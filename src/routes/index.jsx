@@ -8,6 +8,7 @@ import AdminLayout from '../views/layouts/AdminLayout'
 import AuthLayout from '../views/layouts/AuthLayout'
 import ErrorLayout from '../views/layouts/ErrorLayout'
 import CustomerPage from '../views/admin/customer/CustomerPage'
+import CustomerDebtPage from '@/views/admin/debt/CustomerDebtPage'
 
 const routes = [
   {
@@ -20,6 +21,14 @@ const routes = [
     element: CustomerPage,
     layout: AdminLayout,
   },
+
+//Công nợ khách hàng
+  {
+    path: '/customer-debt',
+    element: CustomerDebtPage,
+    layout: AdminLayout,
+  },
+
   {
     path: '/forgot-password',
     element: ForgotPasswordPage,
