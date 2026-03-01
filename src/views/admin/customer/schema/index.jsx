@@ -3,8 +3,8 @@ import { z } from 'zod'
 const phoneRegex = /^\+?\d{1,}$/
 
 const createCustomerSchema = z.object({
-  code: z.string().nullable(),
-  name: z.string().min(1, { message: 'Tên khách hàng không được để trống' }),
+  customerCode: z.string().min(1, { message: 'Mã khách hàng không được để trống' }),
+  customerName: z.string().min(1, { message: 'Tên khách hàng không được để trống' }),
   phone: z
     .string()
     .min(1, { message: 'Số điện thoại không được để trống' })
@@ -20,37 +20,38 @@ const createCustomerSchema = z.object({
     .string()
     .min(1, { message: 'Địa chỉ không được để trống' })
     .max(120, { message: 'Địa chỉ không được vượt quá 120 ký tự' }),
-  represent: z
+  contactPerson: z
     .string()
-    .max(120, { message: 'Tên đại diện không được vượt quá 120 ký tự' })
+    .max(120, { message: 'Người liên hệ không được vượt quá 120 ký tự' })
     .nullable(),
-  note: z
+  notes: z
     .string()
     .max(120, { message: 'Ghi chú không được vượt quá 120 ký tự' })
     .nullable(),
-  type: z
-    .enum(['company', 'partner', 'other'], {
+  customerType: z
+    .enum(['individual', 'company'], {
       message: 'Loại khách hàng không hợp lệ',
-    })
-    .nullable(),
+    }),
   taxCode: z
     .string()
     .max(120, { message: 'Mã số thuế không được vượt quá 120 ký tự' })
     .nullable(),
-  identityCard: z
+  cccd: z
     .string()
     .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' })
     .nullable(),
-  identityDate: z.string().nullable(),
-  identityPlace: z
+  issuedAt: z.string().nullable(),
+  issuedBy: z
     .string()
     .max(255, { message: 'Nơi cấp không được vượt quá 255 ký tự' })
     .nullable(),
+  creditLimit: z.coerce.number().min(0, { message: 'Hạn mức công nợ phải lớn hơn hoặc bằng 0' }).optional(),
+  rewardPoints: z.coerce.number().min(0, { message: 'Điểm thưởng phải lớn hơn hoặc bằng 0' }).optional(),
+  rewardCode: z.string().max(50, { message: 'Mã thưởng không được vượt quá 50 ký tự' }).nullable().optional(),
 })
 
 const updateCustomerSchema = z.object({
-  code: z.string().nullable(),
-  name: z.string().min(1, { message: 'Tên khách hàng không được để trống' }),
+  customerName: z.string().min(1, { message: 'Tên khách hàng không được để trống' }),
   phone: z
     .string()
     .min(1, { message: 'Số điện thoại không được để trống' })
@@ -66,32 +67,38 @@ const updateCustomerSchema = z.object({
     .string()
     .min(1, { message: 'Địa chỉ không được để trống' })
     .max(120, { message: 'Địa chỉ không được vượt quá 120 ký tự' }),
-  represent: z
+  contactPerson: z
     .string()
-    .max(120, { message: 'Tên đại diện không được vượt quá 120 ký tự' })
+    .max(120, { message: 'Người liên hệ không được vượt quá 120 ký tự' })
     .nullable(),
-  note: z
+  notes: z
     .string()
     .max(120, { message: 'Ghi chú không được vượt quá 120 ký tự' })
     .nullable(),
-  type: z
-    .enum(['company', 'partner', 'other'], {
+  customerType: z
+    .enum(['individual', 'company'], {
       message: 'Loại khách hàng không hợp lệ',
-    })
-    .nullable(),
+    }),
   taxCode: z
     .string()
     .max(120, { message: 'Mã số thuế không được vượt quá 120 ký tự' })
     .nullable(),
-  identityCard: z
+  cccd: z
     .string()
     .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' })
     .nullable(),
-  identityDate: z.string().nullable(),
-  identityPlace: z
+  issuedAt: z.string().nullable(),
+  issuedBy: z
     .string()
     .max(255, { message: 'Nơi cấp không được vượt quá 255 ký tự' })
     .nullable(),
+  creditLimit: z.coerce.number().min(0, { message: 'Hạn mức công nợ phải lớn hơn hoặc bằng 0' }).optional(),
+  rewardPoints: z.coerce.number().min(0, { message: 'Điểm thưởng phải lớn hơn hoặc bằng 0' }).optional(),
+  rewardCode: z.string().max(50, { message: 'Mã thưởng không được vượt quá 50 ký tự' }).nullable().optional(),
 })
 
-export { createCustomerSchema, updateCustomerSchema }
+const updateCustomerStatusSchema = z.object({
+  status: z.string({ required_error: 'Vui lòng chọn trạng thái' }),
+})
+
+export { createCustomerSchema, updateCustomerSchema, updateCustomerStatusSchema }

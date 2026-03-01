@@ -22,7 +22,7 @@ import { DataTableToolbar } from './DataTableToolbar'
 import { DataTablePagination } from './DataTablePagination'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const CustomerDataTable = ({ columns, data, loading = false }) => {
+const CustomerDataTable = ({ columns, data, loading = false, pagination, pageCount, rowCount, onPaginationChange }) => {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState({})
   const [columnFilters, setColumnFilters] = useState([])
@@ -31,17 +31,17 @@ const CustomerDataTable = ({ columns, data, loading = false }) => {
   const table = useReactTable({
     data,
     columns,
-    initialState: {
-      pagination: {
-        pageSize: 30, //custom default page size
-      },
-    },
     state: {
       sorting,
       columnVisibility,
       rowSelection,
       columnFilters,
+      pagination,
     },
+    pageCount,
+    rowCount,
+    manualPagination: true,
+    onPaginationChange,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
@@ -70,9 +70,9 @@ const CustomerDataTable = ({ columns, data, loading = false }) => {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   )
                 })}

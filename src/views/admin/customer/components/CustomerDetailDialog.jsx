@@ -279,7 +279,7 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
                         <UserIcon className="h-4 w-4" />
                       </div>
                       <span>
-                        {types.find((type) => type.value === customer?.type)
+                        {types.find((type) => type.value === customer?.customerType)
                           ?.label || 'Chưa cập nhật'}
                       </span>
                     </div>

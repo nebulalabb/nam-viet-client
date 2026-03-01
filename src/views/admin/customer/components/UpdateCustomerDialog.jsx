@@ -50,18 +50,20 @@ const UpdateCustomerDialog = ({
   const form = useForm({
     resolver: zodResolver(updateCustomerSchema),
     defaultValues: {
-      code: customer.code,
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      address: customer.address,
-      represent: customer.represent,
-      note: customer.note,
-      type: customer.type,
-      taxCode: customer.taxCode,
-      identityCard: customer.identityCard || '',
-      identityDate: customer.identityDate || null,
-      identityPlace: customer.identityPlace || '',
+      customerName: customer.customerName || customer.name || '',
+      phone: customer.phone || '',
+      email: customer.email || '',
+      address: customer.address || '',
+      contactPerson: customer.contactPerson || customer.represent || '',
+      notes: customer.notes || customer.note || '',
+      customerType: customer.customerType || customer.type || 'individual',
+      taxCode: customer.taxCode || '',
+      cccd: customer.cccd || customer.identityCard || '',
+      issuedAt: customer.issuedAt || customer.identityDate || null,
+      issuedBy: customer.issuedBy || customer.identityPlace || '',
+      creditLimit: customer.creditLimit || 0,
+      rewardPoints: customer.rewardPoints || 0,
+      rewardCode: customer.rewardCode || '',
     },
   })
 
@@ -103,12 +105,12 @@ const UpdateCustomerDialog = ({
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="customerName"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel required={true}>Khách hàng</FormLabel>
+                      <FormLabel required={true}>Tên khách hàng</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập khách hàng" {...field} />
+                        <Input placeholder="Nhập tên khách hàng" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -159,12 +161,12 @@ const UpdateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="represent"
+                  name="contactPerson"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Tên công ty</FormLabel>
+                      <FormLabel>Người liên hệ / Đại diện</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập tên công ty" {...field} />
+                        <Input placeholder="Nhập người liên hệ / tên công ty" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -187,7 +189,7 @@ const UpdateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="identityCard"
+                  name="cccd"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>CMND/CCCD</FormLabel>
@@ -201,7 +203,7 @@ const UpdateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="identityDate"
+                  name="issuedAt"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>Ngày cấp</FormLabel>
@@ -210,6 +212,7 @@ const UpdateCustomerDialog = ({
                           <FormControl>
                             <Button
                               variant="outline"
+                              type="button"
                               className={cn(
                                 'w-full pl-3 text-left font-normal',
                                 !field.value && 'text-muted-foreground',
@@ -249,7 +252,7 @@ const UpdateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="identityPlace"
+                  name="issuedBy"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>Nơi cấp</FormLabel>
@@ -260,12 +263,54 @@ const UpdateCustomerDialog = ({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="creditLimit"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Hạn mức công nợ (VND)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Nhập hạn mức công nợ" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rewardPoints"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Điểm thưởng</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Nhập điểm thưởng" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rewardCode"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Mã thưởng (Code)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập mã ưu đãi / mã thưởng" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="grid gap-4 md:grid-cols-1">
                 <FormField
                   control={form.control}
-                  name="note"
+                  name="notes"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>Ghi chú</FormLabel>
@@ -274,6 +319,7 @@ const UpdateCustomerDialog = ({
                           rows={5}
                           placeholder="Nhập ghi chú nếu có"
                           {...field}
+                          value={field.value || ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -283,7 +329,7 @@ const UpdateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="type"
+                  name="customerType"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel required={true}>
@@ -295,19 +341,18 @@ const UpdateCustomerDialog = ({
                           defaultValue={field.value}
                           className="flex flex-col space-y-1"
                         >
-                          {types.map((type, index) => (
-                            <FormItem
-                              key={index}
-                              className="flex items-center space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <RadioGroupItem value={type.value} />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {type.label}
-                              </FormLabel>
-                            </FormItem>
-                          ))}
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="individual" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Cá nhân</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="company" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Công ty</FormLabel>
+                          </FormItem>
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />

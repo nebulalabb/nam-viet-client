@@ -46,18 +46,21 @@ const CreateCustomerDialog = ({
   const form = useForm({
     resolver: zodResolver(createCustomerSchema),
     defaultValues: {
-      code: '',
-      name: '',
+      customerCode: '',
+      customerName: '',
       phone: '',
       email: '',
       address: '',
-      represent: '',
-      note: '',
-      type: 'company',
+      contactPerson: '',
+      notes: '',
+      customerType: 'individual',
       taxCode: '',
-      identityCard: '',
-      identityDate: null,
-      identityPlace: '',
+      cccd: '',
+      issuedAt: null,
+      issuedBy: '',
+      creditLimit: 0,
+      rewardPoints: 0,
+      rewardCode: '',
     },
   })
 
@@ -101,12 +104,26 @@ const CreateCustomerDialog = ({
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="customerCode"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel required={true}>Khách hàng</FormLabel>
+                      <FormLabel required={true}>Mã khách hàng</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập khách hàng" {...field} />
+                        <Input placeholder="Nhập mã khách hàng" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="customerName"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel required={true}>Tên khách hàng</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên khách hàng" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -157,12 +174,12 @@ const CreateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="represent"
+                  name="contactPerson"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Tên công ty</FormLabel>
+                      <FormLabel>Người liên hệ / Đại diện</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập tên công ty" {...field} />
+                        <Input placeholder="Nhập người liên hệ / tên công ty" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -185,7 +202,7 @@ const CreateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="identityCard"
+                  name="cccd"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>CMND/CCCD</FormLabel>
@@ -199,7 +216,7 @@ const CreateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="identityDate"
+                  name="issuedAt"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>Ngày cấp</FormLabel>
@@ -247,7 +264,7 @@ const CreateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="identityPlace"
+                  name="issuedBy"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>Nơi cấp</FormLabel>
@@ -258,12 +275,54 @@ const CreateCustomerDialog = ({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="creditLimit"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Hạn mức công nợ (VND)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Nhập hạn mức công nợ" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rewardPoints"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Điểm thưởng</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Nhập điểm thưởng" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rewardCode"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Mã thưởng (Code)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập mã ưu đãi / mã thưởng" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="grid gap-4 md:grid-cols-1">
                 <FormField
                   control={form.control}
-                  name="note"
+                  name="notes"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel>Ghi chú</FormLabel>
@@ -272,6 +331,7 @@ const CreateCustomerDialog = ({
                           rows={5}
                           placeholder="Nhập ghi chú nếu có"
                           {...field}
+                          value={field.value || ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -281,7 +341,7 @@ const CreateCustomerDialog = ({
 
                 <FormField
                   control={form.control}
-                  name="type"
+                  name="customerType"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormLabel required={true}>
@@ -293,19 +353,18 @@ const CreateCustomerDialog = ({
                           defaultValue={field.value}
                           className="flex flex-col space-y-1"
                         >
-                          {types.map((type, index) => (
-                            <FormItem
-                              key={index}
-                              className="flex items-center space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <RadioGroupItem value={type.value} />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {type.label}
-                              </FormLabel>
-                            </FormItem>
-                          ))}
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="individual" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Cá nhân</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="company" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Công ty</FormLabel>
+                          </FormItem>
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />

@@ -209,7 +209,7 @@ const ExportCustomerView = ({
               </TableHeader>
               <TableBody>
                 {props?.data?.map((customer) => {
-                  const typeLabel = types.find((t) => t.value === customer.type)?.label || '—'
+                  const typeLabel = types.find((t) => t.value === customer.customerType)?.label || '—'
                   return (
                     <TableRow key={customer.id}>
                       <TableCell>{indexTable++}</TableCell>

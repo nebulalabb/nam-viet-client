@@ -130,7 +130,7 @@ const ImportCustomerDialog = ({
         // 1: Type, 2: Name, 3: Phone, 4: Address, 5: Email, 
         // 6: Company Name (Represent?), 7: TaxCode, 8: IdentityCard, 9: IdentityDate, 10: IdentityPlace, 11: Note
         const item = {
-          type: String(getVal(1) || 'company').trim(),
+          customerType: String(getVal(1) || 'company').trim(),
           name: String(getVal(2)).trim(),
           phone: String(getVal(3)).trim(),
           address: String(getVal(4)).trim(),

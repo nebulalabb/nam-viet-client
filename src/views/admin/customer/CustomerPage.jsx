@@ -1,7 +1,7 @@
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { useDispatch, useSelector } from 'react-redux'
 import { columns } from './components/Column'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getCustomers } from '@/stores/CustomerSlice'
 import { CustomerDataTable } from './components/CustomerDataTable'
 
@@ -9,11 +9,21 @@ const CustomerPage = () => {
   const customers = useSelector((state) => state.customer.customers)
   const loading = useSelector((state) => state.customer.loading)
 
+  const serverPagination = useSelector((state) => state.customer.pagination)
+
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 20,
+  })
+
   const dispatch = useDispatch()
   useEffect(() => {
     document.title = 'Quản lý khách hàng'
-    dispatch(getCustomers())
-  }, [dispatch])
+    dispatch(getCustomers({
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
+    }))
+  }, [dispatch, pagination.pageIndex, pagination.pageSize])
 
   return (
     <Layout>
@@ -25,12 +35,16 @@ const CustomerPage = () => {
             </h2>
           </div>
         </div>
-        <div className="-mx-4 flex-1 overflow-auto px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
+        <div className="-mx-4 flex-1 overflow-hidden px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
           {customers && (
             <CustomerDataTable
               data={customers}
               columns={columns}
               loading={loading}
+              pagination={pagination}
+              pageCount={serverPagination?.totalPages || 1}
+              rowCount={serverPagination?.total || 0}
+              onPaginationChange={setPagination}
             />
           )}
         </div>

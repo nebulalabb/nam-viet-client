@@ -1,14 +1,36 @@
 import { IconRefreshDot } from '@tabler/icons-react'
-import { CheckCircleIcon } from 'lucide-react'
+import { CheckCircleIcon, PauseCircle, Ban } from 'lucide-react'
 
 export const types = [
   {
     value: 'company',
-    label: 'Khách công ty',
+    label: 'Công ty',
   },
   {
-    value: 'partner',
-    label: 'Khách đối tác',
+    value: 'individual',
+    label: 'Cá nhân',
+  },
+]
+
+
+export const customerStatuses = [
+  {
+    value: 'active',
+    label: 'Hoạt động',
+    variant: 'default',
+    icon: CheckCircleIcon,
+  },
+  {
+    value: 'inactive',
+    label: 'Tạm ngưng',
+    variant: 'secondary',
+    icon: PauseCircle,
+  },
+  {
+    value: 'blacklisted',
+    label: 'Khóa',
+    variant: 'destructive',
+    icon: Ban,
   },
 ]
 

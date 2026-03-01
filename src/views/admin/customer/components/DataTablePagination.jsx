@@ -18,7 +18,7 @@ const DataTablePagination = ({ table }) => {
   return (
     <div className="flex items-center justify-between overflow-auto px-2">
       <div className="hidden flex-1 text-sm text-muted-foreground sm:block">
-        {table.getFilteredRowModel().rows.length} hàng
+        {table.getRowCount()} hàng
       </div>
       <div className="flex items-center sm:space-x-6 lg:space-x-8">
         <div className="flex items-center space-x-2">
@@ -35,7 +35,7 @@ const DataTablePagination = ({ table }) => {
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[30, 50, 100, 250, 500].map((pageSize) => (
+              {[20, 30, 50, 100, 250, 500].map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>

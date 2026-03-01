@@ -51,9 +51,9 @@ const DataTableToolbar = ({ table }) => {
         />
 
         <div className="flex gap-x-2">
-          {table.getColumn('type') && (
+          {table.getColumn('customerType') && (
             <DataTableFacetedFilter
-              column={table.getColumn('type')}
+              column={table.getColumn('customerType')}
               title="Loại khách hàng"
               options={types}
             />

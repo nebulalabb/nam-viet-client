@@ -20,7 +20,7 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="relative h-full overflow-hidden bg-background">
+    <div className="relative h-svh overflow-hidden bg-background">
       <Notification />
       <Sidebar
         isCollapsed={isCollapsed}
