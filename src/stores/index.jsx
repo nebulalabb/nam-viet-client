@@ -8,6 +8,7 @@ import customerReducer from './CustomerSlice'
 import expiryReducer from './ExpirySlice'
 import customerTimelineReducer from './CustomerTimelineSlice'
 import categoryReducer from './CategorySlice'
+import warehouseReducer from './WarehouseSlice'
 
 const persistConfig = { key: 'nam-viet', storage }
 
@@ -22,6 +23,7 @@ export const store = configureStore({
     expiry: expiryReducer,
     customerTimeline: customerTimelineReducer,
     category: categoryReducer,
+    warehouse: warehouseReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

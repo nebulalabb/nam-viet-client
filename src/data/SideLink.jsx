@@ -237,7 +237,7 @@ export const sideLinks = [
     title: 'Kho',
     icon: <IconBuildingWarehouse size={20} stroke={1.5} />,
     permission: [
-      'WAREHOUSE_IMPORT_VIEW_ALL',
+      'WAREHOUSE_MANAGEMENT',
       'WAREHOUSE_EXPORT_VIEW_ALL',
       'INVENTORY_NXT_VIEW',
       'INVENTORY_LEDGER_VIEW'
@@ -247,7 +247,7 @@ export const sideLinks = [
         title: 'Danh sách kho',
         href: '/warehouse-list',
         icon: <IconBuildingWarehouse size={18} stroke={1.5} />,
-        permission: 'WAREHOUSE_IMPORT_VIEW_ALL',
+        permission: 'WAREHOUSE_MANAGEMENT',
       },
       {
         title: 'Nhập kho',

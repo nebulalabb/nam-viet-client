@@ -9,6 +9,7 @@ import AuthLayout from '../views/layouts/AuthLayout'
 import ErrorLayout from '../views/layouts/ErrorLayout'
 import CustomerPage from '../views/admin/customer/CustomerPage'
 import CategoryPage from '../views/admin/category/CategoryPage'
+import WarehousePage from '../views/admin/warehouse/WarehousePage'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
   {
     path: '/category',
     element: CategoryPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/warehouse-list',
+    element: WarehousePage,
     layout: AdminLayout,
   },
   {

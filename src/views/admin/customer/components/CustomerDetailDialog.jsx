@@ -364,7 +364,7 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
             </div>
           </div>
         </div>
-        <DialogFooter className="hidden md:flex sm:space-x-0">
+        <DialogFooter className="flex flex-col sm:flex-row sm:space-x-0 gap-2">
           <div className="w-full grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
             <Can permission="UPDATE_CUSTOMER">
               <Button
