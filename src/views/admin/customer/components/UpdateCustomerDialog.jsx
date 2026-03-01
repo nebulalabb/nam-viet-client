@@ -27,9 +27,9 @@ import { updateCustomerSchema } from '../schema'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { types } from '../data'
+import { types, customerStatuses } from '../data'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
+import { DatePicker } from '@/components/custom/DatePicker'
 import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -64,6 +64,7 @@ const UpdateCustomerDialog = ({
       creditLimit: customer.creditLimit || 0,
       rewardPoints: customer.rewardPoints || 0,
       rewardCode: customer.rewardCode || '',
+      status: customer.status || 'active',
     },
   })
 
@@ -192,7 +193,7 @@ const UpdateCustomerDialog = ({
                   name="cccd"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel>CMND/CCCD</FormLabel>
+                      <FormLabel required={true}>CMND/CCCD</FormLabel>
                       <FormControl>
                         <Input placeholder="Nhập số CMND/CCCD" {...field} value={field.value || ''} />
                       </FormControl>
@@ -230,8 +231,11 @@ const UpdateCustomerDialog = ({
                           </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
+                          <DatePicker
                             mode="single"
+                            captionLayout="dropdown-buttons"
+                            fromYear={1900}
+                            toYear={new Date().getFullYear()}
                             selected={field.value ? new Date(field.value) : undefined}
                             onSelect={(date) => {
                               field.onChange(date ? format(date, 'yyyy-MM-dd') : null)
@@ -341,18 +345,41 @@ const UpdateCustomerDialog = ({
                           defaultValue={field.value}
                           className="flex flex-col space-y-1"
                         >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="individual" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Cá nhân</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="company" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Công ty</FormLabel>
-                          </FormItem>
+                          {types.map((type) => (
+                            <FormItem key={type.value} className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value={type.value} />
+                              </FormControl>
+                              <FormLabel className="font-normal">{type.label}</FormLabel>
+                            </FormItem>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel required={true}>Trạng thái</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-1"
+                        >
+                          {customerStatuses.map((status) => (
+                            <FormItem key={status.value} className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value={status.value} />
+                              </FormControl>
+                              <FormLabel className="font-normal">{status.label}</FormLabel>
+                            </FormItem>
+                          ))}
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />

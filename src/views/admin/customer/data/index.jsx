@@ -1,14 +1,18 @@
 import { IconRefreshDot } from '@tabler/icons-react'
-import { CheckCircleIcon, PauseCircle, Ban } from 'lucide-react'
+import { CheckCircleIcon, PauseCircle, Ban, Building2, User } from 'lucide-react'
 
 export const types = [
   {
     value: 'company',
     label: 'Công ty',
+    icon: Building2,
+    color: 'text-blue-600',
   },
   {
     value: 'individual',
     label: 'Cá nhân',
+    icon: User,
+    color: 'text-amber-600',
   },
 ]
 

@@ -38,8 +38,8 @@ const createCustomerSchema = z.object({
     .nullable(),
   cccd: z
     .string()
-    .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' })
-    .nullable(),
+    .min(1, { message: 'Số CMND/CCCD không được để trống' })
+    .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' }),
   issuedAt: z.string().nullable(),
   issuedBy: z
     .string()
@@ -48,6 +48,7 @@ const createCustomerSchema = z.object({
   creditLimit: z.coerce.number().min(0, { message: 'Hạn mức công nợ phải lớn hơn hoặc bằng 0' }).optional(),
   rewardPoints: z.coerce.number().min(0, { message: 'Điểm thưởng phải lớn hơn hoặc bằng 0' }).optional(),
   rewardCode: z.string().max(50, { message: 'Mã thưởng không được vượt quá 50 ký tự' }).nullable().optional(),
+  status: z.enum(['active', 'inactive', 'blacklisted'], { message: 'Trạng thái không hợp lệ' }).optional(),
 })
 
 const updateCustomerSchema = z.object({
@@ -85,8 +86,8 @@ const updateCustomerSchema = z.object({
     .nullable(),
   cccd: z
     .string()
-    .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' })
-    .nullable(),
+    .min(1, { message: 'Số CMND/CCCD không được để trống' })
+    .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' }),
   issuedAt: z.string().nullable(),
   issuedBy: z
     .string()
@@ -95,6 +96,7 @@ const updateCustomerSchema = z.object({
   creditLimit: z.coerce.number().min(0, { message: 'Hạn mức công nợ phải lớn hơn hoặc bằng 0' }).optional(),
   rewardPoints: z.coerce.number().min(0, { message: 'Điểm thưởng phải lớn hơn hoặc bằng 0' }).optional(),
   rewardCode: z.string().max(50, { message: 'Mã thưởng không được vượt quá 50 ký tự' }).nullable().optional(),
+  status: z.enum(['active', 'inactive', 'blacklisted'], { message: 'Trạng thái không hợp lệ' }).optional(),
 })
 
 const updateCustomerStatusSchema = z.object({

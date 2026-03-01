@@ -208,7 +208,16 @@ export const columns = [
       const typeValue = row.getValue('customerType')
       const type = types.find((t) => t.value === typeValue)
 
-      return <div className="flex w-[150px] items-center">{type?.label}</div>
+      if (!type) return <div className="flex w-[150px] items-center"></div>
+
+      const TypeIcon = type.icon
+
+      return (
+        <div className={`flex w-[150px] items-center gap-2 font-medium ${type.color || ''}`}>
+          {TypeIcon && <TypeIcon className="h-4 w-4" />}
+          <span>{type.label}</span>
+        </div>
+      )
     },
     filterFn: (row, id, value) => {
       return value.includes(row.original?.customerType)
