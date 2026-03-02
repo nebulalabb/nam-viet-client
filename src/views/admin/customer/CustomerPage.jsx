@@ -15,15 +15,25 @@ const CustomerPage = () => {
     pageIndex: 0,
     pageSize: 20,
   })
+  const [columnFilters, setColumnFilters] = useState([])
+  const [globalFilter, setGlobalFilter] = useState('')
 
   const dispatch = useDispatch()
   useEffect(() => {
     document.title = 'Quản lý khách hàng'
+
+    const filtersParams = columnFilters.reduce((acc, filter) => {
+      acc[filter.id] = filter.value.join ? filter.value.join(',') : filter.value
+      return acc
+    }, {})
+
     dispatch(getCustomers({
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
+      search: globalFilter || undefined,
+      ...filtersParams
     }))
-  }, [dispatch, pagination.pageIndex, pagination.pageSize])
+  }, [dispatch, pagination.pageIndex, pagination.pageSize, columnFilters, globalFilter])
 
   return (
     <Layout>
@@ -45,6 +55,10 @@ const CustomerPage = () => {
               pageCount={serverPagination?.totalPages || 1}
               rowCount={serverPagination?.total || 0}
               onPaginationChange={setPagination}
+              columnFilters={columnFilters}
+              onColumnFiltersChange={setColumnFilters}
+              globalFilter={globalFilter}
+              onGlobalFilterChange={setGlobalFilter}
             />
           )}
         </div>

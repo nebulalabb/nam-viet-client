@@ -22,10 +22,21 @@ import { DataTableToolbar } from './DataTableToolbar'
 import { DataTablePagination } from './DataTablePagination'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const CustomerDataTable = ({ columns, data, loading = false, pagination, pageCount, rowCount, onPaginationChange }) => {
+const CustomerDataTable = ({
+  columns,
+  data,
+  loading = false,
+  pagination,
+  pageCount,
+  rowCount,
+  onPaginationChange,
+  columnFilters,
+  onColumnFiltersChange,
+  globalFilter,
+  onGlobalFilterChange
+}) => {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState({})
-  const [columnFilters, setColumnFilters] = useState([])
   const [sorting, setSorting] = useState([])
 
   const table = useReactTable({
@@ -36,16 +47,19 @@ const CustomerDataTable = ({ columns, data, loading = false, pagination, pageCou
       columnVisibility,
       rowSelection,
       columnFilters,
+      globalFilter,
       pagination,
     },
     pageCount,
     rowCount,
     manualPagination: true,
+    manualFiltering: true,
     onPaginationChange,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange,
+    onGlobalFilterChange,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

@@ -12,11 +12,11 @@ import {
 
 const DataTableViewOptions = ({ table }) => {
   const options = {
-    code: 'Mã khách hàng',
-    name: 'Họ và tên',
+    customerCode: 'Mã khách hàng',
+    customerName: 'Tên khách hàng',
+    status: 'Trạng thái',
+    customerType: 'Loại khách hàng',
     creator: 'Người tạo',
-    type: 'Loại khách hàng',
-    phone: 'Số điện thoại',
     createdAt: 'Ngày tạo',
     invoiceCount: 'SL đơn',
   }

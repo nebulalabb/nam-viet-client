@@ -4,10 +4,10 @@ import { Input } from '@/components/ui/input'
 import { DataTableViewOptions } from './DataTableViewOption'
 import Can from '@/utils/can'
 import { PlusIcon, FileSpreadsheet } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CreateCustomerDialog from './CreateCustomerDialog'
 import ImportCustomerDialog from './ImportCustomerDialog'
-import { types } from '../data'
+import { types, customerStatuses } from '../data'
 import { DataTableFacetedFilter } from './DataTableFacetedFilter'
 import { DeleteMultipleCustomersDialog } from './DeleteMultipleCustomersDialog'
 import { deleteMultipleCustomers } from '@/stores/CustomerSlice'
@@ -15,6 +15,7 @@ import { useDispatch } from 'react-redux'
 import { TrashIcon } from '@radix-ui/react-icons'
 import { IconFileTypeXls } from '@tabler/icons-react'
 import ExportCustomerDialog from './ExportCustomerDialog'
+import { useDebounce } from '@/hooks/useDebounce'
 
 const DataTableToolbar = ({ table }) => {
   const isFiltered = table.getState().columnFilters.length > 0
@@ -38,15 +39,22 @@ const DataTableToolbar = ({ table }) => {
     }
   }
 
+  const [searchValue, setSearchValue] = useState(table.getState().globalFilter || '')
+  const debouncedSearchValue = useDebounce(searchValue, 500)
+
+  useEffect(() => {
+    if (table.getState().globalFilter !== debouncedSearchValue) {
+      table.setGlobalFilter(debouncedSearchValue)
+    }
+  }, [debouncedSearchValue, table])
+
   return (
     <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
       <div className="flex flex-1 items-center space-x-2">
         <Input
           placeholder="Tìm kiếm tên, SĐT..."
-          value={table.getState().globalFilter || ''}
-          onChange={(event) =>
-            table.setGlobalFilter(String(event.target.value))
-          }
+          value={searchValue}
+          onChange={(event) => setSearchValue(String(event.target.value))}
           className="h-8 w-[150px] lg:w-[250px]"
         />
 
@@ -56,6 +64,13 @@ const DataTableToolbar = ({ table }) => {
               column={table.getColumn('customerType')}
               title="Loại khách hàng"
               options={types}
+            />
+          )}
+          {table.getColumn('status') && (
+            <DataTableFacetedFilter
+              column={table.getColumn('status')}
+              title="Trạng thái"
+              options={customerStatuses}
             />
           )}
         </div>
