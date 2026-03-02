@@ -6,11 +6,14 @@ import { getAuthUserRolePermissions } from './AuthSlice'
 
 export const getUsers = createAsyncThunk(
   'user',
-  async (_, { rejectWithValue }) => {
+  async (query, { rejectWithValue }) => {
     try {
-      const response = await api.get('/user')
-      const { data } = response.data
-      return data
+      const response = await api.get('/users', { params: query })
+      const { data, meta } = response.data
+      return {
+        data,
+        pagination: meta?.pagination || { total: data.length, totalPages: 1 }
+      }
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -22,7 +25,7 @@ export const deleteUser = createAsyncThunk(
   'user/delete',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      await api.delete(`/user/${data}/delete`)
+      await api.delete(`/users/${data}`)
       await dispatch(getUsers()).unwrap()
       toast.success('Xóa thành công')
     } catch (error) {
@@ -36,7 +39,7 @@ export const createUser = createAsyncThunk(
   'user/create',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      await api.post('/user/create', data)
+      await api.post('/users', data)
 
       await dispatch(getUsers()).unwrap()
       toast.success('Thêm mới thành công')
@@ -52,7 +55,7 @@ export const updateUser = createAsyncThunk(
   async (updateData, { rejectWithValue, dispatch }) => {
     try {
       const { id, data } = updateData
-      await api.put(`/user/${id}/update`, data)
+      await api.put(`/users/${id}`, data)
       await dispatch(getUsers()).unwrap()
       toast.success('Cập nhật dữ liệu thành công')
     } catch (error) {
@@ -67,7 +70,7 @@ export const updateUserStatus = createAsyncThunk(
   async (updateData, { rejectWithValue, dispatch }) => {
     try {
       const { id, data } = updateData
-      await api.put(`/user/${id}/update-status`, data)
+      await api.patch(`/users/${id}/status`, data)
       await dispatch(getUsers()).unwrap()
       toast.success('Cập nhật trạng thái thành công')
     } catch (error) {
@@ -79,9 +82,10 @@ export const updateUserStatus = createAsyncThunk(
 
 export const changePassword = createAsyncThunk(
   'user/change-password',
-  async (data, { rejectWithValue }) => {
+  async (updateData, { rejectWithValue }) => {
     try {
-      await api.put('/user/change-password', data)
+      const { id, data } = updateData
+      await api.put(`/users/${id}/password`, data)
       toast.success('Cập nhật mật khẩu thành công')
     } catch (error) {
       const message = handleError(error)
@@ -94,9 +98,10 @@ export const updateProfile = createAsyncThunk(
   'user/update-profile',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      await api.put('/user/profile', data)
+      const { id, profileData } = data
+      await api.put(`/users/${id}`, profileData)
       await dispatch(getAuthUserRolePermissions()).unwrap()
-      toast.success('Cập nhật thông')
+      toast.success('Cập nhật thông tin thành công')
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -106,6 +111,10 @@ export const updateProfile = createAsyncThunk(
 
 const initialState = {
   users: [],
+  pagination: {
+    total: 0,
+    totalPages: 1,
+  },
   loading: false,
   error: null,
 }
@@ -122,7 +131,8 @@ export const userSlice = createSlice({
       })
       .addCase(getUsers.fulfilled, (state, action) => {
         state.loading = false
-        state.users = action.payload
+        state.users = action.payload.data
+        state.pagination = action.payload.pagination
       })
       .addCase(getUsers.rejected, (state, action) => {
         state.loading = false

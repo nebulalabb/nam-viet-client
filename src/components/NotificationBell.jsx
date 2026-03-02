@@ -6,27 +6,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { IconBell } from '@tabler/icons-react'
+import { Bell } from 'lucide-react'
 import { Button } from '@/components/custom/Button'
 import { useDispatch, useSelector } from 'react-redux'
 import { useEffect, useMemo } from 'react'
-import {
-  getNotifications,
-  readNotification,
-  markLocalRead,
-} from '@/stores/NotificationSlice'
+
 import { Link, useNavigate } from 'react-router-dom'
 import { dateFormat } from '@/utils/date-format'
 import clsx from 'clsx'
 
 const NotificationBell = () => {
-  const { notifications } = useSelector((state) => state.notification)
+  const notifications = []
   const dispatch = useDispatch()
   const navigate = useNavigate()
-
-  useEffect(() => {
-    dispatch(getNotifications())
-  }, [dispatch])
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => n.unread).length,
@@ -45,8 +37,6 @@ const NotificationBell = () => {
   const handleClickItem = (e, noti) => {
     if (noti.isToday && noti.unread) {
       e.preventDefault()
-      dispatch(markLocalRead(noti.id))
-      dispatch(readNotification(noti.id))
       navigate('/expiry')
     }
   }
@@ -73,7 +63,7 @@ const NotificationBell = () => {
           className="relative h-8 w-8 rounded-full p-0"
           aria-label="Thông báo"
         >
-          <IconBell className="h-5 w-5" />
+          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <span
               className="absolute right-0 top-0 inline-flex h-2 w-2 rounded-full bg-red-500"

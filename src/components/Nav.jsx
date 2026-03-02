@@ -17,11 +17,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from './ui/collapsible'
-import { IconChevronDown, IconChevronDownLeft } from '@tabler/icons-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import Can from '@/utils/can'
+import { useState } from 'react'
 
 const Nav = ({ links, isCollapsed, className, closeNav }) => {
-  const renderLink = ({ sub, ...rest }) => {
+  const [openDropdownIdx, setOpenDropdownIdx] = useState(null)
+
+  const renderLink = ({ sub, ...rest }, idx) => {
     const key = `${rest.title}-${rest.href || 'no-href'}`
 
     if (isCollapsed && sub)
@@ -39,10 +42,17 @@ const Nav = ({ links, isCollapsed, className, closeNav }) => {
 
     if (sub)
       return (
-        <NavLinkDropdown {...rest} sub={sub} key={key} closeNav={closeNav} />
+        <NavLinkDropdown
+          {...rest}
+          sub={sub}
+          key={key}
+          closeNav={closeNav}
+          isOpen={openDropdownIdx === idx}
+          onOpenChange={(isOpen) => setOpenDropdownIdx(isOpen ? idx : null)}
+        />
       )
 
-    return <NavLink {...rest} key={key} closeNav={closeNav} />
+    return <NavLink {...rest} key={key} closeNav={closeNav} onClick={() => setOpenDropdownIdx(null)} />
   }
 
   return (
@@ -54,13 +64,13 @@ const Nav = ({ links, isCollapsed, className, closeNav }) => {
       )}
     >
       <TooltipProvider delayDuration={0}>
-        <nav className="grid gap-1 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
+        <nav className="grid gap-2 px-3 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
           {links.map((link, idx) => {
             const key = `${link.href || 'no-href'}-${link.title || 'no-title'}-${idx}`
 
             return (
               <Can permission={link.permission} key={key} option="some">
-                {renderLink(link)}
+                {renderLink(link, idx)}
               </Can>
             )
           })}
@@ -70,20 +80,23 @@ const Nav = ({ links, isCollapsed, className, closeNav }) => {
   )
 }
 
-const NavLink = ({ title, icon, label, href, closeNav, subLink = false }) => {
+const NavLink = ({ title, icon, label, href, closeNav, subLink = false, onClick }) => {
   const { checkActiveNav } = useCheckActiveNav()
 
   return (
     <Link
       to={href}
-      onClick={closeNav}
+      onClick={(e) => {
+        closeNav?.()
+        onClick?.(e)
+      }}
       className={cn(
         buttonVariants({
           variant: checkActiveNav(href) ? 'secondary' : 'ghost',
           size: 'sm',
         }),
-        'h-12 justify-start text-wrap rounded-none px-6',
-        subLink && 'h-10 w-full border-l border-l-slate-500 px-2',
+        'h-[3.25rem] w-full justify-start text-wrap rounded-lg px-4 font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+        subLink && 'h-11 w-full border-l-2 border-slate-200 dark:border-slate-800 px-4 rounded-none rounded-r-lg text-muted-foreground hover:text-foreground',
       )}
       aria-current={checkActiveNav(href) ? 'page' : undefined}
     >
@@ -128,17 +141,24 @@ const NavLinkIcon = ({ title, icon, label, href }) => {
   )
 }
 
-const NavLinkDropdown = ({ title, icon, label, sub, closeNav }) => {
+const NavLinkDropdown = ({ title, icon, label, sub, closeNav, isOpen, onOpenChange }) => {
   const { checkActiveNav } = useCheckActiveNav()
 
   const isChildActive = !!sub?.find((s) => checkActiveNav(s.href))
 
+  // Open by default if child is active and we don't have controlled state yet,
+  // but if controlled state is provided, use that
+  const openState = isOpen !== undefined ? isOpen || isChildActive : isChildActive
+
   return (
-    <Collapsible defaultOpen={isChildActive}>
+    <Collapsible
+      open={openState}
+      onOpenChange={onOpenChange}
+    >
       <CollapsibleTrigger
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
-          'group h-12 w-full justify-start rounded-none px-6',
+          'group h-[3.25rem] w-full justify-start rounded-lg px-4 font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
         )}
       >
         <div className="mr-2">{icon}</div>
@@ -150,14 +170,14 @@ const NavLinkDropdown = ({ title, icon, label, sub, closeNav }) => {
         )}
         <span
           className={cn(
-            'ml-auto transition-all group-data-[state="open"]:-rotate-180',
+            'ml-auto transition-transform duration-200 group-data-[state="open"]:rotate-180',
           )}
         >
-          <IconChevronDown stroke={1} />
+          <ChevronDown className="h-4 w-4" strokeWidth={2} />
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="collapsibleDropdown" asChild>
-        <ul>
+        <ul className="mt-1 pl-4">
           {sub &&
             sub.map((subLink) => (
               <Can
@@ -165,7 +185,7 @@ const NavLinkDropdown = ({ title, icon, label, sub, closeNav }) => {
                 key={subLink.href}
                 option="some"
               >
-                <li key={subLink.title} className="my-1 ml-8">
+                <li key={subLink.title} className="my-1">
                   <NavLink {...subLink} subLink closeNav={closeNav} />
                 </li>
               </Can>
@@ -200,9 +220,9 @@ const NavLinkIconDropdown = ({ title, icon, label, sub }) => {
           {label && (
             <span className="ml-auto text-muted-foreground">{label}</span>
           )}
-          <IconChevronDownLeft
+          <ChevronRight
             size={18}
-            className="-rotate-90 text-muted-foreground"
+            className="text-muted-foreground"
           />
         </TooltipContent>
       </Tooltip>

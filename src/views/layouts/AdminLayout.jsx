@@ -31,8 +31,8 @@ const AdminLayout = () => {
         className={`overflow-x-hidden pt-16 pb-16 transition-[margin] md:overflow-y-hidden md:pt-0 md:pb-0 ${isCollapsed ? 'md:ml-14' : 'md:ml-64'} h-full`}
       >
         <Layout>
-          <LayoutHeader className="bg-green-600 text-white border-none min-h-[var(--header-height)]">
-            <div className="ml-auto flex items-center space-x-4">
+          <LayoutHeader className="sticky top-0 z-40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 text-foreground border-b border-border min-h-[var(--header-height)] shadow-sm">
+            <div className="ml-auto flex items-center space-x-6">
               <div className="hidden md:flex items-center space-x-4">
                 <NotificationBell />
                 <ThemeSwitch />
