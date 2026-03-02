@@ -22,7 +22,7 @@ import { DataTableToolbar } from './DataTableToolbar'
 import { DataTablePagination } from './DataTablePagination'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const UserDataTable = ({ columns, data, loading = false }) => {
+const EmployeeDataTable = ({ columns, data, loading = false }) => {
     const [rowSelection, setRowSelection] = useState({})
     const [columnVisibility, setColumnVisibility] = useState({})
     const [columnFilters, setColumnFilters] = useState([])
@@ -128,4 +128,4 @@ const UserDataTable = ({ columns, data, loading = false }) => {
     )
 }
 
-export { UserDataTable }
+export { EmployeeDataTable }

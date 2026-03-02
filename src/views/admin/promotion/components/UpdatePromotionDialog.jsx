@@ -57,6 +57,7 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
             giftProductId: promotion?.products?.[0]?.giftProductId || promotion?.conditions?.gift_product_id || undefined,
             buyQuantity: promotion?.conditions?.buy_quantity || undefined,
             getQuantity: promotion?.products?.[0]?.giftQuantity || promotion?.conditions?.get_quantity || undefined,
+            customerId: promotion?.conditions?.customer_id || undefined,
         },
     })
 
@@ -66,21 +67,43 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
     const [openStartDatePicker, setOpenStartDatePicker] = useState(false)
     const [openEndDatePicker, setOpenEndDatePicker] = useState(false)
     const [productsList, setProductsList] = useState([])
+    const [customersList, setCustomersList] = useState([])
 
     useEffect(() => {
-        const fetchProducts = async () => {
+        if (watchPromotionType === 'buy_x_get_y') {
+            if (['customer_group', 'specific_customer'].includes(watchApplicableTo)) {
+                form.setValue('applicableTo', 'all')
+            }
+        } else if (watchPromotionType === 'gift') {
+            if (['all', 'category', 'product_group', 'specific_product'].includes(watchApplicableTo)) {
+                form.setValue('applicableTo', 'customer_group')
+            }
+        }
+    }, [watchPromotionType, watchApplicableTo, form])
+
+    useEffect(() => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/products?limit=1000')
-                if (res.data?.data) {
-                    setProductsList(res.data.data)
-                } else if (res.data) {
-                    setProductsList(res.data)
+                const [resProducts, resCustomers] = await Promise.all([
+                    api.get('/products?limit=1000'),
+                    api.get('/customers?limit=1000')
+                ])
+                if (resProducts.data?.data) {
+                    setProductsList(resProducts.data.data)
+                } else if (resProducts.data) {
+                    setProductsList(resProducts.data)
+                }
+
+                if (resCustomers.data?.data) {
+                    setCustomersList(resCustomers.data.data)
+                } else if (resCustomers.data) {
+                    setCustomersList(resCustomers.data)
                 }
             } catch (error) {
                 console.log(error)
             }
         }
-        if (open) fetchProducts()
+        if (open) fetchData()
     }, [open])
 
     // Set default values when promotion changes
@@ -99,6 +122,7 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                 giftProductId: promotion?.products?.[0]?.giftProductId || promotion?.conditions?.gift_product_id || undefined,
                 buyQuantity: promotion?.conditions?.buy_quantity || undefined,
                 getQuantity: promotion?.products?.[0]?.giftQuantity || promotion?.conditions?.get_quantity || undefined,
+                customerId: promotion?.conditions?.customer_id || undefined,
             })
         }
     }, [promotion, form])
@@ -135,10 +159,15 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                 }]
             }
 
-            if (data.giftProductId) {
+            if (data.promotionType === 'gift') {
                 payload.conditions = {
                     ...(payload.conditions || {}),
-                    gift_product_id: Number(data.giftProductId)
+                    gift_product_id: Number(data.giftProductId),
+                    get_quantity: Number(data.getQuantity)
+                }
+
+                if (data.applicableTo === 'specific_customer' && data.customerId) {
+                    payload.conditions.customer_id = Number(data.customerId)
                 }
             }
 
@@ -235,7 +264,15 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {applicableToOptions.map((type) => (
+                                                    {applicableToOptions.filter((type) => {
+                                                        if (watchPromotionType === 'buy_x_get_y') {
+                                                            return ['all', 'category', 'product_group', 'specific_product'].includes(type.value)
+                                                        }
+                                                        if (watchPromotionType === 'gift') {
+                                                            return ['customer_group', 'specific_customer'].includes(type.value)
+                                                        }
+                                                        return true
+                                                    }).map((type) => (
                                                         <SelectItem key={type.value} value={type.value}>
                                                             {type.label}
                                                         </SelectItem>
@@ -246,6 +283,36 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                                         </FormItem>
                                     )}
                                 />
+
+                                {watchApplicableTo === 'specific_customer' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="customerId"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Khách hàng</FormLabel>
+                                                <Select
+                                                    onValueChange={(val) => field.onChange(Number(val))}
+                                                    value={field.value ? String(field.value) : undefined}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn khách hàng" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {customersList.map((customer) => (
+                                                            <SelectItem key={customer.id} value={String(customer.id)}>
+                                                                {customer.customerName}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
                                 {watchApplicableTo === 'specific_product' && (
                                     <FormField
@@ -278,37 +345,38 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                                 )}
 
                                 {watchPromotionType === 'buy_x_get_y' && (
-                                    <>
-                                        <FormField
-                                            control={form.control}
-                                            name="buyQuantity"
-                                            render={({ field }) => (
-                                                <FormItem className="mb-2 space-y-1">
-                                                    <FormLabel required={true}>Mua số lượng (X)</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" placeholder="Mua X sản phẩm" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="getQuantity"
-                                            render={({ field }) => (
-                                                <FormItem className="mb-2 space-y-1">
-                                                    <FormLabel required={true}>Tặng số lượng (Y)</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="number" placeholder="Được Tặng Y sản phẩm" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </>
+                                    <FormField
+                                        control={form.control}
+                                        name="buyQuantity"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Mua số lượng (X)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" placeholder="Mua X sản phẩm" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 )}
 
-                                {(watchPromotionType === 'buy_x_get_y' || watchApplicableTo === 'specific_product') && (
+                                {(watchPromotionType === 'buy_x_get_y' || watchPromotionType === 'gift') && (
+                                    <FormField
+                                        control={form.control}
+                                        name="getQuantity"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Tặng số lượng (Y)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" placeholder="Được Tặng Y sản phẩm" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {(watchPromotionType === 'buy_x_get_y' || watchPromotionType === 'gift' || watchApplicableTo === 'specific_product') && (
                                     <FormField
                                         control={form.control}
                                         name="giftProductId"

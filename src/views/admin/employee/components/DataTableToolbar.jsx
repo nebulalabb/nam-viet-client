@@ -5,8 +5,8 @@ import { DataTableViewOptions } from './DataTableViewOption'
 import Can from '@/utils/can'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
-import CreateUserDialog from './CreateUserDialog'
-import { userStatuses } from '../data/index'
+import CreateUserDialog from './CreateEmployeeDialog'
+import { employeeStatuses } from '../data/index'
 import { DataTableFacetedFilter } from './DataTableFacetedFilter'
 // import { DeleteMultipleUsersDialog } from './DeleteMultipleUsersDialog'
 // import { deleteMultipleUsers } from '@/stores/UserSlice'
@@ -21,16 +21,6 @@ const DataTableToolbar = ({ table }) => {
     const dispatch = useDispatch()
     const selectedRows = table.getSelectedRowModel().rows
 
-    const handleDelete = async () => {
-        // const selectedIds = selectedRows.map((row) => row.original.id)
-        // try {
-        //   await dispatch(deleteMultipleUsers(selectedIds)).unwrap()
-        //   table.resetRowSelection()
-        //   setShowDeleteDialog(false)
-        // } catch (error) {
-        //   console.log(error)
-        // }
-    }
 
     return (
         <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
@@ -49,7 +39,7 @@ const DataTableToolbar = ({ table }) => {
                         <DataTableFacetedFilter
                             column={table.getColumn('status')}
                             title="Trạng thái"
-                            options={userStatuses}
+                            options={employeeStatuses}
                         />
                     )}
                 </div>

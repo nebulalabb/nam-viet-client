@@ -3,9 +3,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import { columns } from './components/Column'
 import { useEffect } from 'react'
 import { getUsers } from '@/stores/UserSlice'
-import { UserDataTable } from './components/UserDataTable'
+import { EmployeeDataTable } from './components/EmployeeDataTable'
 
-const UserPage = () => {
+const EmployeePage = () => {
     const users = useSelector((state) => state.user.users)
     const loading = useSelector((state) => state.user.loading)
 
@@ -27,7 +27,7 @@ const UserPage = () => {
                 </div>
                 <div className="-mx-4 flex-1 overflow-hidden px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
                     {users && (
-                        <UserDataTable
+                        <EmployeeDataTable
                             data={users}
                             columns={columns}
                             loading={loading}
@@ -39,4 +39,4 @@ const UserPage = () => {
     )
 }
 
-export default UserPage
+export default EmployeePage

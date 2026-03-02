@@ -11,8 +11,8 @@ import {
 import { IconEdit, IconTrash } from '@tabler/icons-react'
 import Can from '@/utils/can'
 import { useState } from 'react'
-import DeleteUserDialog from './DeleteUserDialog'
-import UpdateUserDialog from './UpdateUserDialog'
+import DeleteUserDialog from './DeleteEmployeeDialog'
+import UpdateUserDialog from './UpdateEmployeeDialog'
 
 const DataTableRowActions = ({ row }) => {
     const [showDeleteUserDialog, setShowDeleteUserDialog] = useState(false)

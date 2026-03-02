@@ -13,7 +13,7 @@ import { IconTrash } from '@tabler/icons-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { deleteUser } from '@/stores/UserSlice'
 
-const DeleteUserDialog = ({ open, onOpenChange, user, showTrigger = true, ...props }) => {
+const DeleteEmployeeDialog = ({ open, onOpenChange, user, showTrigger = true, ...props }) => {
     const loading = useSelector((state) => state.user.loading)
     const dispatch = useDispatch()
 
@@ -58,4 +58,4 @@ const DeleteUserDialog = ({ open, onOpenChange, user, showTrigger = true, ...pro
     )
 }
 
-export default DeleteUserDialog
+export default DeleteEmployeeDialog

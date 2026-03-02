@@ -12,7 +12,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux'
 import { updateUserStatus } from '@/stores/UserSlice'
 
-const UpdateUserStatusDialog = ({ open, onOpenChange, user, showTrigger = true, ...props }) => {
+const UpdateEmployeeStatusDialog = ({ open, onOpenChange, user, showTrigger = true, ...props }) => {
     const loading = useSelector((state) => state.user.loading)
     const dispatch = useDispatch()
 
@@ -60,4 +60,4 @@ const UpdateUserStatusDialog = ({ open, onOpenChange, user, showTrigger = true, 
     )
 }
 
-export default UpdateUserStatusDialog
+export default UpdateEmployeeStatusDialog

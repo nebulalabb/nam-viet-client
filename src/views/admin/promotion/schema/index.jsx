@@ -13,12 +13,13 @@ export const createPromotionSchema = z.object({
         message: 'Ngày kết thúc không hợp lệ',
     }),
     isRecurring: z.boolean().optional(),
-    applicableTo: z.enum(['all', 'category', 'product_group', 'specific_product', 'customer_group']),
+    applicableTo: z.enum(['all', 'category', 'product_group', 'specific_product', 'customer_group', 'specific_customer']),
     minOrderValue: z.coerce.number().min(0, 'Giá trị nhỏ nhất là 0').optional(),
     minQuantity: z.coerce.number().min(0, 'Số lượng nhỏ nhất là 0').optional(),
     quantityLimit: z.coerce.number().min(1, 'Giới hạn dùng ít nhất là 1').optional(),
     buyQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng mua').optional(),
     getQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng tặng').optional(),
+    customerId: z.coerce.number().optional(),
 })
 
 export const updatePromotionSchema = z.object({
@@ -37,4 +38,5 @@ export const updatePromotionSchema = z.object({
     quantityLimit: z.coerce.number().min(1, 'Giới hạn dùng ít nhất là 1').optional(),
     buyQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng mua').optional(),
     getQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng tặng').optional(),
+    customerId: z.coerce.number().optional(),
 })

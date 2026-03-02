@@ -99,6 +99,22 @@ export const deletePromotion = createAsyncThunk(
     },
 )
 
+// Delete multiple promotions
+export const deleteMultiplePromotions = createAsyncThunk(
+    'promotion/deleteMultiple',
+    async (ids, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.post(`/promotions/bulk-delete`, { ids })
+            await dispatch(getPromotions()).unwrap()
+            toast.success(response.data.message || 'Xóa các khuyến mãi thành công')
+            return response.data;
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
 const initialState = {
     promotions: [],
     meta: {
@@ -202,6 +218,20 @@ export const promotionSlice = createSlice({
             .addCase(deletePromotion.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload || 'Lỗi xóa khuyến mãi'
+                toast.error(state.error)
+            })
+
+            // deleteMultiplePromotions
+            .addCase(deleteMultiplePromotions.pending, (state) => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(deleteMultiplePromotions.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(deleteMultiplePromotions.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload || 'Lỗi xóa nhiều khuyến mãi'
                 toast.error(state.error)
             })
     },

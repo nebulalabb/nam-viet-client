@@ -64,4 +64,8 @@ export const applicableToOptions = [
         value: 'customer_group',
         label: 'Nhóm khách hàng',
     },
+    {
+        value: 'specific_customer',
+        label: 'Khách hàng cụ thể',
+    },
 ]

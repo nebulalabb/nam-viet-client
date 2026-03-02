@@ -1,10 +1,10 @@
 import { DataTableRowActions } from './DataTableRowAction'
 import { DataTableColumnHeader } from './DataTableColumnHeader'
 import { dateFormat } from '@/utils/date-format'
-import { userStatuses } from '../data/index'
+import { employeeStatuses } from '../data/index'
 import { normalizeText } from '@/utils/normalize-text'
-import UserDetailDialog from './UserDetailDialog'
-import UpdateUserStatusDialog from './UpdateUserStatusDialog'
+import UserDetailDialog from './EmployeeDetailDialog'
+import UpdateUserStatusDialog from './UpdateEmployeeStatusDialog'
 import { useState } from 'react'
 
 import { Checkbox } from '@/components/ui/checkbox'
@@ -145,7 +145,7 @@ export const columns = [
         ),
         cell: function Cell({ row }) {
             const statusValue = row.getValue('status')
-            const status = userStatuses.find((s) => s.value === statusValue) || {
+            const status = employeeStatuses.find((s) => s.value === statusValue) || {
                 label: statusValue,
                 variant: 'outline',
             }

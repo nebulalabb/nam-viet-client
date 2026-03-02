@@ -1,6 +1,6 @@
 import { CheckCircle2, XCircle, Lock } from 'lucide-react'
 
-export const userStatuses = [
+export const employeeStatuses = [
     {
         value: 'active',
         label: 'Hoạt động',

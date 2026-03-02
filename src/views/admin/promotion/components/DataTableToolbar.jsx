@@ -12,7 +12,7 @@ import Can from '@/utils/can'
 import { useState } from 'react'
 // import CustomDatePicker from '@/components/custom/CustomDatePicker'
 import CreatePromotionDialog from './CreatePromotionDialog'
-// import DeleteMultiplePromotionsDialog from './DeleteMultiplePromotionsDialog'
+import DeleteMultiplePromotionsDialog from './DeleteMultiplePromotionsDialog'
 
 export function DataTableToolbar({ table }) {
     const isFiltered = table.getState().columnFilters.length > 0
@@ -75,7 +75,8 @@ export function DataTableToolbar({ table }) {
             </div>
 
             <div className="flex items-center gap-2">
-                {table.getFilteredSelectedRowModel().rows.length > 0 ? (
+                {table.getFilteredSelectedRowModel().rows.length > 0 &&
+                    table.getFilteredSelectedRowModel().rows.every(row => row.original.status === 'cancelled') ? (
                     <Can permission="DELETE_PROMOTION">
                         <Button
                             variant="destructive"
@@ -105,6 +106,13 @@ export function DataTableToolbar({ table }) {
                 <CreatePromotionDialog
                     open={showCreatePromotionDialog}
                     onOpenChange={setShowCreatePromotionDialog}
+                />
+
+                <DeleteMultiplePromotionsDialog
+                    open={showDeleteMultiplePromotionsDialog}
+                    onOpenChange={setShowDeleteMultiplePromotionsDialog}
+                    selectedRows={table.getFilteredSelectedRowModel().rows}
+                    table={table}
                 />
             </div>
         </div>

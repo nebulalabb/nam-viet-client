@@ -7,12 +7,12 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { dateFormat } from '@/utils/date-format'
-import { userStatuses } from '../data/index'
+import { employeeStatuses } from '../data/index'
 
-const UserDetailDialog = ({ open, onOpenChange, user, showTrigger = true, ...props }) => {
+const EmployeeDetailDialog = ({ open, onOpenChange, user, showTrigger = true, ...props }) => {
     if (!user) return null
 
-    const status = userStatuses.find((s) => s.value === user.status) || {
+    const status = employeeStatuses.find((s) => s.value === user.status) || {
         label: user.status,
         variant: 'outline',
     }
@@ -73,4 +73,4 @@ const DetailItem = ({ label, value }) => (
     </div>
 )
 
-export default UserDetailDialog
+export default EmployeeDetailDialog

@@ -9,6 +9,7 @@ import {
     DialogTrigger,
     DialogTitle,
 } from '@/components/ui/dialog'
+import { PlusIcon } from '@radix-ui/react-icons'
 
 import {
     Form,
@@ -23,31 +24,30 @@ import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateUserSchema } from '../schema/index'
-import { updateUser } from '@/stores/UserSlice'
+import { createUserSchema } from '../schema/index'
+import { createUser } from '@/stores/UserSlice'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { userStatuses } from '../data/index'
+import { employeeStatuses } from '../data/index'
 import { useState, useEffect } from 'react'
 import api from '@/utils/axios'
 
-const UpdateUserDialog = ({
+const CreateEmployeeDialog = ({
     open,
     onOpenChange,
-    user,
     showTrigger = true,
     ...props
 }) => {
     const form = useForm({
-        resolver: zodResolver(updateUserSchema),
+        resolver: zodResolver(createUserSchema),
         defaultValues: {
-            employeeCode: user?.employeeCode || '',
-            fullName: user?.fullName || '',
-            email: user?.email || '',
-            phone: user?.phone || '',
+            employeeCode: '',
+            fullName: '',
+            email: '',
+            phone: '',
             password: '',
-            roleId: user?.roleId ? String(user.roleId) : '',
-            status: user?.status || 'active',
+            roleId: '',
+            status: 'active',
         },
     })
 
@@ -71,13 +71,7 @@ const UpdateUserDialog = ({
 
     const onSubmit = async (data) => {
         try {
-            const payloadData = { ...data }
-            if (!payloadData.password) {
-                delete payloadData.password
-            }
-            payloadData.roleId = Number(payloadData.roleId)
-
-            await dispatch(updateUser({ id: user.id, data: payloadData })).unwrap()
+            await dispatch(createUser(data)).unwrap()
             form.reset()
             onOpenChange?.(false)
         } catch (error) {
@@ -90,21 +84,22 @@ const UpdateUserDialog = ({
             {showTrigger && (
                 <DialogTrigger asChild>
                     <Button className="mx-2" variant="outline" size="sm">
-                        Cập nhật
+                        <PlusIcon className="mr-2 size-4" aria-hidden="true" />
+                        Thêm mới
                     </Button>
                 </DialogTrigger>
             )}
 
             <DialogContent className="md:max-w-xl">
                 <DialogHeader>
-                    <DialogTitle>Cập nhật nhân viên</DialogTitle>
+                    <DialogTitle>Thêm nhân viên mới</DialogTitle>
                     <DialogDescription>
-                        Cập nhật thông tin chi tiết của nhân viên {user?.fullName}
+                        Điền vào chi tiết phía dưới để tạo tài khoản nhân viên
                     </DialogDescription>
                 </DialogHeader>
 
                 <Form {...form}>
-                    <form id={`update-user-${user?.id}`} onSubmit={form.handleSubmit(onSubmit)}>
+                    <form id="create-user" onSubmit={form.handleSubmit(onSubmit)}>
                         <div className="grid gap-4 md:grid-cols-2">
                             <FormField
                                 control={form.control}
@@ -141,7 +136,7 @@ const UpdateUserDialog = ({
                                     <FormItem className="mb-2 space-y-1">
                                         <FormLabel required={true}>Email</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Nhập địa chỉ email" {...field} disabled />
+                                            <Input placeholder="Nhập địa chỉ email" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -167,9 +162,9 @@ const UpdateUserDialog = ({
                                 name="password"
                                 render={({ field }) => (
                                     <FormItem className="mb-2 space-y-1">
-                                        <FormLabel>Mật khẩu mới (Tùy chọn)</FormLabel>
+                                        <FormLabel required={true}>Mật khẩu</FormLabel>
                                         <FormControl>
-                                            <Input type="password" placeholder="Bỏ trống nếu không đổi" {...field} />
+                                            <Input type="password" placeholder="Mật khẩu" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -214,7 +209,7 @@ const UpdateUserDialog = ({
                                                     defaultValue={field.value}
                                                     className="flex flex-row gap-4"
                                                 >
-                                                    {userStatuses.map((status) => (
+                                                    {employeeStatuses.map((status) => (
                                                         <FormItem key={status.value} className="flex items-center space-x-2 space-y-0">
                                                             <FormControl>
                                                                 <RadioGroupItem value={status.value} />
@@ -247,8 +242,8 @@ const UpdateUserDialog = ({
                         </Button>
                     </DialogClose>
 
-                    <Button form={`update-user-${user?.id}`} loading={loading}>
-                        Cập nhật
+                    <Button form="create-user" loading={loading}>
+                        Thêm mới
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -256,4 +251,4 @@ const UpdateUserDialog = ({
     )
 }
 
-export default UpdateUserDialog
+export default CreateEmployeeDialog
