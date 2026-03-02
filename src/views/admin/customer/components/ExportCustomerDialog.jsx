@@ -38,7 +38,7 @@ const ExportCustomerDialog = ({
   const handleReviewExport = async () => {
     setLoading(true)
     try {
-      const url = '/customer'
+      const url = '/customers'
       const { data } = await api.get(url, {
         params: {
           limit: Number(limit),

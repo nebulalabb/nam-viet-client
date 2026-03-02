@@ -33,6 +33,7 @@ import { DatePicker } from '@/components/custom/DatePicker'
 import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import MoneyInput from '@/components/custom/MoneyInput'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
@@ -268,32 +269,18 @@ const UpdateCustomerDialog = ({
                   )}
                 />
 
-                <FormField
+                <MoneyInput
                   control={form.control}
                   name="creditLimit"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Hạn mức công nợ (VND)</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Nhập hạn mức công nợ" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Hạn mức công nợ (VND)"
+                  placeholder="Nhập hạn mức công nợ"
                 />
 
-                <FormField
+                <MoneyInput
                   control={form.control}
                   name="rewardPoints"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Điểm thưởng</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Nhập điểm thưởng" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Điểm thưởng"
+                  placeholder="Nhập điểm thưởng"
                 />
 
                 <FormField

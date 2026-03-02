@@ -17,6 +17,20 @@ export const getCustomers = createAsyncThunk(
   },
 )
 
+export const getCustomerById = createAsyncThunk(
+  'customer/getById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/customers/${id}`)
+      return response.data.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+
 export const createCustomer = createAsyncThunk(
   'customer/create',
   async (data, { rejectWithValue, dispatch }) => {

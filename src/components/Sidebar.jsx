@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import { Button } from './custom/Button'
-import { IconChevronsLeft, IconMenu2, IconX } from '@tabler/icons-react'
+import { ChevronsLeft, Menu, X } from 'lucide-react'
 import { Layout, LayoutHeader, LayoutBody } from './custom/Layout'
 import Nav from './Nav'
 import { sideLinks } from '@/data/SideLink'
@@ -25,22 +25,22 @@ const Sidebar = ({ className, isCollapsed, setIsCollapsed }) => {
 
       <Layout>
         {/* Header */}
-        <LayoutHeader className="sticky top-0 justify-between px-4 py-3 bg-green-600 text-white border-none md:px-4 min-h-[var(--header-height)]">
-          <Link to={'/dashboard'}>
-            <div className={`flex items-center ${!isCollapsed ? 'gap-2' : ''}`}>
-              <div className="flex items-center justify-center bg-white rounded-md p-1 shadow-sm">
+        <LayoutHeader className="sticky top-0 justify-between px-4 py-3 bg-background border-b border-border md:px-4 min-h-[var(--header-height)] shadow-sm">
+          <Link to={'/dashboard'} className="overflow-hidden">
+            <div className={`flex items-center ${!isCollapsed ? 'gap-3' : 'gap-0'}`}>
+              <div className="flex flex-shrink-0 items-center justify-center p-1">
                 <img
                   src="/images/logo/logo-nobackground.png"
                   alt="Nam Viet Logo"
-                  className={`transition-all object-contain ${isCollapsed ? 'block h-7 w-7' : 'block h-9 w-auto'}`}
+                  className={`transition-all duration-300 object-contain ${isCollapsed ? 'block h-8 w-8' : 'block h-10 w-auto'}`}
                 />
               </div>
               <span className="sr-only">NAM VIỆT</span>
               <div
-                className={`flex flex-col justify-end truncate ${isCollapsed ? 'invisible w-0' : 'visible w-auto'}`}
+                className={`flex flex-col justify-end truncate transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}
               >
-                <span className="mx-2 text-xl font-bold tracking-tight text-white uppercase drop-shadow-sm">
-                  NAM VIỆT
+                <span className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-500 uppercase drop-shadow-sm">
+                  Nam Việt
                 </span>
               </div>
             </div>
@@ -56,14 +56,14 @@ const Sidebar = ({ className, isCollapsed, setIsCollapsed }) => {
             onClick={() => setNavOpened((prev) => !prev)}
           >
             {navOpened ? (
-              <IconX className="text-white" />
+              <X className="text-foreground h-5 w-5" strokeWidth={2} />
             ) : (
-              <IconMenu2 className="text-white" />
+              <Menu className="text-foreground h-5 w-5" strokeWidth={2} />
             )}
           </Button>
         </LayoutHeader>
 
-        <LayoutBody className="h-full flex-1 border-r-2 p-0 md:px-0">
+        <LayoutBody className="h-full flex-1 border-r border-border p-0 md:px-0 bg-background/50 backdrop-blur-sm">
           <Nav
             id="sidebar-menu"
             className={`h-full flex-1 overflow-y-auto overflow-x-hidden transition-all ${navOpened
@@ -81,11 +81,11 @@ const Sidebar = ({ className, isCollapsed, setIsCollapsed }) => {
           onClick={() => setIsCollapsed((prev) => !prev)}
           size="icon"
           variant="outline"
-          className="absolute -right-5 top-1/2 hidden rounded-full md:inline-flex"
+          className="absolute -right-4 top-1/2 hidden h-8 w-8 rounded-full border border-border bg-background text-foreground shadow-sm md:inline-flex hover:bg-accent hover:text-accent-foreground z-50 transition-transform hover:scale-105"
         >
-          <IconChevronsLeft
-            stroke={1.5}
-            className={`h-5 w-5 ${isCollapsed ? 'rotate-180' : ''}`}
+          <ChevronsLeft
+            strokeWidth={2}
+            className={`h-4 w-4 transition-transform duration-200 ${isCollapsed ? 'rotate-180' : ''}`}
           />
         </Button>
       </Layout>

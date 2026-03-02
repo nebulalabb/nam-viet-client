@@ -73,12 +73,41 @@ export const getAuthUserRolePermissions = createAsyncThunk(
 )
 
 
+export const getAccessLogs = createAsyncThunk(
+  'auth/get-access-logs',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/settings/login-history')
+      return response.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+export const revokeTokens = createAsyncThunk(
+  'auth/revoke-tokens',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await api.post('/settings/login-history/revoke', data)
+      toast.success('Đăng xuất thiết bị thành công')
+      dispatch(getAccessLogs())
+      return response.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
 const initialState = {
   authUserWithRoleHasPermissions: null,
   error: null,
   loading: false,
   requireOTP: false,
   emailForOTP: null,
+  accessLogs: [],
 }
 
 export const authSlice = createSlice({
@@ -157,6 +186,35 @@ export const authSlice = createSlice({
       .addCase(logout.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload.message || 'Lỗi không xác định'
+        toast.error(state.error)
+      })
+
+      // GET ACCESS LOGS
+      .addCase(getAccessLogs.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(getAccessLogs.fulfilled, (state, action) => {
+        state.loading = false
+        state.accessLogs = action.payload?.data || []
+      })
+      .addCase(getAccessLogs.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload?.message || 'Lỗi không xác định'
+        toast.error(state.error)
+      })
+
+      // REVOKE TOKENS
+      .addCase(revokeTokens.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(revokeTokens.fulfilled, (state) => {
+        state.loading = false
+      })
+      .addCase(revokeTokens.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload?.message || 'Lỗi không xác định'
         toast.error(state.error)
       })
   },

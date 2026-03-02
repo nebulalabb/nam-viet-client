@@ -29,6 +29,7 @@ import { useDispatch } from 'react-redux'
 import Can from '@/utils/can'
 import { DeleteCustomerDialog } from './DeleteCustomerDialog'
 import UpdateCustomerDialog from './UpdateCustomerDialog'
+import { getCustomerById } from '@/stores/CustomerSlice'
 import { getExpiriesByCustomerId } from '@/stores/ExpirySlice'
 import { useEffect, useState } from 'react'
 import { CustomerDetailPagination } from './CustomerDetailPagination'
@@ -79,11 +80,20 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
     to: addHours(endOfDay(endOfMonth(current)), 0),
   })
 
+  const [customerDetail, setCustomerDetail] = useState(customer)
   const [showDeleteCustomerDialog, setShowDeleteCustomerDialog] = useState(false)
   const [showUpdateCustomerDialog, setShowUpdateCustomerDialog] = useState(false)
 
   useEffect(() => {
     if (!customer?.id) return
+
+    dispatch(getCustomerById(customer.id))
+      .unwrap()
+      .then((res) => {
+        if (res) setCustomerDetail(res)
+      })
+      .catch(() => { })
+
     dispatch(getExpiriesByCustomerId({ customerId: customer.id, page, limit }))
       .unwrap()
       .then((res) => {
@@ -114,9 +124,9 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
         overlayClassName={props.overlayClassName}
       >
         <DialogHeader>
-          <DialogTitle>{customer?.name}</DialogTitle>
+          <DialogTitle>{customerDetail?.customerName || customer?.name}</DialogTitle>
           <DialogDescription>
-            Thông tin chi tiết khách hàng: <strong>{customer?.name}</strong>
+            Thông tin chi tiết khách hàng: <strong>{customerDetail?.customerName || customer?.name}</strong>
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[75vh] overflow-auto">
@@ -260,13 +270,13 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
                 <div className="flex items-center gap-4">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src={`https://ui-avatars.com/api/?bold=true&background=random&name=${customer?.name}`}
-                      alt={customer?.name}
+                      src={`https://ui-avatars.com/api/?bold=true&background=random&name=${customerDetail?.customerName || customer?.name}`}
+                      alt={customerDetail?.customerName || customer?.name}
                     />
                     <AvatarFallback>AD</AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium">{customer?.name}</div>
+                    <div className="font-medium">{customerDetail?.customerName || customer?.name}</div>
                   </div>
                 </div>
                 <div>
@@ -279,7 +289,7 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
                         <UserIcon className="h-4 w-4" />
                       </div>
                       <span>
-                        {types.find((type) => type.value === customer?.customerType)
+                        {types.find((type) => type.value === customerDetail?.customerType)
                           ?.label || 'Chưa cập nhật'}
                       </span>
                     </div>
@@ -287,73 +297,67 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
                       <div className="mr-2 h-4 w-4">
                         <MobileIcon className="h-4 w-4" />
                       </div>
-                      <a href={`tel:${customer?.phone}`}>
-                        {customer?.phone || 'Chưa cập nhật'}
+                      <a href={`tel:${customerDetail?.phone}`}>
+                        {customerDetail?.phone || 'Chưa cập nhật'}
                       </a>
                     </div>
                     <div className="flex items-center text-muted-foreground">
                       <div className="mr-2 h-4 w-4">
                         <Mail className="h-4 w-4" />
                       </div>
-                      <a href={`mailto:${customer?.email}`}>
-                        {customer?.email || 'Chưa cập nhật'}
+                      <a href={`mailto:${customerDetail?.email}`}>
+                        {customerDetail?.email || 'Chưa cập nhật'}
                       </a>
                     </div>
                     <div className="flex items-center text-primary hover:text-secondary-foreground">
                       <div className="mr-2 h-4 w-4">
                         <CircleDollarSign className="h-4 w-4" />
                       </div>
-                      {customer?.taxCode || 'Chưa cập nhật'}
+                      {customerDetail?.taxCode || 'Chưa cập nhật'}
                     </div>
                     <div className="flex items-center text-primary hover:text-secondary-foreground">
                       <div className="mr-2 h-4 w-4">
                         <Building2 className="h-4 w-4" />
                       </div>
-                      {customer?.represent || 'Chưa cập nhật'}
-                    </div>
-                    <div className="flex items-center text-primary hover:text-secondary-foreground">
-                      <div className="mr-2 h-4 w-4">
-                        <MapPin className="h-4 w-4" />
-                      </div>
-                      {customer?.address || 'Chưa cập nhật'}
+                      {customerDetail?.contactPerson || 'Chưa cập nhật'}
                     </div>
                     <div className="flex items-center text-primary hover:text-secondary-foreground">
                       <div className="mr-2 h-4 w-4">
                         <InfoIcon className="h-4 w-4" />
                       </div>
-                      {customer?.note || 'Không có ghi chú'}
+                      {customerDetail?.notes || 'Không có ghi chú'}
                     </div>
 
                     {/* Identity Information */}
-                    {(customer?.identityCard || customer?.identityDate || customer?.identityPlace) && (
+                    {(customerDetail?.cccd || customerDetail?.issuedAt || customerDetail?.issuedBy) && (
                       <>
                         <div className="my-2 border-t" />
                         <div className="font-medium text-sm mb-2">Thông tin CMND/CCCD</div>
 
-                        {customer?.identityCard && (
+                        {customerDetail?.cccd && (
                           <div className="flex items-center text-primary hover:text-secondary-foreground">
                             <div className="mr-2 h-4 w-4">
                               <CreditCard className="h-4 w-4" />
                             </div>
-                            <span>{customer.identityCard}</span>
+                            <span>{customerDetail.cccd}</span>
                           </div>
                         )}
 
-                        {customer?.identityDate && (
+                        {customerDetail?.issuedAt && (
                           <div className="flex items-center text-primary hover:text-secondary-foreground">
                             <div className="mr-2 h-4 w-4">
                               <CalendarDays className="h-4 w-4" />
                             </div>
-                            <span>Ngày cấp: {dateFormat(customer.identityDate)}</span>
+                            <span>Ngày cấp: {dateFormat(customerDetail.issuedAt)}</span>
                           </div>
                         )}
 
-                        {customer?.identityPlace && (
+                        {customerDetail?.issuedBy && (
                           <div className="flex items-center text-primary hover:text-secondary-foreground">
                             <div className="mr-2 h-4 w-4">
                               <MapPinned className="h-4 w-4" />
                             </div>
-                            <span>{customer.identityPlace}</span>
+                            <span>{customerDetail.issuedBy}</span>
                           </div>
                         )}
                       </>
@@ -403,7 +407,7 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
         <DeleteCustomerDialog
           open={showDeleteCustomerDialog}
           onOpenChange={setShowDeleteCustomerDialog}
-          customer={customer}
+          customer={customerDetail}
           showTrigger={false}
           onSuccess={() => props?.onOpenChange?.(false)}
           contentClassName="z-[100070]"
@@ -414,8 +418,19 @@ const CustomerDetailDialog = ({ customer, showTrigger = true, ...props }) => {
       {showUpdateCustomerDialog && (
         <UpdateCustomerDialog
           open={showUpdateCustomerDialog}
-          onOpenChange={setShowUpdateCustomerDialog}
-          customer={customer}
+          onOpenChange={(open) => {
+            setShowUpdateCustomerDialog(open)
+            if (!open) {
+              // Refresh customer data when dialog closes
+              dispatch(getCustomerById(customer.id))
+                .unwrap()
+                .then((res) => {
+                  if (res) setCustomerDetail(res)
+                })
+                .catch(() => { })
+            }
+          }}
+          customer={customerDetail}
           showTrigger={false}
           contentClassName="z-[100070]"
           overlayClassName="z-[100069]"

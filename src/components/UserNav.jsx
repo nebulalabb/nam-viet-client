@@ -16,10 +16,10 @@ import LogoutAlertDialog from './LogoutAlertDialog'
 import { useDispatch, useSelector } from 'react-redux'
 import UserProfileDialog from './UserProfileDialog'
 import ChangePasswordDialog from './ChangePasswordDialog'
-import { IconKey, IconLogout, IconUserCircle, IconMoon, IconSun, IconDeviceDesktop, IconBell } from '@tabler/icons-react'
+import { Key, LogOut, UserCircle, Moon, Sun, Monitor, Bell } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 import { DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from '@/components/ui/dropdown-menu'
-import { markLocalRead, readNotification } from '@/stores/NotificationSlice'
+
 import { Link, useNavigate } from 'react-router-dom'
 import { dateFormat } from '@/utils/date-format'
 import clsx from 'clsx'
@@ -43,9 +43,8 @@ const UserNav = () => {
   const [showMobileNotifications, setShowMobileNotifications] = useState(false)
 
   const { theme, setTheme } = useTheme()
-  const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { notifications } = useSelector((state) => state.notification)
+  const notifications = []
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => n.unread).length,
@@ -64,8 +63,6 @@ const UserNav = () => {
   const handleClickItem = (e, noti) => {
     if (noti.isToday && noti.unread) {
       e.preventDefault()
-      dispatch(markLocalRead(noti.id))
-      dispatch(readNotification(noti.id))
       navigate('/expiry')
     }
   }
@@ -117,7 +114,7 @@ const UserNav = () => {
             <DropdownMenuItem>
               Thông tin cá nhân
               <DropdownMenuShortcut>
-                <IconUserCircle className="h-4 w-4" />
+                <UserCircle className="h-4 w-4" />
               </DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuGroup>
@@ -128,7 +125,7 @@ const UserNav = () => {
             <DropdownMenuItem>
               Đổi mật khẩu
               <DropdownMenuShortcut>
-                <IconKey className="h-4 w-4" />
+                <Key className="h-4 w-4" />
               </DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuGroup>
@@ -142,7 +139,7 @@ const UserNav = () => {
                   setShowMobileNotifications(true)
                 }}
               >
-                <IconBell className="mr-2 h-4 w-4" />
+                <Bell className="mr-2 h-4 w-4" />
                 <span>Thông báo</span>
                 {unreadCount > 0 && (
                   <span className="ml-auto mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
@@ -154,24 +151,24 @@ const UserNav = () => {
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   {theme === 'dark' ? (
-                    <IconMoon className="mr-2 h-4 w-4" />
+                    <Moon className="mr-2 h-4 w-4" />
                   ) : (
-                    <IconSun className="mr-2 h-4 w-4" />
+                    <Sun className="mr-2 h-4 w-4" />
                   )}
                   <span>Giao diện</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
                     <DropdownMenuItem onClick={() => setTheme('light')}>
-                      <IconSun className="mr-2 h-4 w-4" />
+                      <Sun className="mr-2 h-4 w-4" />
                       <span>Sáng</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme('dark')}>
-                      <IconMoon className="mr-2 h-4 w-4" />
+                      <Moon className="mr-2 h-4 w-4" />
                       <span>Tối</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme('system')}>
-                      <IconDeviceDesktop className="mr-2 h-4 w-4" />
+                      <Monitor className="mr-2 h-4 w-4" />
                       <span>Hệ thống</span>
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
@@ -188,7 +185,7 @@ const UserNav = () => {
           >
             Đăng xuất
             <DropdownMenuShortcut>
-              <IconLogout className="h-4 w-4" />
+              <LogOut className="h-4 w-4" />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>

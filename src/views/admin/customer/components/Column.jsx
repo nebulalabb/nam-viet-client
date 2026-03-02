@@ -48,7 +48,7 @@ export const columns = [
         <div>
           <div
             onClick={() => setShowCustomerDetailDialog(true)}
-            className="w-20 cursor-pointer font-medium text-blue-600 hover:underline"
+            className="cursor-pointer font-medium text-blue-600 hover:underline whitespace-nowrap"
             title={row.getValue('customerCode')}
           >
             {row.getValue('customerCode')}

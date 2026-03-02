@@ -36,10 +36,16 @@ import { IconDownload } from '@tabler/icons-react'
 // J Người đại diện
 // K Mã số thuế
 // L Loại khách hàng
-// M Số lượng đơn
-// N Người tạo
-// O Ngày tạo
-// P Ghi chú
+// M Phân loại KH
+// N Giới tính
+// O Trạng thái
+// P Hạn mức nợ
+// Q Công nợ hiện hành
+// R Điểm thưởng
+// S Số lượng đơn
+// T Người tạo
+// U Ngày tạo
+// V Ghi chú
 
 const ExportCustomerView = ({
   open,
@@ -54,7 +60,7 @@ const ExportCustomerView = ({
     })
     const table = document.getElementById('exportCustomerTable')
 
-    worksheet.mergeCells('A1:P1')
+    worksheet.mergeCells('A1:V1')
     worksheet.getCell('A1').value = 'Báo cáo danh sách khách hàng'
 
     const rows = table.querySelectorAll('tr')
@@ -127,10 +133,16 @@ const ExportCustomerView = ({
       25, // J Người đại diện
       15, // K Mã số thuế
       20, // L Loại khách hàng
-      12, // M Số lượng đơn
-      25, // N Người tạo
-      18, // O Ngày tạo
-      30, // P Ghi chú
+      15, // M Phân loại
+      15, // N Giới tính
+      15, // O Trạng thái
+      20, // P Hạn mức nợ
+      20, // Q Công nợ hiện hành
+      15, // R Điểm thưởng
+      12, // S Số lượng đơn
+      25, // T Người tạo
+      18, // U Ngày tạo
+      30, // V Ghi chú
     ]
     worksheet.columns.forEach((column, index) => {
       column.width = customColumnWidths[index] || 15
@@ -201,6 +213,12 @@ const ExportCustomerView = ({
                   <TableHead className="min-w-40">Người đại diện</TableHead>
                   <TableHead className="min-w-32">Mã số thuế</TableHead>
                   <TableHead className="min-w-40">Loại khách hàng</TableHead>
+                  <TableHead className="min-w-32">Phân loại KH</TableHead>
+                  <TableHead className="min-w-28 text-center">Giới tính</TableHead>
+                  <TableHead className="min-w-32 text-center">Trạng thái</TableHead>
+                  <TableHead className="min-w-40 text-right">Hạn mức nợ</TableHead>
+                  <TableHead className="min-w-40 text-right">Công nợ HT</TableHead>
+                  <TableHead className="min-w-32 text-center">Điểm thưởng</TableHead>
                   <TableHead className="min-w-28 text-center">SL đơn</TableHead>
                   <TableHead className="min-w-40">Người tạo</TableHead>
                   <TableHead className="min-w-32">Ngày tạo</TableHead>
@@ -210,24 +228,32 @@ const ExportCustomerView = ({
               <TableBody>
                 {props?.data?.map((customer) => {
                   const typeLabel = types.find((t) => t.value === customer.customerType)?.label || '—'
+                  const formatCurrency = (val) => val ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val) : '—'
+
                   return (
                     <TableRow key={customer.id}>
                       <TableCell>{indexTable++}</TableCell>
-                      <TableCell>{customer.name}</TableCell>
-                      <TableCell>{customer.code}</TableCell>
+                      <TableCell>{customer.customerName}</TableCell>
+                      <TableCell>{customer.customerCode}</TableCell>
                       <TableCell>{customer.phone || '—'}</TableCell>
                       <TableCell>{customer.email || '—'}</TableCell>
-                      <TableCell>{customer.identityCard || '—'}</TableCell>
-                      <TableCell>{customer.identityDate ? dateFormat(customer.identityDate, true) : '—'}</TableCell>
-                      <TableCell>{customer.identityPlace || '—'}</TableCell>
+                      <TableCell>{customer.cccd || '—'}</TableCell>
+                      <TableCell>{customer.issuedAt ? dateFormat(customer.issuedAt, true) : '—'}</TableCell>
+                      <TableCell>{customer.issuedBy || '—'}</TableCell>
                       <TableCell>{customer.address || '—'}</TableCell>
-                      <TableCell>{customer.represent || '—'}</TableCell>
+                      <TableCell>{customer.contactPerson || '—'}</TableCell>
                       <TableCell>{customer.taxCode || '—'}</TableCell>
                       <TableCell>{typeLabel}</TableCell>
-                      <TableCell className="text-center">{customer.invoiceCount || 0}</TableCell>
+                      <TableCell>{customer.classification || '—'}</TableCell>
+                      <TableCell className="text-center">{customer.gender === 'male' ? 'Nam' : customer.gender === 'female' ? 'Nữ' : customer.gender === 'other' ? 'Khác' : '—'}</TableCell>
+                      <TableCell className="text-center">{customer.status === 'active' ? 'Hoạt động' : 'Khóa'}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(customer.creditLimit)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(customer.currentDebt)}</TableCell>
+                      <TableCell className="text-center">{customer.rewardPoints || 0}</TableCell>
+                      <TableCell className="text-center">{customer._count?.salesOrders || 0}</TableCell>
                       <TableCell>{customer.creator?.fullName || '—'}</TableCell>
                       <TableCell>{dateFormat(customer.createdAt, true)}</TableCell>
-                      <TableCell>{customer.note || '—'}</TableCell>
+                      <TableCell>{customer.notes || '—'}</TableCell>
                     </TableRow>
                   )
                 })}

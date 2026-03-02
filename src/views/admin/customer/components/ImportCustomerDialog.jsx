@@ -80,7 +80,11 @@ const ImportCustomerDialog = ({
         'CMND/CCCD',        // 8
         'Ngày cấp',         // 9
         'Nơi cấp',          // 10
-        'Ghi chú'           // 11
+        'Ghi chú',          // 11
+        'Phân loại KH',     // 12
+        'Giới tính',        // 13
+        'Trạng thái',       // 14
+        'Hạn mức nợ'        // 15
       ]
 
       const headerRow = worksheet.getRow(1)
@@ -127,20 +131,22 @@ const ImportCustomerDialog = ({
         }
 
         // Mapping based on new template:
-        // 1: Type, 2: Name, 3: Phone, 4: Address, 5: Email, 
-        // 6: Company Name (Represent?), 7: TaxCode, 8: IdentityCard, 9: IdentityDate, 10: IdentityPlace, 11: Note
         const item = {
-          customerType: String(getVal(1) || 'company').trim(),
+          customerType: String(getVal(1) || 'individual').trim(),
           name: String(getVal(2)).trim(),
           phone: String(getVal(3)).trim(),
           address: String(getVal(4)).trim(),
           email: String(getVal(5)).trim(),
-          represent: String(getVal(6)).trim(), // Assuming 'Tên công ty' maps to represent if needed, or maybe represent?
+          represent: String(getVal(6)).trim(),
           taxCode: String(getVal(7)).trim(),
           identityCard: String(getVal(8)).trim(),
           identityDate: getDateVal(9),
           identityPlace: String(getVal(10)).trim(),
           note: String(getVal(11)).trim(),
+          classification: String(getVal(12)).trim(),
+          gender: String(getVal(13)).trim() === 'Nam' ? 'male' : String(getVal(13)).trim() === 'Nữ' ? 'female' : 'other',
+          status: String(getVal(14)).trim() === 'Khóa' ? 'inactive' : 'active',
+          creditLimit: getVal(15) ? Number(getVal(15)) : 0,
         }
 
         // Clean up empty strings to null
@@ -226,7 +232,7 @@ const ImportCustomerDialog = ({
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await api.get('/customer/import-template?type=excel', {
+      const response = await api.get('/customers/import-template?type=excel', {
         responseType: 'blob',
       })
 
