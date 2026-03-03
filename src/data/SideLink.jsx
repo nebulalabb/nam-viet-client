@@ -181,7 +181,6 @@ export const sideLinks = [
       'GET_PRODUCT',
       'GET_CATEGORY',
       'GET_ATTRIBUTE',
-      'GET_UNIT',
       'GET_SUPPLIER',
       'GET_TAX'
     ],
@@ -211,10 +210,10 @@ export const sideLinks = [
         permission: 'GET_ATTRIBUTE',
       },
       {
-        title: 'Đơn vị tính (nếu có)',
+        title: 'Đơn vị tính',
         href: '/unit',
         icon: <Ruler size={18} strokeWidth={1.5} />,
-        permission: 'GET_UNIT',
+        permission: 'GET_PRODUCT',
       },
       {
         title: 'Nhà cung cấp',
