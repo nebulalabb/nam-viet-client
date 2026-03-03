@@ -10,6 +10,7 @@ import ErrorLayout from '../views/layouts/ErrorLayout'
 import CustomerPage from '../views/admin/customer/CustomerPage'
 import UserPage from '../views/admin/employee/EmployeePage'
 import PromotionPage from '../views/admin/promotion/PromotionPage'
+import ActivePromotionPage from '../views/admin/promotion/ActivePromotionPage'
 
 const routes = [
   {
@@ -30,6 +31,11 @@ const routes = [
   {
     path: '/promotion',
     element: PromotionPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/active-promotions',
+    element: ActivePromotionPage,
     layout: AdminLayout,
   },
   {

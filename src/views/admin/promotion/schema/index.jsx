@@ -24,6 +24,8 @@ export const createPromotionSchema = z.object({
 
 export const updatePromotionSchema = z.object({
     promotionName: z.string().min(1, 'Tên khuyến mãi là bắt buộc').max(200).optional(),
+    promotionType: z.enum(['buy_x_get_y', 'gift']).optional(),
+    applicableTo: z.enum(['all', 'category', 'product_group', 'specific_product', 'customer_group', 'specific_customer']).optional(),
     productId: z.coerce.number().optional(),
     giftProductId: z.coerce.number().optional(),
     startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {

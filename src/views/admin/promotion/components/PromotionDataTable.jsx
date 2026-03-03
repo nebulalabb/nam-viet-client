@@ -22,7 +22,16 @@ import { DataTableToolbar } from './DataTableToolbar'
 import { DataTablePagination } from './DataTablePagination'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const PromotionDataTable = ({ columns, data, loading = false, pagination, pageCount, rowCount, onPaginationChange }) => {
+export function PromotionDataTable({
+    columns,
+    data,
+    loading = false,
+    pagination,
+    pageCount,
+    rowCount,
+    onPaginationChange,
+    Toolbar = DataTableToolbar, // Use custom toolbar or fallback
+}) {
     const [rowSelection, setRowSelection] = useState({})
     const [columnVisibility, setColumnVisibility] = useState({})
     const [columnFilters, setColumnFilters] = useState([])
@@ -57,7 +66,7 @@ const PromotionDataTable = ({ columns, data, loading = false, pagination, pageCo
 
     return (
         <div className="space-y-4">
-            <DataTableToolbar table={table} />
+            <Toolbar table={table} />
 
             <div className="rounded-md border">
                 <Table>
@@ -127,5 +136,3 @@ const PromotionDataTable = ({ columns, data, loading = false, pagination, pageCo
         </div>
     )
 }
-
-export { PromotionDataTable }

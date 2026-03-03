@@ -12,14 +12,12 @@ import {
 
 const DataTableViewOptions = ({ table }) => {
     const options = {
-        employeeCode: 'Mã nhân viên',
-        fullName: 'Họ và tên',
-        email: 'Email',
-        phone: 'Số điện thoại',
-        role: 'Chức vụ',
-        warehouse: 'Kho',
+        promotionCode: 'Mã khuyến mãi',
+        promotionName: 'Tên khuyến mãi',
+        promotionType: 'Loại khuyến mãi',
+        applicableTo: 'Đối tượng áp dụng',
+        timeline: 'Thời gian áp dụng',
         status: 'Trạng thái',
-        createdAt: 'Ngày tạo',
     }
 
     return (

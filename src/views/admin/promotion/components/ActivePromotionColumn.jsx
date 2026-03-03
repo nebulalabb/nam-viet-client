@@ -1,38 +1,11 @@
-import { DataTableRowActions } from './DataTableRowAction'
 import { DataTableColumnHeader } from './DataTableColumnHeader'
 import { dateFormat } from '@/utils/date-format'
 import { promotionStatuses, promotionTypes, applicableToOptions } from '../data'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { useState } from 'react'
 import { PromotionDetailDialog } from './PromotionDetailDialog'
-import ApprovePromotionDialog from './ApprovePromotionDialog'
 
 export const columns = [
-    {
-        id: 'select',
-        header: ({ table }) => (
-            <Checkbox
-                checked={
-                    table.getIsAllPageRowsSelected() ||
-                    (table.getIsSomePageRowsSelected() && 'indeterminate')
-                }
-                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                aria-label="Select all"
-                className="translate-y-[2px]"
-            />
-        ),
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-                className="translate-y-[2px]"
-            />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
     {
         accessorKey: 'promotionCode',
         header: ({ column }) => (
@@ -155,31 +128,15 @@ export const columns = [
             }
 
             const StatusIcon = status.icon
-            const [openApprove, setOpenApprove] = useState(false)
 
             return (
-                <>
-                    <Badge
-                        variant={status.variant}
-                        className={`flex w-fit items-center gap-1 ${statusValue === 'pending' ? 'cursor-pointer hover:opacity-80' : ''}`}
-                        onClick={() => {
-                            if (statusValue === 'pending') {
-                                setOpenApprove(true)
-                            }
-                        }}
-                        title={statusValue === 'pending' ? 'Bấm để Duyệt khuyến mãi' : ''}
-                    >
-                        {StatusIcon && <StatusIcon className="h-3 w-3" />}
-                        {status.label}
-                    </Badge>
-                    {openApprove && (
-                        <ApprovePromotionDialog
-                            open={openApprove}
-                            onOpenChange={setOpenApprove}
-                            promotion={row.original}
-                        />
-                    )}
-                </>
+                <Badge
+                    variant={status.variant}
+                    className="flex w-fit items-center gap-1"
+                >
+                    {StatusIcon && <StatusIcon className="h-3 w-3" />}
+                    {status.label}
+                </Badge>
             )
         },
         filterFn: (row, id, value) => {
@@ -187,12 +144,5 @@ export const columns = [
         },
         enableSorting: true,
         enableHiding: true,
-    },
-    {
-        id: 'actions',
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Thao tác" />
-        ),
-        cell: ({ row }) => <DataTableRowActions row={row} />,
     },
 ]

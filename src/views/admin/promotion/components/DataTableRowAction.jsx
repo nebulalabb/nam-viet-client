@@ -17,12 +17,14 @@ import { CheckIcon } from '@radix-ui/react-icons'
 import DeletePromotionDialog from './DeletePromotionDialog'
 import UpdatePromotionDialog from './UpdatePromotionDialog'
 import ApprovePromotionDialog from './ApprovePromotionDialog'
+import RestorePromotionDialog from './RestorePromotionDialog'
 
 const DataTableRowActions = ({ row }) => {
     const [showCancelPromotionDialog, setShowCancelPromotionDialog] = useState(false)
     const [showExplicitDeleteDialog, setShowExplicitDeleteDialog] = useState(false)
     const [showUpdatePromotionDialog, setShowUpdatePromotionDialog] = useState(false)
     const [showApprovePromotionDialog, setShowApprovePromotionDialog] = useState(false)
+    const [showRestorePromotionDialog, setShowRestorePromotionDialog] = useState(false)
 
     // Only "pending" promotions can be approved
     const canApprove = row.original.status === 'pending'
@@ -30,6 +32,7 @@ const DataTableRowActions = ({ row }) => {
     // Non-cancelled/expired promotions can be cancelled
     const canCancel = ['pending', 'active'].includes(row.original.status)
     const canDelete = row.original.status === 'cancelled'
+    const canRestore = row.original.status === 'cancelled'
 
     // Only "pending" promotions can be edited
     const canEdit = row.original.status === 'pending'
@@ -62,6 +65,12 @@ const DataTableRowActions = ({ row }) => {
             <ApprovePromotionDialog
                 open={showApprovePromotionDialog}
                 onOpenChange={setShowApprovePromotionDialog}
+                promotion={row.original}
+            />
+
+            <RestorePromotionDialog
+                open={showRestorePromotionDialog}
+                onOpenChange={setShowRestorePromotionDialog}
                 promotion={row.original}
             />
 
@@ -128,6 +137,17 @@ const DataTableRowActions = ({ row }) => {
                                     <DropdownMenuShortcut>
                                         <IconTrash className="h-4 w-4" />
                                     </DropdownMenuShortcut>
+                                </DropdownMenuItem>
+                            </Can>
+                        )}
+
+                        {canRestore && (
+                            <Can permission="UPDATE_PROMOTION">
+                                <DropdownMenuItem
+                                    onSelect={() => setShowRestorePromotionDialog(true)}
+                                    className="text-blue-600 focus:text-blue-600 focus:bg-blue-50"
+                                >
+                                    Khôi phục
                                 </DropdownMenuItem>
                             </Can>
                         )}

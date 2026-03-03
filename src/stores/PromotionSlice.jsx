@@ -99,6 +99,21 @@ export const deletePromotion = createAsyncThunk(
     },
 )
 
+// Restore promotion
+export const restorePromotion = createAsyncThunk(
+    'promotion/restore',
+    async (id, { rejectWithValue, dispatch }) => {
+        try {
+            await api.put(`/promotions/${id}/restore`)
+            await dispatch(getPromotions()).unwrap()
+            toast.success('Khôi phục trạng thái chờ duyệt thành công')
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
 // Delete multiple promotions
 export const deleteMultiplePromotions = createAsyncThunk(
     'promotion/deleteMultiple',
@@ -107,6 +122,54 @@ export const deleteMultiplePromotions = createAsyncThunk(
             const response = await api.post(`/promotions/bulk-delete`, { ids })
             await dispatch(getPromotions()).unwrap()
             toast.success(response.data.message || 'Xóa các khuyến mãi thành công')
+            return response.data;
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
+// Cancel multiple promotions
+export const cancelMultiplePromotions = createAsyncThunk(
+    'promotion/cancelMultiple',
+    async (cancelData, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.post(`/promotions/bulk-cancel`, cancelData)
+            await dispatch(getPromotions()).unwrap()
+            toast.success(response.data.message || 'Hủy các khuyến mãi thành công')
+            return response.data;
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
+// Restore multiple promotions
+export const restoreMultiplePromotions = createAsyncThunk(
+    'promotion/restoreMultiple',
+    async (ids, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.post(`/promotions/bulk-restore`, { ids })
+            await dispatch(getPromotions()).unwrap()
+            toast.success(response.data.message || 'Khôi phục các khuyến mãi thành công')
+            return response.data;
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
+// Approve multiple promotions
+export const approveMultiplePromotions = createAsyncThunk(
+    'promotion/approveMultiple',
+    async (approveData, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.post(`/promotions/bulk-approve`, approveData)
+            await dispatch(getPromotions()).unwrap()
+            toast.success(response.data.message || 'Duyệt các khuyến mãi thành công')
             return response.data;
         } catch (error) {
             const message = handleError(error)
@@ -207,6 +270,20 @@ export const promotionSlice = createSlice({
                 toast.error(state.error)
             })
 
+            // restorePromotion
+            .addCase(restorePromotion.pending, (state) => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(restorePromotion.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(restorePromotion.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload || 'Lỗi khôi phục khuyến mãi'
+                toast.error(state.error)
+            })
+
             // deletePromotion
             .addCase(deletePromotion.pending, (state) => {
                 state.loading = true
@@ -232,6 +309,48 @@ export const promotionSlice = createSlice({
             .addCase(deleteMultiplePromotions.rejected, (state, action) => {
                 state.loading = false
                 state.error = action.payload || 'Lỗi xóa nhiều khuyến mãi'
+                toast.error(state.error)
+            })
+
+            // cancelMultiplePromotions
+            .addCase(cancelMultiplePromotions.pending, (state) => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(cancelMultiplePromotions.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(cancelMultiplePromotions.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload || 'Lỗi hủy nhiều khuyến mãi'
+                toast.error(state.error)
+            })
+
+            // restoreMultiplePromotions
+            .addCase(restoreMultiplePromotions.pending, (state) => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(restoreMultiplePromotions.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(restoreMultiplePromotions.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload || 'Lỗi khôi phục nhiều khuyến mãi'
+                toast.error(state.error)
+            })
+
+            // approveMultiplePromotions
+            .addCase(approveMultiplePromotions.pending, (state) => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(approveMultiplePromotions.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(approveMultiplePromotions.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload || 'Lỗi duyệt nhiều khuyến mãi'
                 toast.error(state.error)
             })
     },

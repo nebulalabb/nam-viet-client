@@ -10,31 +10,60 @@ import { dateFormat } from '@/utils/date-format'
 import { applicableToOptions, promotionStatuses, promotionTypes } from '../data'
 import { useEffect, useState } from 'react'
 import api from '@/utils/axios'
+import CustomerDetailDialog from '../../customer/components/CustomerDetailDialog'
 
 export function PromotionDetailDialog({ open, onOpenChange, promotion }) {
     const [products, setProducts] = useState([])
+    const [customers, setCustomers] = useState([])
+    const [selectedCustomer, setSelectedCustomer] = useState(null)
+    const [showCustomerModal, setShowCustomerModal] = useState(false)
 
     useEffect(() => {
         if (!open) return
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/products?limit=1000')
-                if (res.data?.data) {
-                    setProducts(res.data.data)
-                } else if (res.data) {
-                    setProducts(res.data)
+                const [resProducts, resCustomers] = await Promise.all([
+                    api.get('/products?limit=1000'),
+                    api.get('/customers?limit=1000')
+                ])
+
+                if (resProducts.data?.data) {
+                    setProducts(resProducts.data.data)
+                } else if (resProducts.data) {
+                    setProducts(resProducts.data)
+                }
+
+                if (resCustomers.data?.data) {
+                    setCustomers(resCustomers.data.data)
+                } else if (resCustomers.data) {
+                    setCustomers(resCustomers.data)
                 }
             } catch (error) {
-                console.error(error)
+                console.error('Fetch data error:', error)
             }
         }
-        fetchProducts()
+        fetchData()
     }, [open])
 
     const getProductName = (id) => {
         if (!id) return ''
         const product = products.find(p => p.id === Number(id))
         return product ? product.productName : `ID: ${id}`
+    }
+
+    const handleCustomerClick = (customerId) => {
+        if (!customerId) return
+        const customer = customers.find(c => c.id === Number(customerId))
+        if (customer) {
+            setSelectedCustomer(customer)
+            setShowCustomerModal(true)
+        }
+    }
+
+    const getCustomerName = (id) => {
+        if (!id) return ''
+        const customer = customers.find(c => c.id === Number(id))
+        return customer ? customer.customerName || customer.name || `ID: ${id}` : `ID: ${id}`
     }
 
     if (!promotion) return null
@@ -69,7 +98,7 @@ export function PromotionDetailDialog({ open, onOpenChange, promotion }) {
                         <p className="font-medium">{promotion.startDate ? dateFormat(promotion.startDate) : '-'}</p>
                     </div>
                     <div className="space-y-1">
-                        <span className="text-muted-foreground">Thời gian kết thúc:</span>
+                        <span className="text-muted-foreground">{promotion.promotionType === "gift" ? "Hạn chót:" : "Thời gian kết thúc:"}</span>
                         <p className="font-medium">{promotion.endDate ? dateFormat(promotion.endDate) : '-'}</p>
                     </div>
                     <div className="space-y-1">
@@ -91,20 +120,39 @@ export function PromotionDetailDialog({ open, onOpenChange, promotion }) {
                             </p>
                         </div>
                     )}
-                    {(promotion.promotionType === 'buy_x_get_y' || promotion.applicableTo === 'specific_product') &&
-                        (promotion.products?.[0]?.giftProductId || promotion.conditions?.gift_product_id) && (
-                            <div className="space-y-1">
-                                <span className="text-muted-foreground">Sản phẩm tặng (Gift):</span>
-                                <p className="font-medium">
-                                    {getProductName(promotion.products?.[0]?.giftProductId || promotion.conditions?.gift_product_id)}
-                                    {(promotion.conditions?.get_quantity || promotion.products?.[0]?.giftQuantity)
-                                        ? ` (Số lượng: ${promotion.conditions?.get_quantity || promotion.products?.[0]?.giftQuantity})`
-                                        : ''}
-                                </p>
-                            </div>
-                        )}
+
+                    {(promotion.products?.[0]?.giftProductId || promotion.conditions?.gift_product_id) && (
+                        <div className="space-y-1">
+                            <span className="text-muted-foreground">Sản phẩm tặng (Gift):</span>
+                            <p className="font-medium">
+                                {getProductName(promotion.products?.[0]?.giftProductId || promotion.conditions?.gift_product_id)}
+                                {(promotion.conditions?.get_quantity || promotion.products?.[0]?.giftQuantity)
+                                    ? ` (Số lượng: ${promotion.conditions?.get_quantity || promotion.products?.[0]?.giftQuantity})`
+                                    : ''}
+                            </p>
+                        </div>
+                    )}
+                    {promotion.applicableTo === 'specific_customer' && promotion.conditions?.customer_id && (
+                        <div className="space-y-1">
+                            <span className="text-muted-foreground">Khách hàng áp dụng:</span>
+                            <p
+                                className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer underline underline-offset-2"
+                                onClick={() => handleCustomerClick(promotion.conditions.customer_id)}
+                            >
+                                {getCustomerName(promotion.conditions.customer_id)}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
+            {showCustomerModal && selectedCustomer && (
+                <CustomerDetailDialog
+                    open={showCustomerModal}
+                    onOpenChange={setShowCustomerModal}
+                    customer={selectedCustomer}
+                    showTrigger={false}
+                />
+            )}
         </Dialog>
     )
 }

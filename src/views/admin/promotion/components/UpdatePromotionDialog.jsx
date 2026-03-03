@@ -125,7 +125,8 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                 customerId: promotion?.conditions?.customer_id || undefined,
             })
         }
-    }, [promotion, form])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [promotion])
 
 
     const loading = useSelector((state) => state.promotion.loading)
@@ -137,14 +138,21 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                 toast.error('Vui lòng chọn ngày bắt đầu và kết thúc')
                 return
             }
+            console.log('[SUBMIT] giftProductId:', data.giftProductId, 'getQuantity:', data.getQuantity, 'all data:', data)
 
             const payload = {
-                ...data,
+                promotionName: data.promotionName,
+                promotionType: data.promotionType,
+                applicableTo: data.applicableTo,
                 minOrderValue: Number(data.minOrderValue) || 0,
                 minQuantity: Number(data.minQuantity) || 0,
                 quantityLimit: Number(data.quantityLimit) || 0,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                isRecurring: data.isRecurring,
             }
 
+            // Build products array
             if (data.applicableTo === 'specific_product' && data.productId) {
                 payload.products = [{
                     productId: Number(data.productId),
@@ -157,30 +165,25 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                     giftProductId: data.giftProductId ? Number(data.giftProductId) : undefined,
                     giftQuantity: Number(data.getQuantity) || 0
                 }]
+            } else {
+                payload.products = []
             }
 
+            // Build conditions
             if (data.promotionType === 'gift') {
                 payload.conditions = {
-                    ...(payload.conditions || {}),
                     gift_product_id: Number(data.giftProductId),
-                    get_quantity: Number(data.getQuantity)
+                    get_quantity: Number(data.getQuantity),
                 }
-
                 if (data.applicableTo === 'specific_customer' && data.customerId) {
                     payload.conditions.customer_id = Number(data.customerId)
                 }
-            }
-
-            if (data.promotionType === 'buy_x_get_y') {
+            } else if (data.promotionType === 'buy_x_get_y') {
                 payload.conditions = {
-                    ...(payload.conditions || {}),
                     buy_quantity: Number(data.buyQuantity),
-                    get_quantity: Number(data.getQuantity)
+                    get_quantity: Number(data.getQuantity),
                 }
             }
-
-            delete payload.productId
-            delete payload.giftProductId
 
             await dispatch(updatePromotion({ id: promotion.id, data: payload })).unwrap()
             onOpenChange?.(false)

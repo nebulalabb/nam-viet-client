@@ -13,6 +13,10 @@ import { useState } from 'react'
 // import CustomDatePicker from '@/components/custom/CustomDatePicker'
 import CreatePromotionDialog from './CreatePromotionDialog'
 import DeleteMultiplePromotionsDialog from './DeleteMultiplePromotionsDialog'
+import CancelMultiplePromotionsDialog from './CancelMultiplePromotionsDialog'
+import RestoreMultiplePromotionsDialog from './RestoreMultiplePromotionsDialog'
+import ApproveMultiplePromotionsDialog from './ApproveMultiplePromotionsDialog'
+import { Ban, RotateCcw, CheckCircle } from 'lucide-react'
 
 export function DataTableToolbar({ table }) {
     const isFiltered = table.getState().columnFilters.length > 0
@@ -20,6 +24,9 @@ export function DataTableToolbar({ table }) {
 
     const [showCreatePromotionDialog, setShowCreatePromotionDialog] = useState(false)
     const [showDeleteMultiplePromotionsDialog, setShowDeleteMultiplePromotionsDialog] = useState(false)
+    const [showCancelMultiplePromotionsDialog, setShowCancelMultiplePromotionsDialog] = useState(false)
+    const [showRestoreMultiplePromotionsDialog, setShowRestoreMultiplePromotionsDialog] = useState(false)
+    const [showApproveMultiplePromotionsDialog, setShowApproveMultiplePromotionsDialog] = useState(false)
 
     return (
         <div className="flex items-center justify-between">
@@ -90,6 +97,51 @@ export function DataTableToolbar({ table }) {
                     </Can>
                 ) : null}
 
+                {table.getFilteredSelectedRowModel().rows.length > 0 &&
+                    table.getFilteredSelectedRowModel().rows.every(row => !['cancelled', 'expired'].includes(row.original.status)) ? (
+                    <Can permission="UPDATE_PROMOTION">
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-8 bg-red-500 hover:bg-red-600 focus:bg-red-600 focus:ring-red-500"
+                            onClick={() => setShowCancelMultiplePromotionsDialog(true)}
+                        >
+                            <Ban className="mr-2 h-4 w-4" aria-hidden="true" />
+                            Hủy ({table.getFilteredSelectedRowModel().rows.length})
+                        </Button>
+                    </Can>
+                ) : null}
+
+                {table.getFilteredSelectedRowModel().rows.length > 0 &&
+                    table.getFilteredSelectedRowModel().rows.every(row => row.original.status === 'cancelled') ? (
+                    <Can permission="UPDATE_PROMOTION">
+                        <Button
+                            variant="default"
+                            size="sm"
+                            className="h-8 bg-blue-600 hover:bg-blue-700"
+                            onClick={() => setShowRestoreMultiplePromotionsDialog(true)}
+                        >
+                            <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+                            Khôi phục ({table.getFilteredSelectedRowModel().rows.length})
+                        </Button>
+                    </Can>
+                ) : null}
+
+                {table.getFilteredSelectedRowModel().rows.length > 0 &&
+                    table.getFilteredSelectedRowModel().rows.every(row => row.original.status === 'pending') ? (
+                    <Can permission="UPDATE_PROMOTION">
+                        <Button
+                            variant="default"
+                            size="sm"
+                            className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => setShowApproveMultiplePromotionsDialog(true)}
+                        >
+                            <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+                            Duyệt ({table.getFilteredSelectedRowModel().rows.length})
+                        </Button>
+                    </Can>
+                ) : null}
+
                 <DataTableViewOptions table={table} />
 
                 <Can permission="CREATE_PROMOTION">
@@ -111,6 +163,27 @@ export function DataTableToolbar({ table }) {
                 <DeleteMultiplePromotionsDialog
                     open={showDeleteMultiplePromotionsDialog}
                     onOpenChange={setShowDeleteMultiplePromotionsDialog}
+                    selectedRows={table.getFilteredSelectedRowModel().rows}
+                    table={table}
+                />
+
+                <CancelMultiplePromotionsDialog
+                    open={showCancelMultiplePromotionsDialog}
+                    onOpenChange={setShowCancelMultiplePromotionsDialog}
+                    selectedRows={table.getFilteredSelectedRowModel().rows}
+                    table={table}
+                />
+
+                <RestoreMultiplePromotionsDialog
+                    open={showRestoreMultiplePromotionsDialog}
+                    onOpenChange={setShowRestoreMultiplePromotionsDialog}
+                    selectedRows={table.getFilteredSelectedRowModel().rows}
+                    table={table}
+                />
+
+                <ApproveMultiplePromotionsDialog
+                    open={showApproveMultiplePromotionsDialog}
+                    onOpenChange={setShowApproveMultiplePromotionsDialog}
                     selectedRows={table.getFilteredSelectedRowModel().rows}
                     table={table}
                 />

@@ -22,8 +22,8 @@ const DeletePromotionDialog = ({ promotion, isDeleteAction = false, showTrigger 
     const [reason, setReason] = useState('')
 
     const destroy = async (id) => {
-        if (!isDeleteAction && !reason.trim()) {
-            toast.error('Vui lòng nhập lý do hủy')
+        if (!isDeleteAction && reason.trim().length > 500) {
+            toast.error('Lý do hủy không được vượt quá 500 ký tự')
             return
         }
         try {
@@ -60,8 +60,8 @@ const DeletePromotionDialog = ({ promotion, isDeleteAction = false, showTrigger 
                 {!isDeleteAction && (
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none text-red-600">
-                                Lý do hủy *
+                            <label className="text-sm font-medium leading-none">
+                                Lý do hủy (Tùy chọn)
                             </label>
                             <Textarea
                                 placeholder="Nhập lý do hủy khuyến mãi..."
@@ -69,7 +69,6 @@ const DeletePromotionDialog = ({ promotion, isDeleteAction = false, showTrigger 
                                 onChange={(e) => setReason(e.target.value)}
                                 className="resize-none"
                                 rows={3}
-                                required
                             />
                         </div>
                     </div>
