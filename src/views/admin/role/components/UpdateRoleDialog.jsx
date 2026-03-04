@@ -26,7 +26,7 @@ import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useDispatch, useSelector } from 'react-redux'
-import { updateRole } from '@/stores/RoleSlice'
+import { updateRole, getRolePermissions } from '@/stores/RoleSlice'
 import { updateRoleSchema } from '../schema'
 import { useEffect, useState, useMemo } from 'react'
 import { getPermission } from '@/stores/PermissionSlice'
@@ -65,8 +65,12 @@ const UpdateRoleDialog = ({
 
   useEffect(() => {
     dispatch(getPermission())
-    setCheckedPermissions(role.permissions.map((permission) => permission.id))
-  }, [dispatch, role.permissions])
+    if (role?.id) {
+      dispatch(getRolePermissions(role.id)).unwrap().then((ids) => {
+        setCheckedPermissions(ids)
+      }).catch(() => { })
+    }
+  }, [dispatch, role?.id])
 
   // Helper to get all permission IDs from a group or item
   const getAllPermissionIds = (node) => {

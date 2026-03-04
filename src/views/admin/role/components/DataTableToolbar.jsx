@@ -18,9 +18,9 @@ const DataTableToolbar = ({ table }) => {
       <div className="flex flex-1 items-center space-x-2">
         <Input
           placeholder="Tìm kiếm..."
-          value={table.getColumn('name')?.getFilterValue() || ''}
+          value={table.getColumn('roleName')?.getFilterValue() || ''}
           onChange={(event) =>
-            table.getColumn('name')?.setFilterValue(event.target.value)
+            table.getColumn('roleName')?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />

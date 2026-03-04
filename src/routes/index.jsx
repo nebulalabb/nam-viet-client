@@ -23,11 +23,23 @@ import ActivePromotionsPage from '../views/admin/promotion/active-promotions/Act
 import UnitPage from '../views/admin/unit/UnitPage'
 import ProductPage from '../views/admin/product/ProductPage'
 
+import TicketPage from '@/views/admin/ticket/TicketPage'
+import TaskPage from '@/views/admin/task/TaskPage'
 
 const routes = [
   {
     path: '/dashboard',
     element: DashboardPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/ticket',
+    element: TicketPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/task',
+    element: TaskPage,
     layout: AdminLayout,
   },
   {

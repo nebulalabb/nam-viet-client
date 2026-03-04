@@ -35,7 +35,12 @@ export const createRole = createAsyncThunk(
   'role/create',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      await api.post('/roles', data)
+      const response = await api.post('/roles', data)
+      const newRole = response.data?.data
+      if (newRole?.id && data.permissions?.length > 0) {
+        const uniqueIds = [...new Set(data.permissions)]
+        await api.put(`/roles/${newRole.id}/permissions`, { permissionIds: uniqueIds })
+      }
       await dispatch(getRoles()).unwrap()
       toast.success('Thêm mới thành công')
     } catch (error) {
@@ -50,8 +55,26 @@ export const updateRole = createAsyncThunk(
   async (data, { rejectWithValue, dispatch }) => {
     try {
       await api.put(`/roles/${data.id}`, data)
+      if (data.permissions !== undefined) {
+        const uniqueIds = [...new Set(data.permissions)]
+        await api.put(`/roles/${data.id}/permissions`, { permissionIds: uniqueIds })
+      }
       await dispatch(getRoles()).unwrap()
       toast.success('Cập nhật thành công')
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+export const getRolePermissions = createAsyncThunk(
+  'role/permissions',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/roles/${id}/permissions`)
+      const { data } = response.data
+      return data.permissions.map((p) => p.id)
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)

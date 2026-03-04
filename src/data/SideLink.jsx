@@ -46,7 +46,7 @@ export const sideLinks = [
   {
     title: 'Đơn bán',
     icon: <ScrollText size={20} strokeWidth={1.5} />,
-    permission: ['GET_INVOICE', 'GET_INVOICE_USER', 'RECEIPT_VIEW_ALL', 'RECEIPT_VIEW_OWN'],
+    permission: ['GET_INVOICE', 'GET_INVOICE_USER', 'GET_RECEIPT', 'GET_RECEIPT_USER'],
     sub: [
       {
         title: 'Đơn bán',
@@ -64,13 +64,13 @@ export const sideLinks = [
         title: 'Phiếu thu',
         href: '/receipt',
         icon: <Receipt size={18} strokeWidth={1.5} />,
-        permission: 'RECEIPT_VIEW_ALL',
+        permission: 'GET_RECEIPT',
       },
       {
         title: 'Phiếu thu của tôi',
         href: '/receipt-user',
         icon: <ReceiptText size={18} strokeWidth={1.5} />,
-        permission: 'RECEIPT_VIEW_OWN',
+        permission: 'GET_RECEIPT_USER',
       },
       {
         title: 'Giao hàng',
@@ -83,31 +83,25 @@ export const sideLinks = [
   {
     title: 'Đơn mua',
     icon: <CircleDollarSign size={20} strokeWidth={1.5} />,
-    permission: ['PURCHASE_ORDER_VIEW_ALL', 'PAYMENT_VIEW_ALL', 'PAYMENT_VIEW_OWN'],
+    permission: ['GET_PURCHASE_ORDER', 'GET_PURCHASE_ORDER_USER', 'GET_PAYMENT'],
     sub: [
       {
         title: 'Đơn mua',
         href: '/purchase-order',
         icon: <ClipboardList size={18} strokeWidth={1.5} />,
-        permission: 'PURCHASE_ORDER_VIEW_ALL',
+        permission: 'GET_PURCHASE_ORDER',
       },
       {
         title: 'Đơn mua của tôi',
         href: '/purchase-order-user',
         icon: <UserCheck size={18} strokeWidth={1.5} />,
-        permission: 'PURCHASE_ORDER_VIEW_ALL',
+        permission: 'GET_PURCHASE_ORDER_USER',
       },
       {
         title: 'Phiếu chi',
         href: '/payment',
         icon: <CreditCard size={18} strokeWidth={1.5} />,
-        permission: 'PAYMENT_VIEW_ALL',
-      },
-      {
-        title: 'Phiếu chi của tôi',
-        href: '/payment-user',
-        icon: <CreditCard size={18} strokeWidth={1.5} />,
-        permission: 'PAYMENT_VIEW_OWN',
+        permission: 'GET_PAYMENT',
       },
     ],
   },
@@ -139,7 +133,7 @@ export const sideLinks = [
         title: 'Công nợ',
         href: '/customer-debt',
         icon: <DatabaseBackup size={18} strokeWidth={1.5} />,
-        permission: 'GET_CUSTOMER',
+        permission: 'GET_DEBT',
       },
       {
         title: 'Phiếu hỗ trợ (nếu có)',
@@ -158,19 +152,19 @@ export const sideLinks = [
   {
     title: 'Khuyến mãi',
     icon: <Gift size={20} strokeWidth={1.5} />,
-    permission: 'GET_PRODUCT',
+    permission: 'GET_PROMOTION',
     sub: [
       {
         title: 'DS Khuyến mãi (Mua X tặng Y, ...)',
         href: '/promotions',
         icon: <Gift size={18} strokeWidth={1.5} />,
-        permission: 'GET_PRODUCT',
+        permission: 'GET_PROMOTION',
       },
       {
         title: 'KM đang hoạt động',
         href: '/active-promotions',
         icon: <Sparkles size={18} strokeWidth={1.5} />,
-        permission: 'GET_PRODUCT',
+        permission: 'GET_PROMOTION',
       }
     ]
   },
@@ -233,29 +227,30 @@ export const sideLinks = [
     title: 'Kho',
     icon: <Warehouse size={20} strokeWidth={1.5} />,
     permission: [
-      'WAREHOUSE_MANAGEMENT',
-      'WAREHOUSE_EXPORT_VIEW_ALL',
+      'GET_WAREHOUSE_IMPORT',
+      'GET_WAREHOUSE_EXPORT',
       'INVENTORY_NXT_VIEW',
-      'INVENTORY_LEDGER_VIEW'
+      'INVENTORY_LEDGER_VIEW',
+      'GET_STOCK'
     ],
     sub: [
       {
         title: 'Danh sách kho',
         href: '/warehouse-list',
         icon: <Warehouse size={18} strokeWidth={1.5} />,
-        permission: 'WAREHOUSE_IMPORT_VIEW_ALL',
+        permission: 'GET_WAREHOUSE_IMPORT',
       },
       {
         title: 'Nhập kho',
         href: '/warehouse-in',
         icon: <Box size={18} strokeWidth={1.5} />,
-        permission: 'WAREHOUSE_IMPORT_VIEW_ALL',
+        permission: 'GET_WAREHOUSE_IMPORT',
       },
       {
         title: 'Xuất kho',
         href: '/warehouse-out',
         icon: <Box size={18} strokeWidth={1.5} />,
-        permission: 'WAREHOUSE_EXPORT_VIEW_ALL',
+        permission: 'GET_WAREHOUSE_EXPORT',
       },
       {
         title: 'Tổng hợp X-N-T',
@@ -280,7 +275,7 @@ export const sideLinks = [
   {
     title: 'Nhân sự',
     icon: <UserCog size={20} strokeWidth={1.5} />,
-    permission: ['USER_MANAGEMENT'],
+    permission: ['GET_USER'],
     sub: [
       {
         title: 'Nhân viên',
@@ -292,19 +287,19 @@ export const sideLinks = [
         title: 'Chấm công',
         href: '/attendance',
         icon: <Calendar size={18} strokeWidth={1.5} />,
-        permission: 'USER_MANAGEMENT',
+        permission: 'GET_USER',
       },
       {
         title: 'Lương',
         href: '/salary',
         icon: <CircleDollarSign size={18} strokeWidth={1.5} />,
-        permission: 'USER_MANAGEMENT',
+        permission: 'GET_USER',
       },
       {
         title: 'Tăng ca',
         href: '/overtime',
         icon: <Activity size={18} strokeWidth={1.5} />,
-        permission: 'USER_MANAGEMENT',
+        permission: 'GET_USER',
       },
     ]
   },
@@ -342,7 +337,7 @@ export const sideLinks = [
   {
     title: 'Cài đặt',
     icon: <Settings size={20} strokeWidth={1.5} />,
-    permission: ['GET_USER', 'GET_ROLE', 'SESSION_SETTING', 'GET_AUDIT_LOG', 'GET_SETTING'],
+    permission: ['GET_USER', 'GET_ROLE', 'GET_AUDIT_LOG', 'GET_SETTING'],
     sub: [
       {
         title: 'Danh sách người dùng',
