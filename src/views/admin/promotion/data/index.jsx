@@ -2,7 +2,8 @@ import {
     CheckCircle2,
     Clock,
     XCircle,
-    Ban
+    Ban,
+    Timer
 } from 'lucide-react'
 
 export const promotionStatuses = [
@@ -13,6 +14,12 @@ export const promotionStatuses = [
         variant: 'outline',
     },
     {
+        value: 'waiting',
+        label: 'Đang chờ',
+        icon: Timer,
+        variant: 'default',
+    },
+    {
         value: 'active',
         label: 'Đang hoạt động',
         icon: CheckCircle2,
@@ -20,7 +27,7 @@ export const promotionStatuses = [
     },
     {
         value: 'expired',
-        label: 'Đã hết hạn',
+        label: 'Hết hạn',
         icon: XCircle,
         variant: 'destructive',
     },
@@ -47,10 +54,6 @@ export const applicableToOptions = [
     {
         value: 'all',
         label: 'Tất cả sản phẩm',
-    },
-    {
-        value: 'category',
-        label: 'Danh mục',
     },
     {
         value: 'product_group',

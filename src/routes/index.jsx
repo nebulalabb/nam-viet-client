@@ -8,7 +8,7 @@ import AdminLayout from '../views/layouts/AdminLayout'
 import AuthLayout from '../views/layouts/AuthLayout'
 import ErrorLayout from '../views/layouts/ErrorLayout'
 import CustomerPage from '../views/admin/customer/CustomerPage'
-import UserPage from '../views/admin/employee/EmployeePage'
+import EmployeePage from '../views/admin/employee/EmployeePage'
 import PromotionPage from '../views/admin/promotion/PromotionPage'
 import ActivePromotionPage from '../views/admin/promotion/ActivePromotionPage'
 import SupplierPage from '../views/admin/supplier/SupplierPage'
@@ -28,6 +28,7 @@ import ProductPage from '../views/admin/product/ProductPage'
 
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
+import MaterialPage from '@/views/admin/material/MaterialPage'
 
 const routes = [
   {
@@ -88,7 +89,7 @@ const routes = [
   },
   {
     path: '/employee',
-    element: UserPage,
+    element: EmployeePage,
     layout: AdminLayout,
   },
   {
@@ -137,6 +138,11 @@ const routes = [
   {
     path: '/supplier',
     element: SupplierPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/material',
+    element: MaterialPage,
     layout: AdminLayout,
   },
   {

@@ -43,7 +43,7 @@ export const columns = [
             return (
                 <>
                     <div
-                        className="w-24 font-medium text-blue-600 hover:text-blue-800 cursor-pointer underline underline-offset-2"
+                        className="max-w-[120px] truncate font-medium text-blue-600 hover:text-blue-800 cursor-pointer underline underline-offset-2"
                         title={row.getValue('promotionCode')}
                         onClick={() => setOpen(true)}
                     >

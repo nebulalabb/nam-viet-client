@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Eye } from 'lucide-react'
 import { useState } from 'react'
-import { PromotionDetailDialog } from './PromotionDetailDialog'
+import { PromotionDetailDialog } from '../../components/PromotionDetailDialog'
 
 export const DataTableRowActions = ({ row }) => {
     const [showDetailDialog, setShowDetailDialog] = useState(false)
