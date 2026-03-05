@@ -1,0 +1,16 @@
+
+> client@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 19 modules transformed.
+
+[31m✗[39m Build failed in 465ms
+[31merror during build:
+[31mCould not resolve "./AccessLogSlice" from "src/stores/index.jsx"[31m
+file: [36mD:/a_themduan/chuyendoireact/LAB-NamViet-Client-V1/nam-viet-client/src/stores/index.jsx[31m
+    at getRollupError (file:///D:/a_themduan/chuyendoireact/LAB-NamViet-Client-V1/nam-viet-client/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///D:/a_themduan/chuyendoireact/LAB-NamViet-Client-V1/nam-viet-client/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at ModuleLoader.handleInvalidResolvedId (file:///D:/a_themduan/chuyendoireact/LAB-NamViet-Client-V1/nam-viet-client/node_modules/rollup/dist/es/shared/node-entry.js:21710:24)
+    at file:///D:/a_themduan/chuyendoireact/LAB-NamViet-Client-V1/nam-viet-client/node_modules/rollup/dist/es/shared/node-entry.js:21670:26[39m

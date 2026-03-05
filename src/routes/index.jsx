@@ -30,6 +30,11 @@ import TaxPage from '../views/admin/tax/TaxPage'
 
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
+import AttendancePage from '../views/admin/attendance/AttendancePage'
+import OvertimePage from '../views/admin/overtime/OvertimePage'
+import OvertimeDetailPage from '../views/admin/overtime/OvertimeDetailPage'
+import SalaryPage from '../views/admin/salary/SalaryPage'
+import SalaryCalculatePage from '../views/admin/salary/SalaryCalculatePage'
 
 const routes = [
   {
@@ -50,6 +55,31 @@ const routes = [
   {
     path: '/system-log',
     element: SystemLogPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/attendance',
+    element: AttendancePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/overtime',
+    element: OvertimePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/overtime/:id',
+    element: OvertimeDetailPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary',
+    element: SalaryPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary/calculate',
+    element: SalaryCalculatePage,
     layout: AdminLayout,
   },
   {

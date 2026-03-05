@@ -19,6 +19,9 @@ import unitReducer from './UnitSlice'
 import productReducer from './ProductSlice'
 import ticketReducer from './TicketSlice'
 import taskReducer from './TaskSlice'
+import attendanceReducer from './AttendanceSlice';
+import overtimeReducer from './OvertimeSlice';
+import salaryReducer from "./SalarySlice"
 import taxReducer from './TaxSlice'
 import attributeReducer from './AttributeSlice'
 
@@ -46,6 +49,9 @@ export const store = configureStore({
     product: productReducer,
     ticket: ticketReducer,
     task: taskReducer,
+    attendance: attendanceReducer,
+    overtime: overtimeReducer,
+    salary: salaryReducer,
     tax: taxReducer,
     attribute: attributeReducer,
   },
