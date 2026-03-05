@@ -6,6 +6,7 @@ import userReducer from './UserSlice'
 import customerReducer from './CustomerSlice'
 import expiryReducer from './ExpirySlice'
 import customerTimelineReducer from './CustomerTimelineSlice'
+import promotionReducer from './PromotionSlice'
 import supplierReducer from './SupplierSlice'
 import debtReducer from './DebtSlice'
 import categoryReducer from './CategorySlice'
@@ -14,6 +15,9 @@ import roleReducer from './RoleSlice'
 import permissionReducer from './PermissionSlice'
 import systemLogReducer from './SystemLogSlice'
 import settingReducer from './SettingSlice'
+import promotionReducer from './PromotionSlice'
+import unitReducer from './UnitSlice'
+import productReducer from './ProductSlice'
 import ticketReducer from './TicketSlice'
 import taskReducer from './TaskSlice'
 
@@ -28,6 +32,7 @@ export const store = configureStore({
     customer: customerReducer,
     expiry: expiryReducer,
     customerTimeline: customerTimelineReducer,
+    promotion: promotionReducer,
     supplier: supplierReducer,
     debt: debtReducer,
     category: categoryReducer,
@@ -36,6 +41,9 @@ export const store = configureStore({
     permission: permissionReducer,
     systemLog: systemLogReducer,
     setting: settingReducer,
+    promotion: promotionReducer,
+    unit: unitReducer,
+    product: productReducer,
     ticket: ticketReducer,
     task: taskReducer,
   },

@@ -1,0 +1,7 @@
+VITE_NODE_ENV=development
+
+VITE_SERVER_URL_DEVELOPMENT=http://localhost:8000
+VITE_SERVER_URL_PRODUCTION=https://039c-2402-800-63a5-d8ab-a866-3a8d-2311-aa15.ngrok-free.app
+
+VITE_SERVER_API_DEVELOPMENT=http://localhost:8000/api
+VITE_SERVER_API_PRODUCTION=https://039c-2402-800-63a5-d8ab-a866-3a8d-2311-aa15.ngrok-free.app/api

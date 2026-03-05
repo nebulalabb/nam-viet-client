@@ -8,6 +8,9 @@ import AdminLayout from '../views/layouts/AdminLayout'
 import AuthLayout from '../views/layouts/AuthLayout'
 import ErrorLayout from '../views/layouts/ErrorLayout'
 import CustomerPage from '../views/admin/customer/CustomerPage'
+import UserPage from '../views/admin/employee/EmployeePage'
+import PromotionPage from '../views/admin/promotion/PromotionPage'
+import ActivePromotionPage from '../views/admin/promotion/ActivePromotionPage'
 import SupplierPage from '../views/admin/supplier/SupplierPage'
 import CustomerDebtPage from '@/views/admin/debt/CustomerDebtPage'
 import CategoryPage from '../views/admin/category/CategoryPage'
@@ -19,6 +22,10 @@ import SettingPage from '../views/admin/setting/SettingPage'
 import GeneralSettingPage from '../views/admin/setting/general/GeneralSettingPage'
 import SystemInformationPage from '../views/admin/setting/system-information/SystemInformationPage'
 import AccessLogPage from '../views/admin/setting/access-log/AccessLogPage'
+import ActivePromotionsPage from '../views/admin/promotion/active-promotions/ActivePromotionsPage'
+import UnitPage from '../views/admin/unit/UnitPage'
+import ProductPage from '../views/admin/product/ProductPage'
+
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
 
@@ -63,6 +70,11 @@ const routes = [
     element: AccessLogPage,
     layout: AdminLayout,
   },
+  {
+    path: '/active-promotions',
+    element: ActivePromotionsPage,
+    layout: AdminLayout,
+  },
 
   {
     path: '/role-and-permissions',
@@ -72,6 +84,31 @@ const routes = [
   {
     path: '/customer',
     element: CustomerPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/employee',
+    element: UserPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/promotion',
+    element: PromotionPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/active-promotions',
+    element: ActivePromotionPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/unit',
+    element: UnitPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/product',
+    element: ProductPage,
     layout: AdminLayout,
   },
 
