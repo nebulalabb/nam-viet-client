@@ -6,6 +6,7 @@ import userReducer from './UserSlice'
 import customerReducer from './CustomerSlice'
 import expiryReducer from './ExpirySlice'
 import customerTimelineReducer from './CustomerTimelineSlice'
+import promotionReducer from './PromotionSlice'
 import supplierReducer from './SupplierSlice'
 import debtReducer from './DebtSlice'
 import categoryReducer from './CategorySlice'
@@ -14,11 +15,15 @@ import roleReducer from './RoleSlice'
 import permissionReducer from './PermissionSlice'
 import systemLogReducer from './SystemLogSlice'
 import settingReducer from './SettingSlice'
+import unitReducer from './UnitSlice'
+import productReducer from './ProductSlice'
 import ticketReducer from './TicketSlice'
 import taskReducer from './TaskSlice'
 import attendanceReducer from './AttendanceSlice';
 import overtimeReducer from './OvertimeSlice';
 import salaryReducer from "./SalarySlice"
+import taxReducer from './TaxSlice'
+import attributeReducer from './AttributeSlice'
 
 const persistConfig = { key: 'nam-viet', storage }
 
@@ -31,6 +36,7 @@ export const store = configureStore({
     customer: customerReducer,
     expiry: expiryReducer,
     customerTimeline: customerTimelineReducer,
+    promotion: promotionReducer,
     supplier: supplierReducer,
     debt: debtReducer,
     category: categoryReducer,
@@ -39,11 +45,15 @@ export const store = configureStore({
     permission: permissionReducer,
     systemLog: systemLogReducer,
     setting: settingReducer,
+    unit: unitReducer,
+    product: productReducer,
     ticket: ticketReducer,
     task: taskReducer,
     attendance: attendanceReducer,
     overtime: overtimeReducer,
     salary: salaryReducer,
+    tax: taxReducer,
+    attribute: attributeReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

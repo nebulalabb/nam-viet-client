@@ -12,8 +12,10 @@ import {
 
 const DataTableViewOptions = ({ table }) => {
   const options = {
-    code: 'Mã nhân viên',
+    employeeCode: 'Mã nhân viên',
     fullName: 'Họ và tên',
+    role: 'Vai trò',
+    cccd: 'CCCD',
     status: 'Trạng thái',
     phone: 'Số điện thoại',
     updatedAt: 'Cập nhật',

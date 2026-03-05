@@ -21,20 +21,20 @@ import { Separator } from '@/components/ui/separator'
 
 const DataTableFacetedFilter = ({ column, title, options }) => {
     const facets = column?.getFacetedUniqueValues()
-    const selectedValues = new Set(column?.getFilterValue() || [])
+    const selectedValues = new Set(column?.getFilterValue())
 
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 border-dashed border-green-300 hover:bg-green-50 hover:text-green-700">
-                    <PlusCircledIcon className="mr-2 h-4 w-4 text-green-600" />
+                <Button variant="outline" size="sm" className="h-8 border-dashed">
+                    <PlusCircledIcon className="mr-2 h-4 w-4" />
                     {title}
                     {selectedValues?.size > 0 && (
                         <>
-                            <Separator orientation="vertical" className="mx-2 h-4 bg-green-200" />
+                            <Separator orientation="vertical" className="mx-2 h-4" />
                             <Badge
                                 variant="secondary"
-                                className="rounded-sm px-1 font-normal lg:hidden bg-green-100 text-green-700"
+                                className="rounded-sm px-1 font-normal lg:hidden"
                             >
                                 {selectedValues.size}
                             </Badge>
@@ -42,7 +42,7 @@ const DataTableFacetedFilter = ({ column, title, options }) => {
                                 {selectedValues.size > 2 ? (
                                     <Badge
                                         variant="secondary"
-                                        className="rounded-sm px-1 font-normal bg-green-100 text-green-700 hover:bg-green-200"
+                                        className="rounded-sm px-1 font-normal"
                                     >
                                         {selectedValues.size} đã chọn
                                     </Badge>
@@ -53,7 +53,7 @@ const DataTableFacetedFilter = ({ column, title, options }) => {
                                             <Badge
                                                 variant="secondary"
                                                 key={option.value}
-                                                className="rounded-sm px-1 font-normal bg-green-100 text-green-700 hover:bg-green-200"
+                                                className="rounded-sm px-1 font-normal"
                                             >
                                                 {option.label}
                                             </Badge>
@@ -64,9 +64,9 @@ const DataTableFacetedFilter = ({ column, title, options }) => {
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0 border-green-200" align="start">
+            <PopoverContent className="w-[200px] p-0" align="start">
                 <Command>
-                    <CommandInput placeholder={title} className="focus-visible:ring-green-500" />
+                    <CommandInput placeholder={title} />
                     <CommandList>
                         <CommandEmpty>Không có kết quả nào.</CommandEmpty>
                         <CommandGroup>
@@ -86,13 +86,12 @@ const DataTableFacetedFilter = ({ column, title, options }) => {
                                                 filterValues.length ? filterValues : undefined,
                                             )
                                         }}
-                                        className="aria-selected:bg-green-50"
                                     >
                                         <div
                                             className={cn(
-                                                'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-green-600',
+                                                'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
                                                 isSelected
-                                                    ? 'bg-green-600 text-white'
+                                                    ? 'bg-primary text-primary-foreground'
                                                     : 'opacity-50 [&_svg]:invisible',
                                             )}
                                         >
@@ -117,7 +116,7 @@ const DataTableFacetedFilter = ({ column, title, options }) => {
                                 <CommandGroup>
                                     <CommandItem
                                         onSelect={() => column?.setFilterValue(undefined)}
-                                        className="justify-center text-center text-green-600 hover:bg-green-50 aria-selected:bg-green-50"
+                                        className="justify-center text-center"
                                     >
                                         Xóa bộ lọc
                                     </CommandItem>

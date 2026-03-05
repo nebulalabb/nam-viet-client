@@ -1,320 +1,256 @@
 import { Button } from '@/components/custom/Button'
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+  DialogTitle,
 } from '@/components/ui/dialog'
+import { PlusIcon } from '@radix-ui/react-icons'
+import { cn } from '@/lib/utils'
+
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form'
+
 import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useDispatch, useSelector } from 'react-redux'
 import { createSupplierSchema } from '../schema'
-import { createSupplier } from '@/stores/SupplierSlice'
 import { Textarea } from '@/components/ui/textarea'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { supplierTypes, supplierStatuses } from '../components/data'
-import { toast } from 'sonner'
+import { createSupplier } from '@/stores/SupplierSlice'
 
 const CreateSupplierDialog = ({
-    open,
-    onOpenChange,
-    ...props
+  open,
+  onOpenChange,
+  showTrigger = true,
+  contentClassName,
+  overlayClassName,
+  ...props
 }) => {
-    const form = useForm({
-        resolver: zodResolver(createSupplierSchema),
-        defaultValues: {
-            supplierCode: '',
-            supplierName: '',
-            supplierType: 'local',
-            contactName: '',
-            phone: '',
-            email: '',
-            address: '',
-            taxCode: '',
-            paymentTerms: '',
-            notes: '',
-            status: 'active',
-        },
-    })
+  const loading = useSelector((state) => state.supplier.loading)
 
-    const loading = useSelector((state) => state.supplier.loading)
-    const dispatch = useDispatch()
+  const form = useForm({
+    resolver: zodResolver(createSupplierSchema),
+    defaultValues: {
+      supplierCode: '',
+      supplierName: '',
+      taxCode: '',
+      contactName: '',
+      phone: '',
+      email: '',
+      address: '',
+      notes: '',
+    },
+  })
 
-    const onSubmit = async (data) => {
-        try {
-            await dispatch(createSupplier(data)).unwrap()
-            form.reset()
-            onOpenChange?.(false)
-        } catch (error) {
-            console.log('Submit error: ', error)
-            const errorMessage = typeof error === 'string' ? error : error?.message || 'Có lỗi xảy ra khi thêm mới'
-            toast.error(errorMessage)
-        }
+  const dispatch = useDispatch()
+  const onSubmit = async (data) => {
+    try {
+      await dispatch(createSupplier(data)).unwrap()
+      form.reset()
+      onOpenChange?.(false)
+    } catch (error) {
+      console.log('Submit error: ', error)
     }
+  }
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange} {...props}>
-            <DialogContent className="md:h-auto md:max-w-4xl border-green-200">
-                <DialogHeader>
-                    <DialogTitle className="text-green-800">Thêm nhà cung cấp mới</DialogTitle>
-                    <DialogDescription>
-                        Điền chi tiết thông tin nhà cung cấp vào biểu mẫu bên dưới
-                    </DialogDescription>
-                </DialogHeader>
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} {...props}>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button className="mx-2" variant="outline" size="sm">
+            <PlusIcon className="mr-2 size-4" aria-hidden="true" />
+            Thêm mới
+          </Button>
+        </DialogTrigger>
+      )}
 
-                <div className="max-h-[65vh] overflow-auto md:max-h-[75vh] px-1">
-                    <Form {...form}>
-                        <form id="create-supplier" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <DialogContent
+        className={cn("md:h-auto md:max-w-2xl", contentClassName)}
+        overlayClassName={overlayClassName}
+      >
+        <DialogHeader>
+          <DialogTitle>Thêm nhà cung cấp mới</DialogTitle>
+          <DialogDescription>
+            Điền vào chi tiết phía dưới để thêm nhà cung cấp mới
+          </DialogDescription>
+        </DialogHeader>
 
-                            <div className="grid gap-6 md:grid-cols-2">
-                                {/* Cột 1: Thông tin cơ bản */}
-                                <div className="space-y-4 border p-4 rounded-lg bg-green-50/30 border-green-100">
-                                    <h3 className="font-semibold text-green-800 border-b border-green-200 pb-2">Thông tin chung</h3>
+        <div className="max-h-[65vh] overflow-auto md:max-h-[75vh]">
+          <Form {...form}>
+            <form id="create-supplier" onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="supplierCode"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel required={true}>Mã nhà cung cấp</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập mã nhà cung cấp" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="supplierCode"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-1">
-                                                <FormLabel required={true}>Mã nhà cung cấp</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Vd: NCC001" className="focus-visible:ring-green-500" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                <FormField
+                  control={form.control}
+                  name="supplierName"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel required={true}>Tên nhà cung cấp</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập tên nhà cung cấp" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="supplierName"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-1">
-                                                <FormLabel required={true}>Tên nhà cung cấp</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Nhập tên nhà cung cấp" className="focus-visible:ring-green-500" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Số điện thoại</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Nhập số điện thoại"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="supplierType"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2 pt-2">
-                                                    <FormLabel required={true}>Phân loại</FormLabel>
-                                                    <FormControl>
-                                                        <RadioGroup
-                                                            onValueChange={field.onChange}
-                                                            defaultValue={field.value}
-                                                            className="flex flex-col space-y-1"
-                                                        >
-                                                            {supplierTypes.map((type) => (
-                                                                <FormItem key={type.value} className="flex items-center space-x-3 space-y-0">
-                                                                    <FormControl>
-                                                                        <RadioGroupItem value={type.value} className="text-green-600 focus:text-green-600" />
-                                                                    </FormControl>
-                                                                    <FormLabel className="font-normal">{type.label}</FormLabel>
-                                                                </FormItem>
-                                                            ))}
-                                                        </RadioGroup>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                <FormField
+                  control={form.control}
+                  name="taxCode"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Mã số thuế</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Nhập mã số thuế"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="status"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-2 pt-2">
-                                                    <FormLabel required={true}>Trạng thái</FormLabel>
-                                                    <FormControl>
-                                                        <RadioGroup
-                                                            onValueChange={field.onChange}
-                                                            defaultValue={field.value}
-                                                            className="flex flex-col space-y-1"
-                                                        >
-                                                            {supplierStatuses.map((status) => (
-                                                                <FormItem key={status.value} className="flex items-center space-x-3 space-y-0">
-                                                                    <FormControl>
-                                                                        <RadioGroupItem value={status.value} className="text-green-600 focus:text-green-600" />
-                                                                    </FormControl>
-                                                                    <FormLabel className="font-normal">{status.label}</FormLabel>
-                                                                </FormItem>
-                                                            ))}
-                                                        </RadioGroup>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
+                <FormField
+                  control={form.control}
+                  name="contactName"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Người đại diện (liên hệ)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Nhập tên người liên hệ"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                                {/* Cột 2: Thông tin liên hệ */}
-                                <div className="space-y-4 border p-4 rounded-lg bg-gray-50 border-gray-100">
-                                    <h3 className="font-semibold text-gray-700 border-b pb-2">Liên hệ & Địa chỉ</h3>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Địa chỉ email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Nhập địa chỉ email"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="contactName"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-1">
-                                                <FormLabel>Người liên hệ đại diện</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Tên người đại diện..." className="focus-visible:ring-green-500" {...field} value={field.value || ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Địa chỉ</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Nhập địa chỉ"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="phone"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-1">
-                                                    <FormLabel>Số điện thoại</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Vd: 09..." className="focus-visible:ring-green-500" {...field} value={field.value || ''} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+              <div className="grid gap-4 md:grid-cols-1">
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Ghi chú</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          type="text"
+                          placeholder="Nhập ghi chú nếu có"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </form>
+          </Form>
+        </div>
 
-                                        <FormField
-                                            control={form.control}
-                                            name="email"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-1">
-                                                    <FormLabel>Email</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="abc@email.com" className="focus-visible:ring-green-500" {...field} value={field.value || ''} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+        <DialogFooter className="flex gap-2 sm:space-x-0">
+          <DialogClose asChild>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                form.reset()
+              }}
+            >
+              Hủy
+            </Button>
+          </DialogClose>
 
-                                    <FormField
-                                        control={form.control}
-                                        name="address"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-1">
-                                                <FormLabel>Địa chỉ đầy đủ</FormLabel>
-                                                <FormControl>
-                                                    <Textarea
-                                                        rows={2}
-                                                        placeholder="Số nhà, đường, phường, quận..."
-                                                        className="focus-visible:ring-green-500"
-                                                        {...field}
-                                                        value={field.value || ''}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Full width: Thanh toán & Khác */}
-                            <div className="space-y-4 border p-4 rounded-lg bg-white border-gray-200">
-                                <h3 className="font-semibold text-gray-700 border-b pb-2">Thanh toán & Ghi chú</h3>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="taxCode"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-1">
-                                                <FormLabel>Mã số thuế</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Nhập MST..." className="focus-visible:ring-green-500" {...field} value={field.value || ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="paymentTerms"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-1">
-                                                <FormLabel>Điều khoản thanh toán</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Vd: Công nợ 30 ngày..." className="focus-visible:ring-green-500" {...field} value={field.value || ''} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <FormField
-                                    control={form.control}
-                                    name="notes"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-1">
-                                            <FormLabel>Ghi chú thêm</FormLabel>
-                                            <FormControl>
-                                                <Textarea
-                                                    rows={2}
-                                                    placeholder="Những lưu ý khi giao dịch với NNC này..."
-                                                    className="focus-visible:ring-green-500"
-                                                    {...field}
-                                                    value={field.value || ''}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                        </form>
-                    </Form>
-                </div>
-
-                <DialogFooter className="flex gap-2 sm:space-x-0 pt-4">
-                    <DialogClose asChild>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => form.reset()}
-                        >
-                            Hủy
-                        </Button>
-                    </DialogClose>
-
-                    <Button form="create-supplier" loading={loading} className="bg-green-600 hover:bg-green-700 text-white">
-                        Thêm nhà cung cấp
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
+          <Button form="create-supplier" loading={loading}>
+            Thêm mới
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export default CreateSupplierDialog

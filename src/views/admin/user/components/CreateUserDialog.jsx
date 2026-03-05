@@ -39,6 +39,12 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getRoles } from '@/stores/RoleSlice'
 import { createUserFormSchema } from '../schema'
 
+const genders = [
+  { label: 'Nam', value: 'male' },
+  { label: 'Nữ', value: 'female' },
+  { label: 'Khác', value: 'other' },
+]
+
 const CreateUserDialog = ({
   open,
   onOpenChange,
@@ -53,15 +59,18 @@ const CreateUserDialog = ({
     defaultValues: {
       fullName: '',
       employeeCode: '',
-      username: '',
+      email: '',
       password: '',
       phone: '',
-      roleId: '',
-      bankCode: '',
-      bankName: '',
+      roleId: undefined,
+      warehouseId: undefined,
       address: '',
-      email: '',
-      status: '',
+      cccd: '',
+      issuedAt: '',
+      issuedBy: '',
+      gender: '',
+      dateOfBirth: '',
+      status: 'active',
     },
   })
 
@@ -72,7 +81,18 @@ const CreateUserDialog = ({
 
   const onSubmit = async (data) => {
     try {
-      await dispatch(createUser(data)).unwrap()
+      // Loại bỏ các field rỗng trước khi gửi
+      const payload = {
+        ...data,
+        phone: data.phone || undefined,
+        address: data.address || undefined,
+        cccd: data.cccd || undefined,
+        issuedAt: data.issuedAt || undefined,
+        issuedBy: data.issuedBy || undefined,
+        gender: data.gender || undefined,
+        dateOfBirth: data.dateOfBirth || undefined,
+      }
+      await dispatch(createUser(payload)).unwrap()
       form.reset()
       onOpenChange?.(false)
     } catch (error) {
@@ -103,6 +123,7 @@ const CreateUserDialog = ({
           <Form {...form}>
             <form id="create-user" onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid gap-4 md:grid-cols-2">
+                {/* Họ và tên */}
                 <FormField
                   control={form.control}
                   name="fullName"
@@ -117,6 +138,7 @@ const CreateUserDialog = ({
                   )}
                 />
 
+                {/* Mã nhân viên */}
                 <FormField
                   control={form.control}
                   name="employeeCode"
@@ -131,20 +153,26 @@ const CreateUserDialog = ({
                   )}
                 />
 
+                {/* Email */}
                 <FormField
                   control={form.control}
-                  name="username"
+                  name="email"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel required={true}>Tên tài khoản</FormLabel>
+                      <FormLabel required={true}>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập tên tài khoản" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="Nhập địa chỉ email"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Mật khẩu */}
                 <FormField
                   control={form.control}
                   name="password"
@@ -163,6 +191,7 @@ const CreateUserDialog = ({
                   )}
                 />
 
+                {/* Số điện thoại */}
                 <FormField
                   control={form.control}
                   name="phone"
@@ -177,34 +206,7 @@ const CreateUserDialog = ({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="bankName"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Tên ngân hàng</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nhập tên ngân hàng" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="bankCode"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Số tài khoản</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nhập số tài khoản" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
+                {/* Địa chỉ */}
                 <FormField
                   control={form.control}
                   name="address"
@@ -219,24 +221,95 @@ const CreateUserDialog = ({
                   )}
                 />
 
+                {/* CCCD */}
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="cccd"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>CCCD</FormLabel>
                       <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="Nhập địa chỉ email"
-                          {...field}
-                        />
+                        <Input placeholder="Số CCCD" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Ngày cấp CCCD */}
+                <FormField
+                  control={form.control}
+                  name="issuedAt"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Ngày cấp CCCD</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Nơi cấp CCCD */}
+                <FormField
+                  control={form.control}
+                  name="issuedBy"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Nơi cấp CCCD</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nơi cấp CCCD" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Ngày sinh */}
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Ngày sinh</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Giới tính */}
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Giới tính</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn giới tính" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectGroup>
+                            {genders.map((g) => (
+                              <SelectItem key={g.value} value={g.value}>
+                                {g.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Vai trò */}
                 <FormField
                   control={form.control}
                   name="roleId"
@@ -244,8 +317,8 @@ const CreateUserDialog = ({
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel required={true}>Vai trò</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        onValueChange={(val) => field.onChange(parseInt(val))}
+                        defaultValue={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -259,7 +332,7 @@ const CreateUserDialog = ({
                                 key={role.id}
                                 value={role.id.toString()}
                               >
-                                {role.name}
+                                {role.roleName}
                               </SelectItem>
                             ))}
                         </SelectContent>
@@ -269,40 +342,7 @@ const CreateUserDialog = ({
                   )}
                 />
 
-                {/* <FormField
-                  control={form.control}
-                  name="positionId"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel required={true}>Chức vụ</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn chức vụ" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectGroup>
-                            {positions &&
-                              positions.map((position) => (
-                                <SelectItem
-                                  key={position.id}
-                                  value={position.id.toString()}
-                                >
-                                  {position.name}
-                                </SelectItem>
-                              ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                /> */}
-
+                {/* Trạng thái */}
                 <FormField
                   control={form.control}
                   name="status"

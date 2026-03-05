@@ -9,19 +9,24 @@ export const getPermission = createAsyncThunk(
       const response = await api.get('/permissions')
       const { data } = response.data
 
+      const moduleGroups = Object.keys(data.grouped).map(module => ({
+        key: module,
+        label: data.grouped[module].label || module.toUpperCase(),
+        permissions: data.grouped[module].permissions.map(p => ({
+          id: p.id,
+          name: p.permissionName,
+          code: p.permissionKey
+        }))
+      }))
+
+      const allPermissions = moduleGroups.flatMap(g => g.permissions)
+
       const groups = [
         {
           key: 'all',
-          label: 'Quản lý quyền hạn',
-          items: Object.keys(data.grouped).map(module => ({
-            key: module,
-            label: module.toUpperCase(),
-            permissions: data.grouped[module].map(p => ({
-              id: p.id,
-              name: p.permissionName,
-              code: p.permissionKey
-            }))
-          }))
+          label: 'Chọn tất cả',
+          permissions: allPermissions,
+          items: moduleGroups
         }
       ]
 

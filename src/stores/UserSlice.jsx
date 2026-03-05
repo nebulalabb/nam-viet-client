@@ -12,7 +12,12 @@ export const getUsers = createAsyncThunk(
       const { data, meta } = response.data
       return {
         data,
-        pagination: meta?.pagination || { total: data.length, totalPages: 1 }
+        pagination: {
+          total: meta?.total ?? data.length,
+          totalPages: meta?.totalPages ?? 1,
+          page: meta?.page ?? 1,
+          limit: meta?.limit ?? data.length,
+        }
       }
     } catch (error) {
       const message = handleError(error)

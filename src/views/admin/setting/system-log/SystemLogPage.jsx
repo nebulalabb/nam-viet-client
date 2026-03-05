@@ -128,30 +128,30 @@ const SystemLogPage = () => {
     setShowDetailDialog(true)
   }
 
-  const ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT']
+  const ACTIONS = ['create', 'update', 'delete', 'login', 'logout']
 
   const ACTIONS_CONFIG = {
-    CREATE: {
+    create: {
       label: 'CREATE',
       icon: Plus,
       color: 'border-green-700 bg-transparent text-green-700',
     },
-    UPDATE: {
+    update: {
       label: 'UPDATE',
       icon: Edit3,
       color: 'border-blue-700 bg-transparent text-blue-700',
     },
-    DELETE: {
+    delete: {
       label: 'DELETE',
       icon: Trash2,
       color: 'border-red-700 bg-transparent text-red-700',
     },
-    LOGIN: {
+    login: {
       label: 'LOGIN',
       icon: LogIn,
       color: 'border-purple-700 bg-transparent text-purple-700',
     },
-    LOGOUT: {
+    logout: {
       label: 'LOGOUT',
       icon: LogOut,
       color: 'border-orange-700 bg-transparent text-orange-700',
@@ -159,16 +159,19 @@ const SystemLogPage = () => {
   }
 
   const ENTITIES_CONFIG = {
-    User: { label: 'Người dùng', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-    Customer: { label: 'Khách hàng', color: 'bg-pink-100 text-pink-700 border-pink-200' },
-    Supplier: { label: 'Nhà cung cấp', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    Product: { label: 'Sản phẩm', color: 'bg-teal-100 text-teal-700 border-teal-200' },
-    SalesContract: { label: 'Hợp đồng bán', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-    PurchaseContract: { label: 'Hợp đồng mua', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
-    PurchaseOrder: { label: 'Đơn mua hàng', color: 'bg-sky-100 text-sky-700 border-sky-200' },
-    Invoice: { label: 'Hóa đơn', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    PaymentVoucher: { label: 'Phiếu thu/chi', color: 'bg-rose-100 text-rose-700 border-rose-200' },
-    WarehouseReceipt: { label: 'Phiếu kho', color: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200' },
+    users: { label: 'Người dùng', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+    customers: { label: 'Khách hàng', color: 'bg-pink-100 text-pink-700 border-pink-200' },
+    suppliers: { label: 'Nhà cung cấp', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    products: { label: 'Sản phẩm', color: 'bg-teal-100 text-teal-700 border-teal-200' },
+    sales_orders: { label: 'Đơn bán hàng', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+    purchase_orders: { label: 'Đơn mua hàng', color: 'bg-sky-100 text-sky-700 border-sky-200' },
+    invoices: { label: 'Hóa đơn', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    payment_vouchers: { label: 'Phiếu chi', color: 'bg-rose-100 text-rose-700 border-rose-200' },
+    payment_receipts: { label: 'Phiếu thu', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+    stock_transactions: { label: 'Giao dịch kho', color: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200' },
+    roles: { label: 'Vai trò', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+    permissions: { label: 'Quyền hạn', color: 'bg-violet-100 text-violet-700 border-violet-200' },
+    warehouses: { label: 'Kho hàng', color: 'bg-lime-100 text-lime-700 border-lime-200' },
   }
 
   return (
@@ -348,7 +351,7 @@ const SystemLogPage = () => {
                 logs.map((log, index) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-center">
-                      {(filters.page - 1) * (meta.per_page || filters.limit) + index + 1}
+                      {(filters.page - 1) * (meta.limit || filters.limit) + index + 1}
                     </TableCell>
                     {visibleColumns.user && (
                       <TableCell className="font-medium">
@@ -375,19 +378,19 @@ const SystemLogPage = () => {
                     {visibleColumns.entity && (
                       <TableCell>
                         {(() => {
-                          const entityConfig = ENTITIES_CONFIG[log.entity]
+                          const entityConfig = ENTITIES_CONFIG[log.tableName]
                           if (entityConfig) {
                             return (
                               <Badge variant="outline" className={`font-normal ${entityConfig.color}`}>
                                 {entityConfig.label}
-                                {log.entityId && <span className='opacity-70 ml-1'>#{log.entityId}</span>}
+                                {log.recordId && <span className='opacity-70 ml-1'>#{log.recordId}</span>}
                               </Badge>
                             )
                           }
                           return (
                             <span>
-                              <span className='font-medium'>{log.entityNameVi || log.entity}</span>
-                              {log.entityId && <span className='text-muted-foreground text-xs ml-1'>#{log.entityId}</span>}
+                              <span className='font-medium'>{log.tableName}</span>
+                              {log.recordId && <span className='text-muted-foreground text-xs ml-1'>#{log.recordId}</span>}
                             </span>
                           )
                         })()}
@@ -430,11 +433,11 @@ const SystemLogPage = () => {
           </Table>
         </div>
 
-        {meta && meta.last_page > 1 && (
+        {meta && (
           <div className="flex justify-end pt-4">
             <SystemLogPagination
               currentPage={filters.page}
-              totalPages={meta.last_page || 1}
+              totalPages={meta.totalPages || 1}
               pageSize={filters.limit}
               totalItems={meta.total || 0}
               onPageChange={handlePageChange}
