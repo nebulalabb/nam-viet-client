@@ -1,70 +1,40 @@
-import { useState } from 'react'
-import { useDispatch } from 'react-redux'
-import { deleteMultipleUnits } from '@/stores/UnitSlice'
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Loader2, Trash2 } from 'lucide-react'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { TrashIcon } from '@radix-ui/react-icons'
 
-export default function DeleteMultipleUnitsDialog({ units, onSuccess }) {
-    const [open, setOpen] = useState(false)
-    const [isLoading, setIsLoading] = useState(false)
-    const dispatch = useDispatch()
-
-    const onDelete = async () => {
-        setIsLoading(true)
-        try {
-            const ids = units.map((u) => u.id)
-            await dispatch(deleteMultipleUnits(ids)).unwrap()
-            setOpen(false)
-            if (onSuccess) onSuccess()
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="h-8">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Xóa {units.length} đã chọn
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Xác nhận xóa nhiều</DialogTitle>
-                    <DialogDescription>
-                        Bạn có chắc chắn muốn xóa {units.length} đơn vị tính đã chọn? Hành động này không thể hoàn tác.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="mt-4">
-                    <Button
-                        variant="outline"
-                        onClick={() => setOpen(false)}
-                        disabled={isLoading}
-                    >
-                        Hủy
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={onDelete}
-                        disabled={isLoading}
-                    >
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Xóa {units.length} mục
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
+export function DeleteMultipleUnitsDialog({ open, onOpenChange, onConfirm, count }) {
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Hành động này không thể hoàn tác. Bạn đang xóa{' '}
+            <span className="font-medium text-foreground">{count}</span> đơn vị tính đã chọn và dữ liệu này sẽ bị xóa.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => onOpenChange(false)}>Hủy</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault()
+              onConfirm()
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            <TrashIcon className="mr-2 size-4" aria-hidden="true" />
+            Xóa
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
 }

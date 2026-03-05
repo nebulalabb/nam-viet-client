@@ -8,7 +8,7 @@ import AdminLayout from '../views/layouts/AdminLayout'
 import AuthLayout from '../views/layouts/AuthLayout'
 import ErrorLayout from '../views/layouts/ErrorLayout'
 import CustomerPage from '../views/admin/customer/CustomerPage'
-import UserPage from '../views/admin/employee/EmployeePage'
+import EmployeePage from '../views/admin/employee/EmployeePage'
 import PromotionPage from '../views/admin/promotion/PromotionPage'
 import ActivePromotionPage from '../views/admin/promotion/ActivePromotionPage'
 import SupplierPage from '../views/admin/supplier/SupplierPage'
@@ -25,6 +25,8 @@ import AccessLogPage from '../views/admin/setting/access-log/AccessLogPage'
 import ActivePromotionsPage from '../views/admin/promotion/active-promotions/ActivePromotionsPage'
 import UnitPage from '../views/admin/unit/UnitPage'
 import ProductPage from '../views/admin/product/ProductPage'
+import AttributePage from '../views/admin/attribute/AttributePage'
+import TaxPage from '../views/admin/tax/TaxPage'
 
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
@@ -109,6 +111,16 @@ const routes = [
   {
     path: '/product',
     element: ProductPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/attribute',
+    element: AttributePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/tax',
+    element: TaxPage,
     layout: AdminLayout,
   },
 

@@ -1,164 +1,199 @@
-import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
-import { DataTableColumnHeader } from './DataTableColumnHeader'
 import { DataTableRowActions } from './DataTableRowAction'
-import { supplierStatuses, supplierTypes } from './data'
-import UpdateSupplierStatusDialog from './UpdateSupplierStatusDialog'
+import { DataTableColumnHeader } from './DataTableColumnHeader'
+import { dateFormat } from '@/utils/date-format'
+import { normalizeText } from '@/utils/normalize-text'
+import { Badge } from '@/components/ui/badge'
+import { statuses } from '../data'
 import { useState } from 'react'
+import UpdateSupplierStatusDialog from './UpdateSupplierStatusDialog'
+import ViewSupplierDialog from './ViewSupplierDialog'
+
+import { Checkbox } from '@/components/ui/checkbox'
 
 export const columns = [
-    {
-        id: 'select',
-        header: ({ table }) => (
-            <Checkbox
-                checked={
-                    table.getIsAllPageRowsSelected() ||
-                    (table.getIsSomePageRowsSelected() && 'indeterminate')
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: 'supplierCode',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Mã NCC" />
+    ),
+    cell: function Cell({ row }) {
+      const [showViewSupplierDialog, setShowViewSupplierDialog] =
+        useState(false)
+
+      return (
+        <>
+          {showViewSupplierDialog && (
+            <ViewSupplierDialog
+              open={showViewSupplierDialog}
+              onOpenChange={setShowViewSupplierDialog}
+              supplierId={row?.original?.id}
+              showTrigger={false}
+            />
+          )}
+
+          <div
+            className="w-[150px] cursor-pointer font-medium text-blue-600 hover:underline"
+            onClick={() => setShowViewSupplierDialog(true)}
+          >
+            {row.getValue('supplierCode')}
+          </div>
+        </>
+      )
+    },
+  },
+  {
+    accessorKey: 'supplierName',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Tên nhà cung cấp" />
+    ),
+    cell: ({ row }) => <div>{row.getValue('supplierName')}</div>,
+    enableSorting: true,
+    enableHiding: true,
+    filterFn: (row, id, value) => {
+      const name = normalizeText(row.original.supplierName || '')
+      const searchValue = normalizeText(value)
+      return name.includes(searchValue)
+    },
+  },
+  {
+    accessorKey: 'phone',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Số điện thoại" />
+    ),
+    cell: ({ row }) => <div className="w-28">{row.getValue('phone')}</div>,
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: 'address',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Địa chỉ" />
+    ),
+    cell: ({ row }) => <div className="w-28">{row.getValue('address')}</div>,
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: 'taxCode',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Mã số thuế" />
+    ),
+    cell: ({ row }) => (
+      <div className="w-28">{row.getValue('taxCode') || 'Không có'}</div>
+    ),
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: 'status',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Trạng thái" />
+    ),
+    cell: function Cell({ row }) {
+      const statusValue = row.getValue('status')
+      const status = statuses.find((status) => status.value === statusValue) || {
+        value: statusValue,
+        label: statusValue,
+        icon: null,
+      }
+      const [
+        showUpdateSupplierStatusDialog,
+        setShowUpdateSupplierStatusDialog,
+      ] = useState(false)
+
+      return (
+        <>
+          <div
+            className="flex w-[150px] cursor-pointer items-center"
+            onClick={() => setShowUpdateSupplierStatusDialog(true)}
+          >
+            <span>
+              <Badge
+                className={
+                  status.value === 'active'
+                    ? 'bg-green-600 text-white hover:bg-green-700 border-transparent'
+                    : 'bg-red-600 text-white hover:bg-red-700 border-transparent'
                 }
-                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                aria-label="Chọn tất cả"
-                className="translate-y-[2px]"
+              >
+                {status.icon && <status.icon className="mr-2 h-4 w-4" />}
+                {status.label}
+              </Badge>
+            </span>
+          </div>
+
+          {showUpdateSupplierStatusDialog && (
+            <UpdateSupplierStatusDialog
+              open={showUpdateSupplierStatusDialog}
+              onOpenChange={setShowUpdateSupplierStatusDialog}
+              supplier={row.original}
+              showTrigger={false}
             />
-        ),
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Chọn dòng"
-                className="translate-y-[2px]"
-            />
-        ),
-        enableSorting: false,
-        enableHiding: false,
+          )}
+        </>
+      )
     },
-    {
-        accessorKey: 'supplierCode',
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Mã NCC" />
-        ),
-        cell: ({ row }) => (
-            <div className="w-20 font-medium">{row.getValue('supplierCode')}</div>
-        ),
-        enableSorting: true,
-        enableHiding: true,
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: 'createdAt',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Ngày tạo" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex space-x-2">
+          <span className="max-w-32 sm:max-w-72 md:max-w-[31rem]">
+            {dateFormat(row.getValue('createdAt'), true)}
+          </span>
+        </div>
+      )
     },
-    {
-        accessorKey: 'supplierName',
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Nhà Cung Cấp" />
-        ),
-        cell: ({ row }) => (
-            <div className="font-medium whitespace-normal break-words">
-                {row.getValue('supplierName')}
-            </div>
-        ),
-        enableSorting: true,
-        enableHiding: true,
+  },
+  {
+    accessorKey: 'updatedAt',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Cập nhật" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="flex space-x-2">
+          <span className="max-w-32 sm:max-w-72 md:max-w-[31rem]">
+            {dateFormat(row.getValue('updatedAt'), true)}
+          </span>
+        </div>
+      )
     },
-    {
-        accessorKey: 'status',
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Trạng thái" />
-        ),
-        cell: function Cell({ row }) {
-            const statusValue = row.getValue('status')
-            const status = supplierStatuses.find((s) => s.value === statusValue) || {
-                label: statusValue,
-                variant: 'outline',
-            }
-            const StatusIcon = status.icon
-            const [showUpdateStatusDialog, setShowUpdateStatusDialog] = useState(false)
-
-            return (
-                <>
-                    <div
-                        className="flex w-[120px] cursor-pointer items-center"
-                        onClick={() => setShowUpdateStatusDialog(true)}
-                    >
-                        <Badge variant={status.variant} className="flex items-center gap-1 bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400">
-                            {StatusIcon && <StatusIcon className="h-3 w-3" />}
-                            {status.label}
-                        </Badge>
-                    </div>
-
-                    {showUpdateStatusDialog && (
-                        <UpdateSupplierStatusDialog
-                            open={showUpdateStatusDialog}
-                            onOpenChange={setShowUpdateStatusDialog}
-                            supplier={row.original}
-                            showTrigger={false}
-                        />
-                    )}
-                </>
-            )
-        },
-        filterFn: (row, id, value) => {
-            return value.includes(row.getValue(id))
-        },
-        enableSorting: true,
-        enableHiding: true,
-    },
-    {
-        accessorKey: 'totalPayable',
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Công Nợ" />
-        ),
-        cell: ({ row }) => {
-            const debt = Number(row.getValue('totalPayable')) || 0
-            const formatCurrency = (val) =>
-                new Intl.NumberFormat('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                }).format(val)
-
-            return (
-                <div className="w-32 font-medium overflow-hidden text-ellipsis whitespace-nowrap text-red-600">
-                    {formatCurrency(debt)}
-                </div>
-            )
-        },
-        enableSorting: true,
-        enableHiding: true,
-    },
-    {
-        id: 'contact',
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Liên hệ (SĐT / Email)" />
-        ),
-        cell: ({ row }) => {
-            const phone = row.original?.phone
-            const email = row.original?.email
-            return (
-                <div className="flex flex-col gap-1 text-sm">
-                    {phone ? (
-                        <a
-                            href={`tel:${phone}`}
-                            className="font-medium underline text-green-700 hover:text-green-800"
-                        >
-                            {phone}
-                        </a>
-                    ) : (
-                        <span className="text-gray-400 italic">Chưa có SĐT</span>
-                    )}
-                    {email ? (
-                        <a
-                            href={`mailto:${email}`}
-                            className="text-gray-600 hover:text-gray-900"
-                        >
-                            {email}
-                        </a>
-                    ) : null}
-                </div>
-            )
-        },
-        enableSorting: false,
-        enableHiding: true,
-    },
-    {
-        id: 'actions',
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Thao tác" />
-        ),
-        cell: ({ row }) => <DataTableRowActions row={row} />,
-    },
+  },
+  {
+    id: 'actions',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Thao tác" />
+    ),
+    cell: ({ row }) => <DataTableRowActions row={row} />,
+  },
 ]

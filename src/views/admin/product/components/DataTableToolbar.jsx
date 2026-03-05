@@ -1,120 +1,386 @@
-import { Cross2Icon } from '@radix-ui/react-icons'
-import { Button } from '@/components/ui/button'
+import { Cross2Icon, PlusIcon, HamburgerMenuIcon } from '@radix-ui/react-icons'
+import { Button } from '@/components/custom/Button'
 import { Input } from '@/components/ui/input'
 import { DataTableViewOptions } from './DataTableViewOption'
-import { productStatuses, productTypes } from '../data'
-import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
 import CreateProductDialog from './CreateProductDialog'
-import DeleteMultipleProductsDialog from './DeleteMultipleProductsDialog'
+import ImportProductDialog from './ImportProductDialog'
+import Can from '@/utils/can'
+import { FileSpreadsheet } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { getCategories } from '@/stores/CategorySlice'
+import { useDispatch, useSelector } from 'react-redux'
+import { DataTableFacetedFilter } from './DataTableFacetedFilter'
+import { copyProduct, getProducts } from '@/stores/ProductSlice'
+import { toast } from 'sonner'
+import { IconCopyCheck, IconFileTypeXls } from '@tabler/icons-react'
+import ExportProductDialog from './ExportProductDialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useMediaQuery } from '@/hooks/UseMediaQuery'
 
-export function DataTableToolbar({
-    table,
-    columnFilters,
-    setColumnFilters,
-    globalFilter,
-    setGlobalFilter,
-}) {
-    const categories = useSelector((state) => state.category?.categories || [])
+import { DeleteMultipleProductsDialog } from './DeleteMultipleProductsDialog'
+import { deleteMultipleProducts } from '@/stores/ProductSlice'
+import { TrashIcon } from '@radix-ui/react-icons'
 
-    const isFiltered = columnFilters.length > 0 || !!globalFilter
-    const selectedRows = table.getFilteredSelectedRowModel().rows
-    const hasSelectedRows = selectedRows.length > 0
+const DataTableToolbar = ({ table }) => {
+  const isFiltered = table.getState().columnFilters.length > 0
+  const [showCreateProductDialog, setShowCreateProductDialog] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const dispatch = useDispatch()
+  const categories = useSelector((state) => state.category.categories)
+  const loading = useSelector((state) => state.product.loading)
+  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const selectedRows = table.getSelectedRowModel().rows
 
-    const [searchInput, setSearchInput] = useState(globalFilter || '')
+  useEffect(() => {
+    dispatch(getCategories())
+  }, [dispatch])
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setGlobalFilter(searchInput)
-        }, 500)
-        return () => clearTimeout(timer)
-    }, [searchInput, setGlobalFilter])
-
-    const handleFilterChange = (id, value) => {
-        const newFilters = columnFilters.filter(f => f.id !== id)
-        if (value) {
-            newFilters.push({ id, value })
-        }
-        setColumnFilters(newFilters)
+  const handleDelete = async () => {
+    const selectedIds = selectedRows.map((row) => row.original.id)
+    try {
+      await dispatch(deleteMultipleProducts(selectedIds)).unwrap()
+      table.resetRowSelection()
+      setShowDeleteDialog(false)
+    } catch (error) {
+      console.log(error)
     }
+  }
 
-    const selectedStatus = columnFilters.find((f) => f.id === 'status')?.value || ''
-    const selectedType = columnFilters.find((f) => f.id === 'productType')?.value || ''
-    const selectedCategory = columnFilters.find((f) => f.id === 'categoryId')?.value || ''
-
+  // Mobile view - Search + Menu
+  if (!isDesktop) {
     return (
-        <div className="flex items-center justify-between">
-            <div className="flex flex-1 items-center space-x-2">
-                <Input
-                    placeholder="Tìm theo mã, tên SP..."
-                    value={searchInput}
-                    onChange={(event) => setSearchInput(event.target.value)}
-                    className="h-8 w-[150px] lg:w-[250px]"
-                />
+      <div className="flex w-full items-center justify-between gap-2 p-1">
+        <Input
+          placeholder="Tìm kiếm..."
+          value={table.getColumn('name')?.getFilterValue() || ''}
+          onChange={(event) =>
+            table.getColumn('name')?.setFilterValue(event.target.value)
+          }
+          className="h-8 flex-1 text-xs"
+        />
 
-                <select
-                    value={selectedType}
-                    onChange={(e) => handleFilterChange('productType', e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        {selectedRows.length > 0 ? (
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => setShowDeleteDialog(true)}
+            className="h-8 px-2"
+          >
+            <TrashIcon className="size-4" aria-hidden="true" />
+            <span className="ml-2 font-bold">{selectedRows.length}</span>
+          </Button>
+        ) : (
+          <Can
+            permission={[
+              'CREATE_PRODUCT',
+              'GET_SUPPLIER',
+              'GET_CATEGORY',
+              'GET_UNIT',
+            ]}
+          >
+            <Button
+              size="sm"
+              onClick={() => setShowCreateProductDialog(true)}
+              className="h-8 px-2 bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusIcon className="size-4" aria-hidden="true" />
+            </Button>
+
+            {showCreateProductDialog && (
+              <CreateProductDialog
+                open={showCreateProductDialog}
+                onOpenChange={setShowCreateProductDialog}
+                showTrigger={false}
+              />
+            )}
+          </Can>
+        )}
+
+        <Can permission="CREATE_PRODUCT">
+          {/* Mobile Import Dialog */}
+          {showImportDialog && (
+            <ImportProductDialog
+              open={showImportDialog}
+              onOpenChange={setShowImportDialog}
+            />
+          )}
+        </Can>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8 px-2">
+              <HamburgerMenuIcon className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuGroup>
+              {/* Danh mục */}
+              {table.getColumn('categoryId') && (
+                <>
+                  <div className="px-2 py-1.5 text-xs font-medium">Danh mục</div>
+                  <DataTableFacetedFilter
+                    column={table.getColumn('categoryId')}
+                    title="Chọn danh mục"
+                    options={categories.map((category) => ({
+                      value: parseInt(category?.id),
+                      label: category?.name,
+                    }))}
+                  />
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
+              {/* Sao chép sản phẩm */}
+              <DropdownMenuItem
+                onClick={async () => {
+                  const selectedRows = table.getSelectedRowModel().rows
+                  if (selectedRows.length !== 1) {
+                    toast.warning('Vui lòng chọn một sản phẩm để sao chép')
+                    return
+                  }
+
+                  const productId = selectedRows[0]?.original?.id
+                  try {
+                    await dispatch(copyProduct(productId)).unwrap()
+                    await dispatch(getProducts()).unwrap()
+                    toast.success('Sao chép thành công')
+                  } catch (error) {
+                    toast.error('Lỗi sao chép')
+                    console.log(error)
+                  }
+                }}
+                className="text-cyan-600 focus:text-cyan-600 focus:bg-cyan-50"
+              >
+                <IconCopyCheck className="mr-2 size-4" />
+                <span>Sao chép</span>
+              </DropdownMenuItem>
+
+              {selectedRows.length > 0 && (
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-destructive focus:text-destructive"
                 >
-                    <option value="">Loại sản phẩm</option>
-                    {productTypes.map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                </select>
+                  <TrashIcon className="mr-2 size-4" />
+                  <span>Xóa ({selectedRows.length})</span>
+                </DropdownMenuItem>
+              )}
 
-                <select
-                    value={selectedCategory}
-                    onChange={(e) => handleFilterChange('categoryId', e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring max-w-[150px]"
+              {/* Reset filter */}
+              {isFiltered && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => table.resetColumnFilters()}
+                  >
+                    <Cross2Icon className="mr-2 size-4" />
+                    <span>Đặt lại bộ lọc</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              <Can permission="GET_PRODUCT">
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setShowExportDialog(true)}
+                  className="text-green-600 focus:text-green-600 focus:bg-green-50"
                 >
-                    <option value="">Danh mục</option>
-                    {categories.slice(0, 50).map((c) => ( // Render first 50 to avoid long dropdowns, or ideally use a searchable select
-                        <option key={c.id} value={c.id}>{c.categoryName}</option>
-                    ))}
-                </select>
+                  <IconFileTypeXls className="mr-2 size-4" />
+                  <span>Xuất Excel</span>
+                </DropdownMenuItem>
+              </Can>
 
-                <select
-                    value={selectedStatus}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              <Can permission="CREATE_PRODUCT">
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setShowImportDialog(true)}
+                  className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50"
                 >
-                    <option value="">Trạng thái</option>
-                    {productStatuses.map((status) => (
-                        <option key={status.value} value={status.value}>
-                            {status.label}
-                        </option>
-                    ))}
-                </select>
+                  <FileSpreadsheet className="mr-2 size-4" />
+                  <span>Import Excel</span>
+                </DropdownMenuItem>
+              </Can>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-                {isFiltered && (
-                    <Button
-                        variant="ghost"
-                        onClick={() => {
-                            setColumnFilters([])
-                            setGlobalFilter('')
-                            setSearchInput('')
-                        }}
-                        className="h-8 px-2 lg:px-3"
-                    >
-                        Xóa lọc
-                        <Cross2Icon className="ml-2 h-4 w-4" />
-                    </Button>
-                )}
-            </div>
+        {showExportDialog && (
+          <ExportProductDialog
+            open={showExportDialog}
+            onOpenChange={setShowExportDialog}
+            showTrigger={false}
+          />
+        )}
 
-            <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                    {hasSelectedRows && (
-                        <DeleteMultipleProductsDialog
-                            products={selectedRows.map((row) => row.original)}
-                            onSuccess={() => table.toggleAllRowsSelected(false)}
-                        />
-                    )}
-                </div>
-                <CreateProductDialog />
-                <DataTableViewOptions table={table} />
-            </div>
-        </div>
+        <DeleteMultipleProductsDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onConfirm={handleDelete}
+          count={selectedRows.length}
+        />
+      </div>
     )
+  }
+
+  // Desktop view - Full toolbar
+  return (
+    <div className="flex w-full items-center justify-between space-x-2 overflow-auto">
+      <div className="flex flex-1 items-center space-x-2 min-w-0">
+        <Input
+          placeholder="Tìm kiếm..."
+          value={table.getColumn('name')?.getFilterValue() || ''}
+          onChange={(event) =>
+            table.getColumn('name')?.setFilterValue(event.target.value)
+          }
+          className="h-8 w-[150px] lg:w-[250px]"
+        />
+        <div className="flex gap-x-2 flex-shrink-0">
+          {table.getColumn('categoryId') && (
+            <DataTableFacetedFilter
+              column={table.getColumn('categoryId')}
+              title="Danh mục"
+              options={categories.map((category) => ({
+                value: parseInt(category?.id),
+                label: category?.name,
+              }))}
+            />
+          )}
+        </div>
+        {isFiltered && (
+          <Button
+            variant="ghost"
+            onClick={() => table.resetColumnFilters()}
+            className="h-8 px-1 sm:px-2 lg:px-3 text-xs sm:text-sm"
+          >
+            Đặt lại
+            <Cross2Icon className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+          </Button>
+        )}
+      </div>
+
+      {selectedRows.length > 0 && (
+        <Button
+          variant="destructive"
+          size="sm"
+          className="h-8"
+          onClick={() => setShowDeleteDialog(true)}
+        >
+          <TrashIcon className="mr-2 size-4" aria-hidden="true" />
+          Xóa ({selectedRows.length})
+        </Button>
+      )}
+
+      {/* Sao chép sản phẩm */}
+      <Button
+        className="mx-0 sm:mx-2 text-cyan-600 border-cyan-600 hover:bg-cyan-50 hover:text-cyan-700"
+        variant="outline"
+        size="sm"
+        onClick={async () => {
+          const selectedRows = table.getSelectedRowModel().rows
+          if (selectedRows.length !== 1) {
+            toast.warning('Vui lòng chọn một sản phẩm để sao chép')
+            return
+          }
+
+          const productId = selectedRows[0]?.original?.id
+          try {
+            await dispatch(copyProduct(productId)).unwrap()
+            await dispatch(getProducts()).unwrap()
+            return true
+          } catch (error) {
+            console.log(error)
+          }
+        }}
+        loading={loading}
+      >
+        <IconCopyCheck className="mr-2 size-4" aria-hidden="true" />
+        Sao chép
+      </Button>
+
+      <Can
+        permission={[
+          'CREATE_PRODUCT',
+          'GET_SUPPLIER',
+          'GET_CATEGORY',
+          'GET_UNIT',
+        ]}
+      >
+        <Button
+          className="mx-2 bg-green-600 hover:bg-green-700 text-white"
+          size="sm"
+          onClick={() => setShowCreateProductDialog(true)}
+        >
+          <PlusIcon className="mr-2 size-4" aria-hidden="true" />
+          Thêm mới
+        </Button>
+
+        {showCreateProductDialog && (
+          <CreateProductDialog
+            open={showCreateProductDialog}
+            onOpenChange={setShowCreateProductDialog}
+            showTrigger={false}
+          />
+        )}
+      </Can>
+
+      <Can permission="GET_PRODUCT">
+        <Button
+          onClick={() => setShowExportDialog(true)}
+          className="mx-0 mr-2 text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
+          variant="outline"
+          size="sm"
+        >
+          <IconFileTypeXls className="mr-2 size-4" aria-hidden="true" />
+          Xuất Excel
+        </Button>
+
+        {showExportDialog && (
+          <ExportProductDialog
+            open={showExportDialog}
+            onOpenChange={setShowExportDialog}
+            showTrigger={false}
+          />
+        )}
+      </Can>
+
+      <Can permission="CREATE_PRODUCT">
+        <Button
+          onClick={() => setShowImportDialog(true)}
+          className="mx-2 text-emerald-600 border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+          variant="outline"
+          size="sm"
+        >
+          <FileSpreadsheet className="mr-2 size-4" aria-hidden="true" />
+          Import Excel
+        </Button>
+
+        {/* Desktop Import Dialog */}
+        {showImportDialog && (
+          <ImportProductDialog
+            open={showImportDialog}
+            onOpenChange={setShowImportDialog}
+          />
+        )}
+      </Can>
+
+      <DeleteMultipleProductsDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDelete}
+        count={selectedRows.length}
+      />
+
+      <DataTableViewOptions table={table} />
+    </div>
+  )
 }
+
+export { DataTableToolbar }
