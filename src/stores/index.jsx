@@ -19,6 +19,8 @@ import unitReducer from './UnitSlice'
 import productReducer from './ProductSlice'
 import ticketReducer from './TicketSlice'
 import taskReducer from './TaskSlice'
+import attendanceReducer from './AttendanceSlice'
+import overtimeReducer from './OvertimeSlice'
 
 const persistConfig = { key: 'nam-viet', storage }
 
@@ -44,6 +46,8 @@ export const store = configureStore({
     product: productReducer,
     ticket: ticketReducer,
     task: taskReducer,
+    attendance: attendanceReducer,
+    overtime: overtimeReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),
