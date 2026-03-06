@@ -1,8 +1,44 @@
+import { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { DataTableColumnHeader } from './DataTableColumnHeader'
 import { DataTableRowActions } from './DataTableRowAction'
 import { priorityLabels } from './data'
+import { getMaterialById } from '@/stores/MaterialSlice'
+import MaterialDetailDialog from './MaterialDetailDialog'
+
+const MaterialCodeCell = ({ row }) => {
+    const [showDetail, setShowDetail] = useState(false)
+    const dispatch = useDispatch()
+    const materialDetail = useSelector((state) => state.material.material)
+    const detailLoading = useSelector((state) => state.material.detailLoading)
+
+    const handleClick = () => {
+        dispatch(getMaterialById(row.original.id))
+        setShowDetail(true)
+    }
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={handleClick}
+                className="font-mono text-sm font-semibold text-green-700 hover:text-green-900 hover:underline cursor-pointer transition-colors"
+            >
+                {row.getValue('materialCode')}
+            </button>
+            {showDetail && (
+                <MaterialDetailDialog
+                    open={showDetail}
+                    onOpenChange={setShowDetail}
+                    material={materialDetail}
+                    loading={detailLoading}
+                />
+            )}
+        </>
+    )
+}
 
 export const columns = [
     {
@@ -34,11 +70,7 @@ export const columns = [
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Mã NL" />
         ),
-        cell: ({ row }) => (
-            <div className="font-mono text-sm font-semibold text-green-700">
-                {row.getValue('materialCode')}
-            </div>
-        ),
+        cell: ({ row }) => <MaterialCodeCell row={row} />,
         enableSorting: true,
     },
     {

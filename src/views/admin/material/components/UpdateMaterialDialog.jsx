@@ -28,6 +28,10 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover'
+import { DatePicker } from '@/components/custom/DatePicker'
+import { CalendarIcon } from 'lucide-react'
+import { format } from 'date-fns'
+import { vi } from 'date-fns/locale'
 import {
     Command,
     CommandEmpty,
@@ -84,6 +88,8 @@ const UpdateMaterialDialog = ({ open, onOpenChange, material, ...props }) => {
 
     const [unitOpen, setUnitOpen] = useState(false)
     const [unitSearch, setUnitSearch] = useState('')
+    const [openPurchaseDate, setOpenPurchaseDate] = useState(false)
+    const [openEffectiveDate, setOpenEffectiveDate] = useState(false)
 
     const dispatch = useDispatch()
 
@@ -371,9 +377,43 @@ const UpdateMaterialDialog = ({ open, onOpenChange, material, ...props }) => {
                                     render={({ field }) => (
                                         <FormItem className="space-y-1">
                                             <FormLabel>Ngày mua vào</FormLabel>
-                                            <FormControl>
-                                                <Input type="date" className="focus-visible:ring-green-500" {...field} value={field.value || ''} />
-                                            </FormControl>
+                                            <Popover open={openPurchaseDate} onOpenChange={setOpenPurchaseDate}>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant="outline"
+                                                            className={cn(
+                                                                'w-full pl-3 text-left font-normal focus-visible:ring-green-500',
+                                                                !field.value && 'text-muted-foreground',
+                                                            )}
+                                                        >
+                                                            {field.value ? (
+                                                                format(new Date(field.value), 'dd/MM/yyyy', {
+                                                                    locale: vi,
+                                                                })
+                                                            ) : (
+                                                                <span>Chọn ngày mua</span>
+                                                            )}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <DatePicker
+                                                        mode="single"
+                                                        captionLayout="dropdown-buttons"
+                                                        fromYear={2000}
+                                                        toYear={new Date().getFullYear() + 5}
+                                                        selected={field.value ? new Date(field.value) : undefined}
+                                                        onSelect={(date) => {
+                                                            field.onChange(date ? format(date, 'yyyy-MM-dd') : null)
+                                                            setOpenPurchaseDate(false)
+                                                        }}
+                                                        initialFocus
+                                                        locale={vi}
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -385,9 +425,43 @@ const UpdateMaterialDialog = ({ open, onOpenChange, material, ...props }) => {
                                     render={({ field }) => (
                                         <FormItem className="space-y-1">
                                             <FormLabel>Ngày áp dụng</FormLabel>
-                                            <FormControl>
-                                                <Input type="date" className="focus-visible:ring-green-500" {...field} value={field.value || ''} />
-                                            </FormControl>
+                                            <Popover open={openEffectiveDate} onOpenChange={setOpenEffectiveDate}>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant="outline"
+                                                            className={cn(
+                                                                'w-full pl-3 text-left font-normal focus-visible:ring-green-500',
+                                                                !field.value && 'text-muted-foreground',
+                                                            )}
+                                                        >
+                                                            {field.value ? (
+                                                                format(new Date(field.value), 'dd/MM/yyyy', {
+                                                                    locale: vi,
+                                                                })
+                                                            ) : (
+                                                                <span>Chọn ngày áp dụng</span>
+                                                            )}
+                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <DatePicker
+                                                        mode="single"
+                                                        captionLayout="dropdown-buttons"
+                                                        fromYear={2000}
+                                                        toYear={new Date().getFullYear() + 5}
+                                                        selected={field.value ? new Date(field.value) : undefined}
+                                                        onSelect={(date) => {
+                                                            field.onChange(date ? format(date, 'yyyy-MM-dd') : null)
+                                                            setOpenEffectiveDate(false)
+                                                        }}
+                                                        initialFocus
+                                                        locale={vi}
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
                                             <FormMessage />
                                         </FormItem>
                                     )}

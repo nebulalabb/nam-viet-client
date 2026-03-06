@@ -4,17 +4,31 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useState } from 'react'
-import { IconEdit, IconTrash } from '@tabler/icons-react'
+import { useDispatch, useSelector } from 'react-redux'
+import { IconEdit, IconTrash, IconEye } from '@tabler/icons-react'
 import UpdateMaterialDialog from './UpdateMaterialDialog'
 import DeleteMaterialDialog from './DeleteMaterialDialog'
+import MaterialDetailDialog from './MaterialDetailDialog'
+import { getMaterialById } from '@/stores/MaterialSlice'
 
 const DataTableRowActions = ({ row }) => {
     const [showEdit, setShowEdit] = useState(false)
     const [showDelete, setShowDelete] = useState(false)
+    const [showDetail, setShowDetail] = useState(false)
+
+    const dispatch = useDispatch()
+    const materialDetail = useSelector((state) => state.material.material)
+    const detailLoading = useSelector((state) => state.material.detailLoading)
+
+    const handleViewDetail = () => {
+        dispatch(getMaterialById(row.original.id))
+        setShowDetail(true)
+    }
 
     return (
         <>
@@ -35,6 +49,15 @@ const DataTableRowActions = ({ row }) => {
                 />
             )}
 
+            {showDetail && (
+                <MaterialDetailDialog
+                    open={showDetail}
+                    onOpenChange={setShowDetail}
+                    material={materialDetail}
+                    loading={detailLoading}
+                />
+            )}
+
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
@@ -46,6 +69,18 @@ const DataTableRowActions = ({ row }) => {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem
+                        onSelect={handleViewDetail}
+                        className="text-green-600 focus:text-green-600 focus:bg-green-50"
+                    >
+                        Xem chi tiết
+                        <DropdownMenuShortcut>
+                            <IconEye className="h-4 w-4" />
+                        </DropdownMenuShortcut>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
                     <DropdownMenuItem
                         onSelect={() => setShowEdit(true)}
                         className="text-orange-600 focus:text-orange-600 focus:bg-orange-50"

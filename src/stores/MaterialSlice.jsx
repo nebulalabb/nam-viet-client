@@ -17,6 +17,19 @@ export const getMaterials = createAsyncThunk(
     },
 )
 
+export const getMaterialById = createAsyncThunk(
+    'material/getMaterialById',
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/materials/${id}`)
+            return response.data.data
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
 export const createMaterial = createAsyncThunk(
     'material/create',
     async (data, { rejectWithValue, dispatch }) => {
@@ -84,6 +97,7 @@ const initialState = {
         totalPages: 1,
     },
     loading: false,
+    detailLoading: false,
     error: null,
 }
 
@@ -142,6 +156,19 @@ export const materialSlice = createSlice({
             })
             .addCase(updateMaterial.rejected, (state, action) => {
                 state.loading = false
+                state.error = action.payload?.message || 'Lỗi không xác định'
+                toast.error(state.error)
+            })
+            .addCase(getMaterialById.pending, (state) => {
+                state.detailLoading = true
+                state.error = null
+            })
+            .addCase(getMaterialById.fulfilled, (state, action) => {
+                state.detailLoading = false
+                state.material = action.payload
+            })
+            .addCase(getMaterialById.rejected, (state, action) => {
+                state.detailLoading = false
                 state.error = action.payload?.message || 'Lỗi không xác định'
                 toast.error(state.error)
             })
