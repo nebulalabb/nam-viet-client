@@ -11,11 +11,11 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     // DISABLING SOCKET IO TEMPORARILY TO FIX CORS POLLING ERRORS
-    const socketIo = io(SOCKET_URL)
-    setSocket(socketIo)
+    // const socketIo = io(SOCKET_URL)
+    // setSocket(socketIo)
 
     return () => {
-      if (socketIo) socketIo.disconnect()
+      // if (socketIo) socketIo.disconnect()
     }
   }, [SOCKET_URL])
 

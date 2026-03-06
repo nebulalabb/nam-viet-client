@@ -306,31 +306,31 @@ export const sideLinks = [
   {
     title: 'Báo Cáo',
     icon: <PieChart size={20} strokeWidth={1.5} />,
-    permission: ['GET_REPORT', 'REPORT_PURCHASE_VIEW', 'REPORT_UNDELIVERED_VIEW', 'REPORT_UNRECEIVED_VIEW'],
+    permission: ['GET_REVENUE_REPORT', 'GET_INVENTORY_REPORT', 'GET_SALES_REPORT', 'GET_FINANCIAL_REPORT'],
     sub: [
       {
         title: 'Doanh thu',
         href: '/revenue',
         icon: <CircleDollarSign size={18} strokeWidth={1.5} />,
-        permission: 'GET_REPORT',
+        permission: 'GET_REVENUE_REPORT',
       },
       {
         title: 'Tồn kho',
         href: '/inventory-report',
         icon: <Archive size={18} strokeWidth={1.5} />,
-        permission: 'GET_REPORT',
+        permission: 'GET_INVENTORY_REPORT',
       },
       {
         title: 'Bán hàng',
         href: '/sales-report',
         icon: <CircleDollarSign size={18} strokeWidth={1.5} />,
-        permission: 'GET_REPORT',
+        permission: 'GET_SALES_REPORT',
       },
       {
         title: 'Tài chính',
         href: '/financial-report',
         icon: <DatabaseBackup size={18} strokeWidth={1.5} />,
-        permission: 'GET_REPORT',
+        permission: 'GET_FINANCIAL_REPORT',
       },
     ],
   },

@@ -1,61 +1,64 @@
-import { useState } from 'react'
-import { useDispatch } from 'react-redux'
-import { deleteUnit } from '@/stores/UnitSlice'
+import { Button } from '@/components/custom/Button'
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import { deleteUnit } from '@/stores/UnitSlice'
+import { TrashIcon } from '@radix-ui/react-icons'
+import { useDispatch, useSelector } from 'react-redux'
 
-export default function DeleteUnitDialog({ unit, open, onOpenChange }) {
-    const [isLoading, setIsLoading] = useState(false)
-    const dispatch = useDispatch()
+const DeleteUnitDialog = ({ unit, showTrigger = true, ...props }) => {
+  const dispatch = useDispatch()
+  const loading = useSelector((state) => state.unit.loading)
 
-    const onDelete = async () => {
-        setIsLoading(true)
-        try {
-            await dispatch(deleteUnit(unit.id)).unwrap()
-            onOpenChange(false)
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setIsLoading(false)
-        }
+  const destroy = async (data) => {
+    try {
+      await dispatch(deleteUnit(data)).unwrap()
+    } catch (error) {
+      console.log('Submit error: ', error)
     }
+  }
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Xác nhận xóa</DialogTitle>
-                    <DialogDescription>
-                        Bạn có chắc chắn muốn xóa đơn vị tính <span className="font-bold">{unit?.unitName}</span>?
-                        Hành động này không thể hoàn tác.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="mt-4">
-                    <Button
-                        variant="outline"
-                        onClick={() => onOpenChange(false)}
-                        disabled={isLoading}
-                    >
-                        Hủy
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={onDelete}
-                        disabled={isLoading}
-                    >
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Xóa
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
+  return (
+    <Dialog {...props}>
+      {showTrigger ? (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <TrashIcon className="mr-2 size-4" aria-hidden="true" />
+          </Button>
+        </DialogTrigger>
+      ) : null}
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Bạn chắc chắn thực hiện hành động này?</DialogTitle>
+          <DialogDescription>
+            Hành động này không thể hoàn tác. Đơn vị:{' '}
+            <strong>{unit.name}</strong> sẽ bị xóa
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:space-x-0">
+          <DialogClose asChild>
+            <Button variant="outline">Hủy</Button>
+          </DialogClose>
+          <DialogClose asChild>
+            <Button
+              variant="destructive"
+              onClick={() => destroy(unit.id)}
+              loading={loading}
+            >
+              Tiếp tục
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
+
+export { DeleteUnitDialog }

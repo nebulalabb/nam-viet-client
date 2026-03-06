@@ -57,6 +57,17 @@ export const columns = [
     enableHiding: true,
   },
   {
+    accessorKey: 'cccd',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="CCCD" />
+    ),
+    cell: ({ row }) => (
+      <div className="w-[120px]">{row.getValue('cccd') || '---'}</div>
+    ),
+    enableSorting: false,
+    enableHiding: true,
+  },
+  {
     accessorKey: 'status',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Trạng thái" />

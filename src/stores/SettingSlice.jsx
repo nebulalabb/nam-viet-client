@@ -9,7 +9,11 @@ export const getSetting = createAsyncThunk(
   'setting/get-setting',
   async (key, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/general-settings`)
+      let url = '/settings/general'
+      if (key === 'system_information') {
+        url = '/settings/general/system-info'
+      }
+      const response = await api.get(url)
       const { data } = response.data
       return data
     } catch (error) {
@@ -23,8 +27,7 @@ export const syncSystemSetting = createAsyncThunk(
   'setting/sync-system-setting',
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      await api.post('/setting/sync-system-setting')
-      await dispatch(getSetting('system_information'))
+      await dispatch(getSetting('system_information')).unwrap()
       toast.success('Đồng bộ thành công')
     } catch (error) {
       const message = handleError(error)
@@ -38,7 +41,7 @@ export const updateGeneralSetting = createAsyncThunk(
   async (data, { rejectWithValue, dispatch }) => {
     try {
       const payload = data.generalSetting ? data.generalSetting : data
-      await api.put('/general-settings', payload)
+      await api.put('/settings/general', payload)
       await dispatch(getSetting())
       toast.success('Cập nhật thành công')
     } catch (error) {

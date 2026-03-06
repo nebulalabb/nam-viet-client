@@ -15,7 +15,7 @@ import SupplierPage from '../views/admin/supplier/SupplierPage'
 import CustomerDebtPage from '@/views/admin/debt/CustomerDebtPage'
 import CategoryPage from '../views/admin/category/CategoryPage'
 import WarehousePage from '../views/admin/warehouse/WarehousePage'
-import UserPage from '../views/admin/user/UserPage'
+import UserPage from '../views/admin/user/UserPage' // Giữ nguyên UserPage cho trang User
 import RolePage from '../views/admin/role/RolePage'
 import SystemLogPage from '../views/admin/setting/system-log/SystemLogPage'
 import SettingPage from '../views/admin/setting/SettingPage'
@@ -25,12 +25,27 @@ import AccessLogPage from '../views/admin/setting/access-log/AccessLogPage'
 import ActivePromotionsPage from '../views/admin/promotion/active-promotions/ActivePromotionsPage'
 import UnitPage from '../views/admin/unit/UnitPage'
 import ProductPage from '../views/admin/product/ProductPage'
+import AttributePage from '../views/admin/attribute/AttributePage'
+import TaxPage from '../views/admin/tax/TaxPage'
 
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
 import MaterialPage from '@/views/admin/material/MaterialPage'
+import AttendancePage from '@/views/admin/attendance/AttendancePage'
+
+import OvertimePage from '@/views/admin/overtime/OvertimePage'
 
 const routes = [
+  {
+    path: '/attendance',
+    element: AttendancePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/overtime',
+    element: OvertimePage,
+    layout: AdminLayout,
+  },
   {
     path: '/dashboard',
     element: DashboardPage,
@@ -76,7 +91,6 @@ const routes = [
     element: ActivePromotionsPage,
     layout: AdminLayout,
   },
-
   {
     path: '/role-and-permissions',
     element: RolePage,
@@ -112,6 +126,16 @@ const routes = [
     element: ProductPage,
     layout: AdminLayout,
   },
+  {
+    path: '/attribute',
+    element: AttributePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/tax',
+    element: TaxPage,
+    layout: AdminLayout,
+  },
 
   //Công nợ khách hàng
   {
@@ -119,7 +143,6 @@ const routes = [
     element: CustomerDebtPage,
     layout: AdminLayout,
   },
-
   {
     path: '/category',
     element: CategoryPage,
@@ -132,7 +155,7 @@ const routes = [
   },
   {
     path: '/user',
-    element: UserPage,
+    element: UserPage, // Trang người dùng hệ thống
     layout: AdminLayout,
   },
   {

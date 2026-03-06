@@ -46,7 +46,7 @@ const LogDetailDialog = ({ open, onOpenChange, log }) => {
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Đối tượng (ID)</label>
-                <div className="text-sm">{log.entity} (#{log.entityId})</div>
+                <div className="text-sm">{log.tableName} (#{log.recordId})</div>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">IP Address</label>
@@ -55,23 +55,23 @@ const LogDetailDialog = ({ open, onOpenChange, log }) => {
             </div>
 
             {/* Changes */}
-            {(log.oldValues || log.newValues) && (
+            {(log.oldValue || log.newValue) && (
               <div className="rounded-md border p-4 bg-muted/50">
                 <h4 className="mb-2 font-semibold">Dữ liệu thay đổi</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {log.oldValues && (
+                  {log.oldValue && (
                     <div>
                       <span className="text-xs font-bold text-red-500 block mb-1">Dữ liệu cũ (Old Values)</span>
                       <pre className="text-xs bg-slate-950 text-slate-50 p-2 rounded overflow-auto max-h-[300px]">
-                        {formatValue(log.oldValues)}
+                        {formatValue(log.oldValue)}
                       </pre>
                     </div>
                   )}
-                  {log.newValues && (
+                  {log.newValue && (
                     <div>
                       <span className="text-xs font-bold text-green-500 block mb-1">Dữ liệu mới (New Values)</span>
                       <pre className="text-xs bg-slate-950 text-slate-50 p-2 rounded overflow-auto max-h-[300px]">
-                        {formatValue(log.newValues)}
+                        {formatValue(log.newValue)}
                       </pre>
                     </div>
                   )}

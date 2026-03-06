@@ -48,11 +48,18 @@ const Nav = ({ links, isCollapsed, className, closeNav }) => {
           key={key}
           closeNav={closeNav}
           isOpen={openDropdownIdx === idx}
-          onOpenChange={(isOpen) => setOpenDropdownIdx(isOpen ? idx : null)}
+          userInteracted={openDropdownIdx !== null}
+          onOpenChange={(open) => {
+            if (open) {
+              setOpenDropdownIdx(idx) // mở menu này, đóng tất cả menu khác
+            } else {
+              setOpenDropdownIdx(-1) // đánh dấu user chủ động đóng
+            }
+          }}
         />
       )
 
-    return <NavLink {...rest} key={key} closeNav={closeNav} onClick={() => setOpenDropdownIdx(null)} />
+    return <NavLink {...rest} key={key} closeNav={closeNav} onClick={() => setOpenDropdownIdx(-1)} />
   }
 
   return (
@@ -141,14 +148,15 @@ const NavLinkIcon = ({ title, icon, label, href }) => {
   )
 }
 
-const NavLinkDropdown = ({ title, icon, label, sub, closeNav, isOpen, onOpenChange }) => {
+const NavLinkDropdown = ({ title, icon, label, sub, closeNav, isOpen, userInteracted = false, onOpenChange }) => {
   const { checkActiveNav } = useCheckActiveNav()
 
   const isChildActive = !!sub?.find((s) => checkActiveNav(s.href))
 
-  // Open by default if child is active and we don't have controlled state yet,
-  // but if controlled state is provided, use that
-  const openState = isOpen !== undefined ? isOpen || isChildActive : isChildActive
+  // userInteracted = false: chưa tương tác → auto open nếu con đang active
+  // userInteracted = true, isOpen = true: user mở menu này
+  // userInteracted = true, isOpen = false: user đóng hoặc mở menu khác
+  const openState = userInteracted ? isOpen : isChildActive
 
   return (
     <Collapsible
