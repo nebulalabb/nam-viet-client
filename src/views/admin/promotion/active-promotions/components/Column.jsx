@@ -1,6 +1,8 @@
 import { format } from 'date-fns'
+import { useState } from 'react'
 import { DataTableColumnHeader } from './DataTableColumnHeader'
 import { DataTableRowActions } from './DataTableRowAction'
+import { PromotionDetailDialog } from '../../components/PromotionDetailDialog'
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -9,17 +11,34 @@ const formatCurrency = (value) => {
     }).format(value || 0)
 }
 
+const PromotionCodeCell = ({ row }) => {
+    const [showDetail, setShowDetail] = useState(false)
+    return (
+        <>
+            <div
+                className="w-20 cursor-pointer font-medium text-blue-600 hover:underline"
+                onClick={() => setShowDetail(true)}
+            >
+                {row.getValue('promotionCode')}
+            </div>
+            {showDetail && (
+                <PromotionDetailDialog
+                    open={showDetail}
+                    onOpenChange={setShowDetail}
+                    promotion={row.original}
+                />
+            )}
+        </>
+    )
+}
+
 export const columns = [
     {
         accessorKey: 'promotionCode',
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Mã khuyến mãi" />
         ),
-        cell: ({ row }) => (
-            <div className="w-20 cursor-pointer font-medium text-blue-600 hover:underline">
-                {row.getValue('promotionCode')}
-            </div>
-        ),
+        cell: ({ row }) => <PromotionCodeCell row={row} />,
         enableSorting: true,
         enableHiding: true,
     },

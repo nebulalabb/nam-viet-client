@@ -81,7 +81,7 @@ export const approvePromotion = createAsyncThunk(
   },
 )
 
-// Cancel promotion
+// Cancel prediction
 export const cancelPromotion = createAsyncThunk(
   'promotion/cancel',
   async (cancelData, { rejectWithValue, dispatch }) => {

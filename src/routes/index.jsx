@@ -30,6 +30,7 @@ import TaxPage from '../views/admin/tax/TaxPage'
 
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
+import MaterialPage from '@/views/admin/material/MaterialPage'
 import AttendancePage from '@/views/admin/attendance/AttendancePage'
 
 import OvertimePage from '@/views/admin/overtime/OvertimePage'
@@ -102,7 +103,7 @@ const routes = [
   },
   {
     path: '/employee',
-    element: EmployeePage, // Đã cập nhật sử dụng EmployeePage
+    element: EmployeePage,
     layout: AdminLayout,
   },
   {
@@ -160,6 +161,11 @@ const routes = [
   {
     path: '/supplier',
     element: SupplierPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/material',
+    element: MaterialPage,
     layout: AdminLayout,
   },
   {

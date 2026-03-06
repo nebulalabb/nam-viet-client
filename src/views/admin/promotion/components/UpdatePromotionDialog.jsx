@@ -37,7 +37,7 @@ import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import api from '@/utils/axios'
 
@@ -58,6 +58,8 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
             buyQuantity: promotion?.conditions?.buy_quantity || undefined,
             getQuantity: promotion?.products?.[0]?.giftQuantity || promotion?.conditions?.get_quantity || undefined,
             customerId: promotion?.conditions?.customer_id || undefined,
+            customerType: promotion?.conditions?.applicable_customer_types?.[0] || undefined,
+            unit: promotion?.conditions?.unit || undefined,
         },
     })
 
@@ -106,6 +108,10 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
         if (open) fetchData()
     }, [open])
 
+    const uniqueUnits = useMemo(() => {
+        return [...new Set(productsList.map(p => p.unit).filter(Boolean))]
+    }, [productsList])
+
     // Set default values when promotion changes
     useEffect(() => {
         if (promotion) {
@@ -123,6 +129,8 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                 buyQuantity: promotion?.conditions?.buy_quantity || undefined,
                 getQuantity: promotion?.products?.[0]?.giftQuantity || promotion?.conditions?.get_quantity || undefined,
                 customerId: promotion?.conditions?.customer_id || undefined,
+                customerType: promotion?.conditions?.applicable_customer_types?.[0] || undefined,
+                unit: promotion?.conditions?.unit || undefined,
             })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,6 +144,11 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
         try {
             if (!data.startDate || !data.endDate) {
                 toast.error('Vui lòng chọn ngày bắt đầu và kết thúc')
+                return
+            }
+
+            if (new Date(data.startDate) >= new Date(data.endDate)) {
+                toast.error('Ngày bắt đầu phải nhỏ hơn ngày kết thúc')
                 return
             }
             console.log('[SUBMIT] giftProductId:', data.giftProductId, 'getQuantity:', data.getQuantity, 'all data:', data)
@@ -178,10 +191,21 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                 if (data.applicableTo === 'specific_customer' && data.customerId) {
                     payload.conditions.customer_id = Number(data.customerId)
                 }
+
+                if (data.applicableTo === 'customer_group' && data.customerType) {
+                    payload.conditions.applicable_customer_types = [data.customerType]
+                }
             } else if (data.promotionType === 'buy_x_get_y') {
                 payload.conditions = {
                     buy_quantity: Number(data.buyQuantity),
                     get_quantity: Number(data.getQuantity),
+                }
+            }
+
+            if (data.applicableTo === 'product_group' && data.unit) {
+                payload.conditions = {
+                    ...(payload.conditions || {}),
+                    unit: data.unit
                 }
             }
 
@@ -286,6 +310,63 @@ const UpdatePromotionDialog = ({ promotion, open, onOpenChange }) => {
                                         </FormItem>
                                     )}
                                 />
+
+                                {watchApplicableTo === 'product_group' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="unit"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Đơn vị sản phẩm</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value || undefined}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn đơn vị sản phẩm" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {uniqueUnits.map((unit) => (
+                                                            <SelectItem key={unit} value={unit}>
+                                                                {unit}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {watchApplicableTo === 'customer_group' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="customerType"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Loại khách hàng</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value || undefined}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn loại khách hàng" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="individual">Cá nhân</SelectItem>
+                                                        <SelectItem value="company">Doanh nghiệp</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
                                 {watchApplicableTo === 'specific_customer' && (
                                     <FormField

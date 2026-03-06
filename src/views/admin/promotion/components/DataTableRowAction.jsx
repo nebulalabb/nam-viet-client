@@ -29,10 +29,10 @@ const DataTableRowActions = ({ row }) => {
     // Only "pending" promotions can be approved
     const canApprove = row.original.status === 'pending'
 
-    // Non-cancelled/expired promotions can be cancelled
-    const canCancel = ['pending', 'active'].includes(row.original.status)
-    const canDelete = row.original.status === 'cancelled'
-    const canRestore = row.original.status === 'cancelled'
+    // Non-cancelled promotions can be cancelled (including waiting)
+    const canCancel = ['pending', 'active', 'waiting'].includes(row.original.status)
+    const canDelete = ['cancelled', 'expired'].includes(row.original.status)
+    const canRestore = ['cancelled', 'expired'].includes(row.original.status)
 
     // Only "pending" promotions can be edited
     const canEdit = row.original.status === 'pending'
