@@ -17,6 +17,20 @@ export const getProducts = createAsyncThunk(
     },
 )
 
+export const getLowStockProducts = createAsyncThunk(
+    'product/getLowStock',
+    async (params = {}, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/products/low-stock', { params })
+            const { data, meta } = response.data
+            return { data, meta }
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
 export const getProductById = createAsyncThunk(
     'product/getById',
     async (id, { rejectWithValue }) => {
@@ -102,6 +116,7 @@ const initialState = {
         total: 0,
         totalPages: 1,
     },
+    lowStockProducts: [],
     loading: false,
     error: null,
 }
@@ -123,6 +138,18 @@ export const productSlice = createSlice({
                 if (action.payload.pagination) {
                     state.pagination = action.payload.pagination
                 }
+            })
+            .addCase(getLowStockProducts.pending, (state) => {
+                state.loading = true
+                state.error = null
+            })
+            .addCase(getLowStockProducts.fulfilled, (state, action) => {
+                state.loading = false
+                state.lowStockProducts = action.payload.data
+            })
+            .addCase(getLowStockProducts.rejected, (state, action) => {
+                state.loading = false
+                state.error = action.payload || 'Lỗi lấy dữ liệu cảnh báo tồn kho'
             })
             .addCase(getProducts.rejected, (state, action) => {
                 state.loading = false

@@ -24,6 +24,7 @@ import UnitPage from '../views/admin/unit/UnitPage'
 import ProductPage from '../views/admin/product/ProductPage'
 import WarehouseInPage from '../views/admin/warehouse-in/WarehouseInPage'
 import WarehouseOutPage from '../views/admin/warehouse-out/WarehouseOutPage'
+import InventoryWarningPage from '../views/admin/inventory-warning/InventoryWarningPage'
 
 
 const routes = [
@@ -109,6 +110,11 @@ const routes = [
   {
     path: '/warehouse-out',
     element: WarehouseOutPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/inventory-warning',
+    element: InventoryWarningPage,
     layout: AdminLayout,
   },
   {

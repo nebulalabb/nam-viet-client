@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/custom/Button'
 import {
     DropdownMenu,
@@ -8,7 +9,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu'
-import { IconEdit, IconTrash, IconEye } from '@tabler/icons-react'
+import { IconEdit, IconTrash, IconEye, IconPackage } from '@tabler/icons-react'
 
 import UpdateWarehouseDialog from './UpdateWarehouseDialog'
 import DeleteWarehouseDialog from './DeleteWarehouseDialog'
@@ -20,6 +21,7 @@ export function DataTableRowAction({ row }) {
     const [isUpdateOpen, setIsUpdateOpen] = useState(false)
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
     const [isDetailOpen, setIsDetailOpen] = useState(false)
+    const navigate = useNavigate()
 
     return (
         <>
@@ -41,6 +43,14 @@ export function DataTableRowAction({ row }) {
                         Xem chi tiết
                         <DropdownMenuShortcut>
                             <IconEye className="h-4 w-4" />
+                        </DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onClick={() => navigate(`/product?warehouseId=${warehouse.id}`)}
+                    >
+                        Danh sách sản phẩm
+                        <DropdownMenuShortcut>
+                            <IconPackage className="h-4 w-4" />
                         </DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <Can permission={'WAREHOUSE_MANAGEMENT'}>

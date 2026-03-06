@@ -55,7 +55,7 @@ const formSchema = z.object({
     status: z.string().optional(),
 })
 
-export default function CreateProductDialog() {
+export default function CreateProductDialog({ onSuccess }) {
     const [open, setOpen] = useState(false)
     const [imageFiles, setImageFiles] = useState([])     // File objects
     const [imagePreviews, setImagePreviews] = useState([]) // { url, isPrimary }
@@ -162,6 +162,11 @@ export default function CreateProductDialog() {
 
             setOpen(false)
             resetForm()
+
+            // Invoke the callback after creation is processed
+            if (onSuccess && newProduct?.id) {
+                onSuccess(newProduct.id)
+            }
         } catch (error) {
             // handled by slice
         } finally {

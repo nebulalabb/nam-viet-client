@@ -10,8 +10,11 @@ import { formatCurrency } from '@/utils/number-format'
 import { productStatuses, productTypes } from '../data'
 import {
     Package, Tag, Barcode, Weight, Box, Calendar,
-    Layers, Building2, Ruler, DollarSign, Warehouse, Image,
+    Layers, Building2, Ruler, DollarSign, Warehouse, Image, PlusCircle
 } from 'lucide-react'
+import CreateImportDialog from '../../warehouse-in/components/CreateImportDialog'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 const InfoRow = ({ icon: Icon, label, value, valueClass = '' }) => (
     <div className="flex items-start gap-3 py-2">
@@ -23,7 +26,9 @@ const InfoRow = ({ icon: Icon, label, value, valueClass = '' }) => (
     </div>
 )
 
-export function ProductDetailDialog({ product, open, onOpenChange }) {
+export function ProductDetailDialog({ product, open, onOpenChange, warehouseContextId }) {
+    const [showImportDialog, setShowImportDialog] = useState(false);
+
     if (!product) return null
 
     const status = productStatuses.find((s) => s.value === product.status)
@@ -184,7 +189,33 @@ export function ProductDetailDialog({ product, open, onOpenChange }) {
                         </div>
                     </div>
                 </div>
+
+                {warehouseContextId && (
+                    <div className="flex justify-end pt-4 border-t mt-4">
+                        <Button
+                            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => {
+                                setShowImportDialog(true)
+                            }}
+                        >
+                            <PlusCircle className="h-4 w-4" />
+                            Tạo Phiếu Nhập
+                        </Button>
+                    </div>
+                )}
             </DialogContent>
+
+            {/* Render CreateImportDialog outside to prevent nested unmounting issues */}
+            {warehouseContextId && (
+                <CreateImportDialog
+                    hideTrigger={true}
+                    externalOpen={showImportDialog}
+                    setExternalOpen={setShowImportDialog}
+                    prefillWarehouseId={warehouseContextId}
+                    prefillProductId={product.id}
+                    isWarningContext={true}
+                />
+            )}
         </Dialog>
     )
 }

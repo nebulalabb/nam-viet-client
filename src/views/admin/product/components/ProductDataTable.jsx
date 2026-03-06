@@ -34,6 +34,8 @@ export function ProductDataTable({
     globalFilter,
     onGlobalFilterChange,
     onRowClick,
+    hideCreateProduct,
+    onCreateSuccess,
 }) {
     const [rowSelection, setRowSelection] = useState({})
     const [columnVisibility, setColumnVisibility] = useState({})
@@ -73,6 +75,8 @@ export function ProductDataTable({
                 setColumnFilters={onColumnFiltersChange}
                 globalFilter={globalFilter}
                 setGlobalFilter={onGlobalFilterChange}
+                hideCreateProduct={hideCreateProduct}
+                onCreateSuccess={onCreateSuccess}
             />
             <div className="flex-1 overflow-hidden rounded-md border">
                 <Table className="relative">

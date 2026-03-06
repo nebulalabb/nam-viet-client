@@ -2,12 +2,15 @@ import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { useDispatch, useSelector } from 'react-redux'
 import { columns } from './components/Column'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getProducts } from '@/stores/ProductSlice'
 import { ProductDataTable } from './components/ProductDataTable'
 import { getCategories } from '@/stores/CategorySlice'
 import { getSuppliers } from '@/stores/SupplierSlice'
 import { getUnits } from '@/stores/UnitSlice'
+import { getWarehouses } from '@/stores/WarehouseSlice'
 import { ProductDetailDialog } from './components/ProductDetailDialog'
+import CreateImportDialog from '../warehouse-in/components/CreateImportDialog'
 
 const ProductPage = () => {
     const products = useSelector((state) => state.product.products)
@@ -22,6 +25,10 @@ const ProductPage = () => {
     const [columnFilters, setColumnFilters] = useState([])
     const [globalFilter, setGlobalFilter] = useState('')
     const [selectedProduct, setSelectedProduct] = useState(null)
+    const [importDialogOpen, setImportDialogOpen] = useState(false)
+    const [prefillProductId, setPrefillProductId] = useState(null)
+    const [searchParams] = useSearchParams()
+    const warehouseId = searchParams.get('warehouseId')
 
     const dispatch = useDispatch()
     useEffect(() => {
@@ -31,6 +38,7 @@ const ProductPage = () => {
         dispatch(getCategories({ limit: 1000 }))
         dispatch(getSuppliers({ limit: 1000 }))
         dispatch(getUnits({ limit: 1000 }))
+        dispatch(getWarehouses({ limit: 1000 }))
     }, [dispatch])
 
     useEffect(() => {
@@ -43,9 +51,15 @@ const ProductPage = () => {
             page: pagination.pageIndex + 1,
             limit: pagination.pageSize,
             search: globalFilter || undefined,
+            warehouseId: warehouseId ? Number(warehouseId) : undefined,
             ...filtersParams
         }))
-    }, [dispatch, pagination.pageIndex, pagination.pageSize, columnFilters, globalFilter])
+    }, [dispatch, pagination.pageIndex, pagination.pageSize, columnFilters, globalFilter, warehouseId])
+
+    const handleCreateSuccess = (productId) => {
+        setPrefillProductId(productId)
+        setImportDialogOpen(true)
+    }
 
     return (
         <Layout>
@@ -72,12 +86,19 @@ const ProductPage = () => {
                             globalFilter={globalFilter}
                             onGlobalFilterChange={setGlobalFilter}
                             onRowClick={setSelectedProduct}
+                            onCreateSuccess={handleCreateSuccess}
                         />
                     )}
                     <ProductDetailDialog
                         product={selectedProduct}
                         open={!!selectedProduct}
                         onOpenChange={(open) => !open && setSelectedProduct(null)}
+                    />
+                    <CreateImportDialog
+                        externalOpen={importDialogOpen}
+                        setExternalOpen={setImportDialogOpen}
+                        prefillProductId={prefillProductId}
+                        hideTrigger={true}
                     />
                 </div>
             </LayoutBody>

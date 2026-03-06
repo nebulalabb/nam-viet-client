@@ -137,11 +137,21 @@ export const columns = [
         id: 'stock',
         header: 'Tồn kho',
         cell: ({ row }) => {
+            const urlParams = new URLSearchParams(window.location.search)
+            const warehouseIdStr = urlParams.get('warehouseId')
+            const warehouseId = warehouseIdStr ? Number(warehouseIdStr) : null
+
             const inventory = row.original.inventory || []
-            const totalStock = inventory.reduce(
-                (sum, inv) => sum + Number(inv.quantity),
-                0,
-            )
+            let totalStock = 0
+            if (warehouseId) {
+                const whInv = inventory.find(i => i.warehouseId === warehouseId)
+                totalStock = whInv ? Number(whInv.quantity) : 0
+            } else {
+                totalStock = inventory.reduce(
+                    (sum, inv) => sum + Number(inv.quantity),
+                    0,
+                )
+            }
             return (
                 <div className="text-right">
                     <Badge variant={totalStock > 0 ? 'secondary' : 'destructive'}>

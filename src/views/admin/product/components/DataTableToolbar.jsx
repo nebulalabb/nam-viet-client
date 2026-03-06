@@ -14,6 +14,8 @@ export function DataTableToolbar({
     setColumnFilters,
     globalFilter,
     setGlobalFilter,
+    hideCreateProduct,
+    onCreateSuccess,
 }) {
     const categories = useSelector((state) => state.category?.categories || [])
 
@@ -104,15 +106,19 @@ export function DataTableToolbar({
             </div>
 
             <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                    {hasSelectedRows && (
-                        <DeleteMultipleProductsDialog
-                            products={selectedRows.map((row) => row.original)}
-                            onSuccess={() => table.toggleAllRowsSelected(false)}
-                        />
-                    )}
-                </div>
-                <CreateProductDialog />
+                {!hideCreateProduct && (
+                    <>
+                        <div className="flex items-center gap-2">
+                            {hasSelectedRows && (
+                                <DeleteMultipleProductsDialog
+                                    products={selectedRows.map((row) => row.original)}
+                                    onSuccess={() => table.toggleAllRowsSelected(false)}
+                                />
+                            )}
+                        </div>
+                        <CreateProductDialog onSuccess={onCreateSuccess} />
+                    </>
+                )}
                 <DataTableViewOptions table={table} />
             </div>
         </div>

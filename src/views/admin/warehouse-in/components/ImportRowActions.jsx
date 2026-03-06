@@ -26,7 +26,7 @@ export function ImportRowActions({ row }) {
     const [showCancel, setShowCancel] = useState(false)
     const [cancelReason, setCancelReason] = useState('')
 
-    const isDraft = transaction.status === 'draft'
+    const canApprove = transaction.status === 'draft' || transaction.status === 'pending'
     const canCancel = transaction.status === 'draft' || transaction.status === 'pending'
 
     const refresh = () =>
@@ -115,7 +115,7 @@ export function ImportRowActions({ row }) {
                         Xem chi tiết
                     </DropdownMenuItem>
 
-                    {isDraft && (
+                    {canApprove && (
                         <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setShowApprove(true)} className="text-green-700 focus:text-green-700">
