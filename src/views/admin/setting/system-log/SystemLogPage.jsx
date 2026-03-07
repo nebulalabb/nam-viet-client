@@ -240,10 +240,7 @@ const SystemLogPage = () => {
                   <SelectItem value="User">Người dùng</SelectItem>
                   <SelectItem value="Customer">Khách hàng</SelectItem>
                   <SelectItem value="Supplier">Nhà cung cấp</SelectItem>
-                  <SelectItem value="Product">Sản phẩm</SelectItem>
-                  <SelectItem value="SalesContract">Hợp đồng bán hàng</SelectItem>
-                  <SelectItem value="PurchaseContract">Hợp đồng mua hàng</SelectItem>
-                  <SelectItem value="PurchaseOrder">Đơn đặt mua hàng</SelectItem>
+
                   <SelectItem value="Invoice">Hóa đơn</SelectItem>
                   <SelectItem value="PaymentVoucher">Phiếu thu/chi</SelectItem>
                   <SelectItem value="WarehouseReceipt">Phiếu nhập/xuất kho</SelectItem>

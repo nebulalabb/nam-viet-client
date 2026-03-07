@@ -1,0 +1,123 @@
+import { dateFormat } from '@/utils/date-format'
+import { moneyFormat, toVietnamese } from '@/utils/money-format'
+import React, { useEffect, useRef } from 'react'
+import { useReactToPrint } from 'react-to-print'
+
+const PrintPaymentView = ({ payment, setting, onAfterPrint }) => {
+  const contentRef = useRef(null)
+  const reactToPrintFn = useReactToPrint({
+    contentRef,
+    documentTitle: payment?.code ? `PC-${payment?.code}` : 'Phieu-chi',
+    onAfterPrint: onAfterPrint,
+  })
+
+  useEffect(() => {
+    if (payment) {
+      reactToPrintFn()
+    }
+  }, [payment, reactToPrintFn])
+
+  return (
+    <div className="hidden">
+      <PrintableContent
+        ref={contentRef}
+        setting={setting?.payload || setting}
+        payment={payment}
+      />
+    </div>
+  )
+}
+
+const PrintableContent = React.forwardRef(
+  ({ setting, payment }, ref) => (
+    <div ref={ref} className="mx-auto max-w-3xl bg-white p-8">
+      {/* Header */}
+      <div className="mb-6 flex justify-between">
+        <div>
+          <h1 className="mb-1 font-bold text-lg">{setting?.brandName || 'CÔNG TY'}</h1>
+          <p className="mb-1 text-sm">Địa chỉ: {setting?.address}</p>
+          <p className="mb-1 text-sm">Điện thoại: {setting?.phone}</p>
+          <p className="text-sm">Email: {setting?.email}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-bold">Mẫu số 02 - TT</p>
+          <p className="text-xs italic">(Ban hành theo Thông tư số 200/2014/TT-BTC</p>
+          <p className="text-xs italic">ngày 22/12/2014 của Bộ Tài chính)</p>
+        </div>
+      </div>
+
+      <h2 className="mb-2 text-center text-2xl font-bold uppercase">
+        Phiếu chi
+      </h2>
+
+      <p className="mb-8 text-center text-sm italic">
+        Ngày {dateFormat(payment?.paymentDate || payment?.createdAt, true)}
+      </p>
+
+      <div className="mb-6 space-y-3 text-base">
+        <div className="flex gap-2">
+          <span className="min-w-32">Họ tên người nhận tiền:</span>
+          <span className="font-semibold">{payment?.receiver?.name || (payment?.receiverType === 'supplier' ? 'Nhà cung cấp' : '................................................')}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="min-w-32">Địa chỉ:</span>
+          <span>{payment?.receiver?.address || '................................................'}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="min-w-32">Lý do chi:</span>
+          <span>{payment?.reason || payment?.note || (payment?.purchaseOrder ? `Thanh toán tiền hàng cho đơn hàng ${payment?.purchaseOrder?.code}` : '................................................')}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="min-w-32">Số tiền:</span>
+          <span className="font-bold">{moneyFormat(payment?.amount)}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="min-w-32">Viết bằng chữ:</span>
+          <span className="italic">{toVietnamese(payment?.amount)}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="min-w-32">Kèm theo:</span>
+          <span>{payment?.purchaseOrder ? `01 chứng từ gốc (ĐH ${payment?.purchaseOrder?.code})` : '................................................'}</span>
+        </div>
+      </div>
+
+      <div className="mt-8 flex justify-between text-center">
+        <div className="w-1/5">
+          <p className="font-bold">Giám đốc</p>
+          <p className="text-xs italic">(Ký, họ tên, đóng dấu)</p>
+          <div className="h-24"></div>
+        </div>
+        <div className="w-1/5">
+          <p className="font-bold">Kế toán trưởng</p>
+          <p className="text-xs italic">(Ký, họ tên)</p>
+          <div className="h-24"></div>
+        </div>
+        <div className="w-1/5">
+          <p className="font-bold">Người nhận tiền</p>
+          <p className="text-xs italic">(Ký, họ tên)</p>
+          <div className="h-24"></div>
+          <p className="font-semibold">{payment?.receiver?.name}</p>
+        </div>
+        <div className="w-1/5">
+          <p className="font-bold">Người lập phiếu</p>
+          <p className="text-xs italic">(Ký, họ tên)</p>
+          <div className="h-24"></div>
+          <p className="font-semibold">{payment?.createdByUser?.fullName}</p>
+        </div>
+        <div className="w-1/5">
+          <p className="font-bold">Thủ quỹ</p>
+          <p className="text-xs italic">(Ký, họ tên)</p>
+          <div className="h-24"></div>
+        </div>
+      </div>
+
+      <div className="mt-4 text-xs italic text-center">
+        (Đã nhận đủ số tiền (viết bằng chữ): ........................................................................................................................)
+      </div>
+    </div>
+  ),
+)
+
+PrintableContent.displayName = 'PrintableContent'
+
+export default PrintPaymentView

@@ -23,7 +23,13 @@ import materialReducer from './MaterialSlice'
 import attendanceReducer from './AttendanceSlice'
 import overtimeReducer from './OvertimeSlice'
 import taxReducer from './TaxSlice'
+import creditNoteReducer from './CreditNoteSlice'
 import attributeReducer from './AttributeSlice'
+import invoiceReducer from './InvoiceSlice'
+import purchaseOrderReducer from './PurchaseOrderSlice'
+import receiptReducer from './ReceiptSlice'
+import paymentReducer from './PaymentSlice'
+import warehouseReceiptReducer from './WarehouseReceiptSlice'
 
 const persistConfig = { key: 'nam-viet', storage }
 
@@ -53,7 +59,13 @@ export const store = configureStore({
     attendance: attendanceReducer,
     overtime: overtimeReducer,
     tax: taxReducer,
+    creditNote: creditNoteReducer,
     attribute: attributeReducer,
+    invoice: invoiceReducer,
+    purchaseOrder: purchaseOrderReducer,
+    receipt: receiptReducer,
+    payment: paymentReducer,
+    warehouseReceipt: warehouseReceiptReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

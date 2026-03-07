@@ -34,6 +34,16 @@ import MaterialPage from '@/views/admin/material/MaterialPage'
 import AttendancePage from '@/views/admin/attendance/AttendancePage'
 
 import OvertimePage from '@/views/admin/overtime/OvertimePage'
+import InvoicePage from '@/views/admin/invoice/InvoicePage'
+import MyInvoicePage from '@/views/admin/invoice/MyInvoicePage'
+import PurchaseOrderPage from '@/views/admin/purchase-order/PurchaseOrderPage'
+import MyPurchaseOrderPage from '@/views/admin/purchase-order/MyPurchaseOrderPage'
+import ReceiptPage from '@/views/admin/receipt/ReceiptPage'
+import MyReceiptPage from '@/views/admin/receipt/MyReceiptPage'
+import PaymentPage from '@/views/admin/payment/PaymentPage'
+import MyPaymentPage from '@/views/admin/payment/MyPaymentPage'
+import WarehouseInPage from '@/views/admin/warehouse-receipt/WarehouseInPage'
+import WarehouseOutPage from '@/views/admin/warehouse-receipt/WarehouseOutPage'
 
 const routes = [
   {
@@ -141,6 +151,57 @@ const routes = [
   {
     path: '/customer-debt',
     element: CustomerDebtPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/invoice',
+    element: InvoicePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/invoice-user',
+    element: MyInvoicePage,
+    layout: AdminLayout,
+  },
+
+  {
+    path: '/purchase-order',
+    element: PurchaseOrderPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/purchase-order-user',
+    element: MyPurchaseOrderPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/receipt',
+    element: ReceiptPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/receipt-user',
+    element: MyReceiptPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/payment',
+    element: PaymentPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/payment-user',
+    element: MyPaymentPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/warehouse-in',
+    element: WarehouseInPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/warehouse-out',
+    element: WarehouseOutPage,
     layout: AdminLayout,
   },
   {
