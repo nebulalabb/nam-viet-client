@@ -11,12 +11,12 @@ export const getUsers = createAsyncThunk(
       const response = await api.get('/users', { params: query })
       const { data, meta } = response.data
       return {
-        data,
+        data: data || [],
         pagination: {
-          total: meta?.total ?? data.length,
+          total: meta?.total ?? data?.length ?? 0,
           totalPages: meta?.totalPages ?? 1,
           page: meta?.page ?? 1,
-          limit: meta?.limit ?? data.length,
+          limit: meta?.limit ?? data?.length ?? 0,
         }
       }
     } catch (error) {

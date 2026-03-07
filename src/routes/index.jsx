@@ -33,6 +33,9 @@ import AttendancePage from '@/views/admin/attendance/AttendancePage'
 
 import OvertimePage from '@/views/admin/overtime/OvertimePage'
 
+import SalaryPage from '@/views/admin/salary/SalaryPage'
+import SalaryCalculatePage from '@/views/admin/salary/SalaryCalculatePage'
+
 const routes = [
   {
     path: '/attendance',
@@ -42,6 +45,16 @@ const routes = [
   {
     path: '/overtime',
     element: OvertimePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary',
+    element: SalaryPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary/calculate',
+    element: SalaryCalculatePage,
     layout: AdminLayout,
   },
   {

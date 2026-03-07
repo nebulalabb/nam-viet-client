@@ -1,6 +1,6 @@
 const handleError = (error) => {
   if (!error.response) {
-    return { message: 'Opps!! Đã có vài lỗi xảy ra' }
+    return { message: error.message || 'Opps!! Đã có vài lỗi xảy ra' }
   }
 
   const { status, data } = error.response

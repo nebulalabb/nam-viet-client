@@ -21,6 +21,7 @@ import ticketReducer from './TicketSlice'
 import taskReducer from './TaskSlice'
 import attendanceReducer from './AttendanceSlice'
 import overtimeReducer from './OvertimeSlice'
+import salaryReducer from './SalarySlice'
 
 const persistConfig = { key: 'nam-viet', storage }
 
@@ -48,6 +49,7 @@ export const store = configureStore({
     task: taskReducer,
     attendance: attendanceReducer,
     overtime: overtimeReducer,
+    salary: salaryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),
