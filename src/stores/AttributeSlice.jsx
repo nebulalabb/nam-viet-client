@@ -45,6 +45,19 @@ export const createAttribute = createAsyncThunk(
   },
 )
 
+export const importAttribute = createAsyncThunk(
+  'attribute/import',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await api.post('/attributes/import', data)
+      await dispatch(getAttributes()).unwrap()
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error)
+    }
+  },
+)
+
 export const updateAttribute = createAsyncThunk(
   'attribute/update',
   async (updateData, { rejectWithValue, dispatch }) => {

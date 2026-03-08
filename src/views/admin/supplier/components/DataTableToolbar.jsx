@@ -4,6 +4,8 @@ import { Button } from '@/components/custom/Button'
 import { Input } from '@/components/ui/input'
 
 import { DataTableViewOptions } from './DataTableViewOption'
+import { DataTableFacetedFilter } from './DataTableFacetedFilter'
+import { statuses } from '../data'
 import Can from '@/utils/can'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -51,6 +53,16 @@ const DataTableToolbar = ({ table }) => {
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
+
+        <div className="flex gap-x-2">
+          {table.getColumn('status') && (
+            <DataTableFacetedFilter
+              column={table.getColumn('status')}
+              title="Trạng thái"
+              options={statuses}
+            />
+          )}
+        </div>
 
         {isFiltered && (
           <Button

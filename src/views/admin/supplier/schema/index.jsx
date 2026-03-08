@@ -17,6 +17,7 @@ const createSupplierSchema = z.object({
   contactName: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
+  status: z.string().nonempty('Trạng thái là bắt buộc'),
 })
 
 const updateSupplierSchema = z.object({
@@ -33,6 +34,7 @@ const updateSupplierSchema = z.object({
   contactName: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
+  status: z.string().nonempty('Trạng thái là bắt buộc'),
 })
 
 const updateSupplierStatusSchema = z.object({

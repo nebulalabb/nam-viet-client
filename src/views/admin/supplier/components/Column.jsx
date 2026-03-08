@@ -2,11 +2,13 @@ import { DataTableRowActions } from './DataTableRowAction'
 import { DataTableColumnHeader } from './DataTableColumnHeader'
 import { dateFormat } from '@/utils/date-format'
 import { normalizeText } from '@/utils/normalize-text'
+import { moneyFormat } from '@/utils/money-format'
 import { Badge } from '@/components/ui/badge'
 import { statuses } from '../data'
 import { useState } from 'react'
 import UpdateSupplierStatusDialog from './UpdateSupplierStatusDialog'
 import ViewSupplierDialog from './ViewSupplierDialog'
+import { Phone, FileText } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -56,7 +58,7 @@ export const columns = [
           )}
 
           <div
-            className="w-[150px] cursor-pointer font-medium text-blue-600 hover:underline"
+            className="cursor-pointer font-medium text-blue-600 hover:underline"
             onClick={() => setShowViewSupplierDialog(true)}
           >
             {row.getValue('supplierCode')}
@@ -68,43 +70,58 @@ export const columns = [
   {
     accessorKey: 'supplierName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Tên nhà cung cấp" />
+      <DataTableColumnHeader column={column} title="Nhà cung cấp" />
     ),
-    cell: ({ row }) => <div>{row.getValue('supplierName')}</div>,
+    cell: ({ row }) => (
+      <div className="flex flex-col gap-1">
+        <span className="font-semibold text-primary text-sm">
+          {row.getValue('supplierName')}
+        </span>
+        <div className="flex flex-col text-xs text-muted-foreground gap-1">
+          <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {row.original.phone || '—'}</span>
+          <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {row.original.taxCode || '—'}</span>
+        </div>
+      </div>
+    ),
     enableSorting: true,
     enableHiding: true,
     filterFn: (row, id, value) => {
       const name = normalizeText(row.original.supplierName || '')
+      const phone = normalizeText(row.original.phone || '')
+      const taxCode = normalizeText(row.original.taxCode || '')
       const searchValue = normalizeText(value)
-      return name.includes(searchValue)
+      return name.includes(searchValue) || phone.includes(searchValue) || taxCode.includes(searchValue)
     },
   },
-  {
-    accessorKey: 'phone',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Số điện thoại" />
-    ),
-    cell: ({ row }) => <div className="w-28">{row.getValue('phone')}</div>,
-    enableSorting: true,
-    enableHiding: true,
-  },
+
   {
     accessorKey: 'address',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Địa chỉ" />
     ),
-    cell: ({ row }) => <div className="w-28">{row.getValue('address')}</div>,
+    cell: ({ row }) => <div>{row.getValue('address')}</div>,
     enableSorting: true,
     enableHiding: true,
   },
   {
-    accessorKey: 'taxCode',
+    accessorKey: 'totalPayable',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Mã số thuế" />
+      <DataTableColumnHeader column={column} title="Công nợ" className="justify-end" />
     ),
-    cell: ({ row }) => (
-      <div className="w-28">{row.getValue('taxCode') || 'Không có'}</div>
-    ),
+    cell: ({ row }) => {
+      const amount = row.getValue('totalPayable') || 0
+      const date = row.original.payableUpdatedAt
+      return (
+        <div className="flex flex-col gap-1 items-end text-right">
+          <span className="font-medium text-red-600">{moneyFormat(amount)}</span>
+          {date && (
+            <span className="text-[11px] text-muted-foreground">
+              Cập nhật: {dateFormat(date, true)}
+            </span>
+          )}
+        </div>
+      )
+    },
     enableSorting: true,
     enableHiding: true,
   },
@@ -128,15 +145,15 @@ export const columns = [
       return (
         <>
           <div
-            className="flex w-[150px] cursor-pointer items-center"
+            className="flex cursor-pointer items-center"
             onClick={() => setShowUpdateSupplierStatusDialog(true)}
           >
             <span>
               <Badge
                 className={
                   status.value === 'active'
-                    ? 'bg-green-600 text-white hover:bg-green-700 border-transparent'
-                    : 'bg-red-600 text-white hover:bg-red-700 border-transparent'
+                    ? 'whitespace-nowrap bg-green-600 text-white hover:bg-green-700 border-transparent'
+                    : 'whitespace-nowrap bg-red-600 text-white hover:bg-red-700 border-transparent'
                 }
               >
                 {status.icon && <status.icon className="mr-2 h-4 w-4" />}
@@ -160,6 +177,22 @@ export const columns = [
     enableHiding: true,
   },
   {
+    accessorKey: 'creator',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Người tạo" />
+    ),
+    cell: ({ row }) => {
+      const creator = row.original.creator
+      return (
+        <div className="break-words">
+          {creator?.fullName || '—'}
+        </div>
+      )
+    },
+    enableSorting: false,
+    enableHiding: true,
+  },
+  {
     accessorKey: 'createdAt',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Ngày tạo" />
@@ -167,7 +200,7 @@ export const columns = [
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
-          <span className="max-w-32 sm:max-w-72 md:max-w-[31rem]">
+          <span>
             {dateFormat(row.getValue('createdAt'), true)}
           </span>
         </div>
@@ -182,7 +215,7 @@ export const columns = [
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
-          <span className="max-w-32 sm:max-w-72 md:max-w-[31rem]">
+          <span>
             {dateFormat(row.getValue('updatedAt'), true)}
           </span>
         </div>

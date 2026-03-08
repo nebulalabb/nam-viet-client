@@ -13,13 +13,13 @@ import { Label } from '@/components/ui/label'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDispatch } from 'react-redux'
-import { importSupplier } from '@/stores/SupplierSlice'
+import { importAttribute } from '@/stores/AttributeSlice'
 import { FileSpreadsheet, Download, AlertCircle } from 'lucide-react'
 import api from '@/utils/axios'
 import ExcelJS from 'exceljs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
-const ImportSupplierDialog = ({
+const ImportAttributeDialog = ({
   open,
   onOpenChange,
   ...props
@@ -69,17 +69,16 @@ const ImportSupplierDialog = ({
 
       // --- STRICT VALIDATION START ---
       const EXPECTED_HEADERS = [
-        'Tên nhà cung cấp (*)',
-        'Mã số thuế',
-        'Người đại diện',
-        'Số điện thoại',
-        'Email',
-        'Địa chỉ',
+        'STT',
+        'Tên thuộc tính (*)',
+        'Mã thuộc tính',
+        'Loại dữ liệu',
+        'Đơn vị',
         'Ghi chú',
         'Trạng thái (*)'
       ]
 
-      const headerRow = worksheet.getRow(5)
+      const headerRow = worksheet.getRow(6) // Attribute instructions use 5 rows, headers at row 6
       const actualHeaders = []
       headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         if (colNumber <= EXPECTED_HEADERS.length) {
@@ -87,9 +86,8 @@ const ImportSupplierDialog = ({
         }
       })
 
-      // 2. Strict Header Compare & Required Fields Check
       for (let i = 0; i < EXPECTED_HEADERS.length; i++) {
-        const expected = EXPECTED_HEADERS[i].split(' ')[0].toLowerCase() // check keywords to be safe
+        const expected = EXPECTED_HEADERS[i].split(' ')[0].toLowerCase()
         const actual = (actualHeaders[i] || '').toLowerCase()
         if (!actual.includes(expected)) {
           throw new Error(`Cột thứ ${i + 1} ("${EXPECTED_HEADERS[i]}") bị thiếu hoặc không đúng định dạng. Cột hiện tại: "${actualHeaders[i] || 'Trống'}"`)
@@ -101,32 +99,28 @@ const ImportSupplierDialog = ({
       const validationErrors = []
 
       worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber <= 5) return
+        if (rowNumber <= 6) return
 
         const getVal = (idx) => {
           const val = row.getCell(idx).value
           return val?.text || val || ''
         }
 
-        // Mapping based on: 
-        // 1: supplierName, 2: TaxCode, 3: contactName, 4: Phone, 5: Email, 6: Address, 7: notes, 8: status
+        // Mapping based on headers: 
+        // 1: STT, 2: name, 3: code, 4: dataType, 5: unit, 6: description, 7: status
         const item = {
-          supplierName: String(getVal(1)).trim(),
-          taxCode: String(getVal(2)).trim(),
-          contactName: String(getVal(3)).trim(),
-          phone: String(getVal(4)).trim(),
-          email: String(getVal(5)).trim(),
-          address: String(getVal(6)).trim(),
-          notes: String(getVal(7)).trim(),
-          status: String(getVal(8)).trim() || 'active',
-          supplierType: 'local', // Default
+          name: String(getVal(2)).trim(),
+          code: String(getVal(3)).trim(),
+          dataType: String(getVal(4)).trim(),
+          unit: String(getVal(5)).trim(),
+          description: String(getVal(6)).trim(),
+          status: String(getVal(7)).trim() || 'published',
         }
 
-        // Required Field Validation: supplierName
-        if (!item.supplierName) {
+        if (!item.name) {
           validationErrors.push({
             row: rowNumber,
-            errors: [{ field: 'Tên nhà cung cấp', message: 'Bắt buộc nhập' }]
+            errors: [{ field: 'Tên thuộc tính', message: 'Bắt buộc nhập' }]
           })
         } else {
           items.push(item)
@@ -145,35 +139,34 @@ const ImportSupplierDialog = ({
       }
 
       const payload = { items }
-      await dispatch(importSupplier(payload)).unwrap()
+      await dispatch(importAttribute(payload)).unwrap()
 
-      toast.success(`Đã import thành công ${items.length} nhà cung cấp`)
+      toast.success(`Đã import thành công ${items.length} thuộc tính`)
       onOpenChange(false)
       setFile(null)
 
     } catch (error) {
       console.error('Import error:', error)
 
-      // Handle structured import errors
       let importErrors = null
 
-      // Check multiple possible locations for importErrors
       if (error?.message?.importErrors && Array.isArray(error.message.importErrors)) {
         importErrors = error.message.importErrors
       } else if (error?.importErrors && Array.isArray(error.importErrors)) {
         importErrors = error.importErrors
       } else if (error?.response?.data?.message?.importErrors && Array.isArray(error.response.data.message.importErrors)) {
         importErrors = error.response.data.message.importErrors
+      } else if (error?.message?.errors && Array.isArray(error.message.errors)) {
+        importErrors = error.message.errors;
       }
 
       if (importErrors && importErrors.length > 0) {
-        // Sanitize errors to ensure no objects are rendered
         const sanitizedErrors = importErrors.map(err => ({
           row: err.row,
           errors: Array.isArray(err.errors) ? err.errors.map(e => ({
             field: String(e.field || ''),
             message: String(e.message || 'Lỗi không xác định')
-          })) : []
+          })) : [{ field: 'Chi tiết', message: String(err.message || 'Lỗi không xác định') }]
         }))
 
         setErrorList(sanitizedErrors)
@@ -203,14 +196,14 @@ const ImportSupplierDialog = ({
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await api.get('/suppliers/import-template?type=excel', {
+      const response = await api.get('/attributes/import-template', {
         responseType: 'blob',
       })
 
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', 'supplier_import_template.xlsx')
+      link.setAttribute('download', 'attribute_import_template.xlsx')
       document.body.appendChild(link)
       link.click()
       link.parentNode.removeChild(link)
@@ -225,9 +218,9 @@ const ImportSupplierDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange} {...props}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Import Excel Nhà Cung Cấp</DialogTitle>
+          <DialogTitle>Import Excel Thuộc Tính</DialogTitle>
           <DialogDescription>
-            Chọn file Excel chứa danh sách nhà cung cấp để nhập liệu.
+            Chọn file Excel chứa danh sách thuộc tính để nhập liệu.
             <br />
             <span className="text-xs text-muted-foreground">Đảm bảo file theo đúng mẫu template.</span>
           </DialogDescription>
@@ -304,4 +297,4 @@ const ImportSupplierDialog = ({
   )
 }
 
-export default ImportSupplierDialog
+export default ImportAttributeDialog

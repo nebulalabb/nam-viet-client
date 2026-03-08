@@ -51,7 +51,7 @@ const ViewSupplierDialog = ({
     setLoading(true)
     setError(null)
     api
-      .get(`/supplier/${supplierId}/products`)
+      .get(`/suppliers/${supplierId}/products`)
       .then((res) => {
         const payload = res?.data?.data ?? res?.data
         setSupplier(payload?.supplier || {})
@@ -147,6 +147,10 @@ const ViewSupplierDialog = ({
                       <span className="font-medium">{supplier.supplierName}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span className="text-muted-foreground">Nhóm/Loại:</span>
+                      <span className="capitalize">{supplier.supplierType === 'local' ? 'Trong nước' : supplier.supplierType === 'foreign' ? 'Ngoài nước' : supplier.supplierType || '—'}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-muted-foreground">Mã số thuế:</span>
                       <span>{supplier.taxCode || '—'}</span>
                     </div>
@@ -164,6 +168,14 @@ const ViewSupplierDialog = ({
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Địa chỉ:</span>
                       <span>{supplier.address || '—'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-red-600">
+                      <span className="text-muted-foreground text-red-600">Công nợ:</span>
+                      <span className="font-semibold">{supplier.totalPayable ? moneyFormat(supplier.totalPayable) : '0 ₫'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Cập nhật công nợ:</span>
+                      <span>{supplier.payableUpdatedAt ? dateFormat(supplier.payableUpdatedAt) : '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Trạng thái:</span>

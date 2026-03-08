@@ -12,10 +12,11 @@ import {
 
 const DataTableViewOptions = ({ table }) => {
   const options = {
-    supplierName: 'Tên nhà cung cấp',
-    phone: 'Số điện thoại',
+    supplierCode: 'Mã NCC',
+    supplierName: 'Nhà cung cấp',
     address: 'Địa chỉ',
-    taxCode: 'Mã số thuế',
+    totalPayable: 'Công nợ',
+    creator: 'Người tạo',
     createdAt: 'Ngày tạo',
     updatedAt: 'Cập nhật',
     status: 'Trạng thái',

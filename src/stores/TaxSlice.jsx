@@ -60,6 +60,19 @@ export const deleteTax = createAsyncThunk(
   },
 )
 
+export const importTax = createAsyncThunk(
+  'tax/import',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await api.post('/taxes/import', data)
+      await dispatch(getTaxes()).unwrap()
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error)
+    }
+  },
+)
+
 export const bulkDeleteTaxes = createAsyncThunk(
   'tax/bulkDelete',
   async (ids, { rejectWithValue, dispatch }) => {
@@ -116,6 +129,12 @@ export const taxSlice = createSlice({
         state.loading = false
         state.error = action.payload || 'Lỗi không xác định'
         toast.error(state.error)
+      })
+      .addCase(importTax.pending, (state) => { state.loading = true; state.error = null })
+      .addCase(importTax.fulfilled, (state) => { state.loading = false })
+      .addCase(importTax.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Lỗi không xác định'
       })
       .addCase(bulkDeleteTaxes.pending, (state) => { state.loading = true; state.error = null })
       .addCase(bulkDeleteTaxes.fulfilled, (state) => { state.loading = false })
