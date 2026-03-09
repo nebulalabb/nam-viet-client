@@ -26,6 +26,8 @@ import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useDispatch, useSelector } from 'react-redux'
 import { createSupplierSchema } from '../schema'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { statuses } from '../data'
 import { Textarea } from '@/components/ui/textarea'
 import { createSupplier } from '@/stores/SupplierSlice'
 
@@ -50,6 +52,7 @@ const CreateSupplierDialog = ({
       email: '',
       address: '',
       notes: '',
+      status: 'active',
     },
   })
 
@@ -201,6 +204,39 @@ const CreateSupplierDialog = ({
                           placeholder="Nhập địa chỉ"
                           {...field}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3 mb-2">
+                      <FormLabel required={true}>
+                        Trạng thái
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4"
+                        >
+                          {statuses.map((status, index) => (
+                            <FormItem
+                              key={index}
+                              className="flex items-center space-x-2 space-y-0"
+                            >
+                              <FormControl>
+                                <RadioGroupItem value={status.value} />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer">
+                                {status.label}
+                              </FormLabel>
+                            </FormItem>
+                          ))}
+                        </RadioGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

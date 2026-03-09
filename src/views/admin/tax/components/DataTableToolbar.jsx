@@ -11,7 +11,9 @@ import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Can from '@/utils/can'
 import { IconFileTypeXls } from '@tabler/icons-react'
+import { FileSpreadsheet } from 'lucide-react'
 import ExportTaxDialog from './ExportTaxDialog'
+import ImportTaxDialog from './ImportTaxDialog'
 
 const DataTableToolbar = ({ table }) => {
   const dispatch = useDispatch()
@@ -19,6 +21,7 @@ const DataTableToolbar = ({ table }) => {
   const [showCreateTaxDialog, setShowCreateTaxDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
 
   const selectedRows = table.getSelectedRowModel().rows
   const selectedCount = selectedRows.length
@@ -97,10 +100,29 @@ const DataTableToolbar = ({ table }) => {
         )}
       </Can>
 
+      <Can permission={'CREATE_TAX'}>
+        <Button
+          onClick={() => setShowImportDialog(true)}
+          className="mx-2 text-emerald-600 border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+          variant="outline"
+          size="sm"
+        >
+          <FileSpreadsheet className="mr-2 size-4" aria-hidden="true" />
+          Import Excel
+        </Button>
+
+        {showImportDialog && (
+          <ImportTaxDialog
+            open={showImportDialog}
+            onOpenChange={setShowImportDialog}
+          />
+        )}
+      </Can>
+
       <Can permission={'GET_TAX'}>
         <Button
           onClick={() => setShowExportDialog(true)}
-          className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
+          className="mx-2 text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
           variant="outline"
           size="sm"
         >

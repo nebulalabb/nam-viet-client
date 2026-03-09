@@ -24,6 +24,7 @@ import taskReducer from './TaskSlice'
 import materialReducer from './MaterialSlice'
 import attendanceReducer from './AttendanceSlice'
 import overtimeReducer from './OvertimeSlice'
+import salaryReducer from './SalarySlice'
 import taxReducer from './TaxSlice'
 import creditNoteReducer from './CreditNoteSlice'
 import attributeReducer from './AttributeSlice'
@@ -63,6 +64,7 @@ export const store = configureStore({
     material: materialReducer,
     attendance: attendanceReducer,
     overtime: overtimeReducer,
+    salary: salaryReducer,
     tax: taxReducer,
     creditNote: creditNoteReducer,
     attribute: attributeReducer,

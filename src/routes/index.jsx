@@ -53,6 +53,9 @@ import InventoryReportPage from '@/views/admin/reports/inventory/InventoryReport
 import SalesReportPage from '@/views/admin/reports/sales/SalesReportPage'
 import FinancialReportPage from '@/views/admin/reports/financial/FinancialReportPage'
 import ProductionReportPage from '@/views/admin/reports/production/ProductionReportPage'
+import SalaryPage from '@/views/admin/salary/SalaryPage'
+import SalaryCalculatePage from '@/views/admin/salary/SalaryCalculatePage'
+
 const routes = [
   {
     path: '/attendance',
@@ -62,6 +65,16 @@ const routes = [
   {
     path: '/overtime',
     element: OvertimePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary',
+    element: SalaryPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary/calculate',
+    element: SalaryCalculatePage,
     layout: AdminLayout,
   },
   {

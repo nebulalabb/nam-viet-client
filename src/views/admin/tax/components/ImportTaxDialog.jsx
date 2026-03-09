@@ -13,13 +13,13 @@ import { Label } from '@/components/ui/label'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useDispatch } from 'react-redux'
-import { importSupplier } from '@/stores/SupplierSlice'
+import { importTax } from '@/stores/TaxSlice'
 import { FileSpreadsheet, Download, AlertCircle } from 'lucide-react'
 import api from '@/utils/axios'
 import ExcelJS from 'exceljs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
-const ImportSupplierDialog = ({
+const ImportTaxDialog = ({
   open,
   onOpenChange,
   ...props
@@ -69,30 +69,29 @@ const ImportSupplierDialog = ({
 
       // --- STRICT VALIDATION START ---
       const EXPECTED_HEADERS = [
-        'Tên nhà cung cấp (*)',
-        'Mã số thuế',
-        'Người đại diện',
-        'Số điện thoại',
-        'Email',
-        'Địa chỉ',
-        'Ghi chú',
-        'Trạng thái (*)'
+        'Tên thuế', // 1
+        'Tỷ lệ (%)', // 2
+        'Trạng thái' // 3 (Hoạt động, Khóa)
       ]
 
       const headerRow = worksheet.getRow(5)
       const actualHeaders = []
-      headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-        if (colNumber <= EXPECTED_HEADERS.length) {
-          actualHeaders.push(String(cell.value || '').trim())
-        }
+      headerRow.eachCell((cell, colNumber) => {
+        actualHeaders.push(String(cell.value || '').trim())
       })
 
-      // 2. Strict Header Compare & Required Fields Check
+      // 1. Signature Check
+      if (actualHeaders.length > EXPECTED_HEADERS.length + 2) {
+        throw new Error('File Excel chứa quá nhiều cột lạ. Vui lòng sử dụng file mẫu.')
+      }
+
+      // 2. Strict Header Compare
       for (let i = 0; i < EXPECTED_HEADERS.length; i++) {
-        const expected = EXPECTED_HEADERS[i].split(' ')[0].toLowerCase() // check keywords to be safe
+        const expected = EXPECTED_HEADERS[i].toLowerCase()
         const actual = (actualHeaders[i] || '').toLowerCase()
+
         if (!actual.includes(expected)) {
-          throw new Error(`Cột thứ ${i + 1} ("${EXPECTED_HEADERS[i]}") bị thiếu hoặc không đúng định dạng. Cột hiện tại: "${actualHeaders[i] || 'Trống'}"`)
+          throw new Error(`Cột thứ ${i + 1} ("${EXPECTED_HEADERS[i]}") bị thiếu hoặc không đúng định dạng.`)
         }
       }
       // --- STRICT VALIDATION END ---
@@ -108,25 +107,31 @@ const ImportSupplierDialog = ({
           return val?.text || val || ''
         }
 
-        // Mapping based on: 
-        // 1: supplierName, 2: TaxCode, 3: contactName, 4: Phone, 5: Email, 6: Address, 7: notes, 8: status
+        const title = String(getVal(1)).trim()
+        const percentageStr = String(getVal(2)).trim()
+        const percentage = percentageStr ? Number(percentageStr) : 0
+
+        const statusVal = String(getVal(3)).trim()
+        const status = statusVal === 'Khóa' ? 'inactive' : 'active'
+
         const item = {
-          supplierName: String(getVal(1)).trim(),
-          taxCode: String(getVal(2)).trim(),
-          contactName: String(getVal(3)).trim(),
-          phone: String(getVal(4)).trim(),
-          email: String(getVal(5)).trim(),
-          address: String(getVal(6)).trim(),
-          notes: String(getVal(7)).trim(),
-          status: String(getVal(8)).trim() || 'active',
-          supplierType: 'local', // Default
+          title,
+          percentage,
+          status,
         }
 
-        // Required Field Validation: supplierName
-        if (!item.supplierName) {
+        const rowErrors = []
+        if (!item.title) {
+          rowErrors.push({ field: 'Tên thuế', message: 'Bắt buộc nhập' })
+        }
+        if (isNaN(item.percentage) || item.percentage < 0) {
+          rowErrors.push({ field: 'Tỷ lệ (%)', message: 'Tỷ lệ phải là số hợp lệ (>= 0)' })
+        }
+
+        if (rowErrors.length > 0) {
           validationErrors.push({
             row: rowNumber,
-            errors: [{ field: 'Tên nhà cung cấp', message: 'Bắt buộc nhập' }]
+            errors: rowErrors
           })
         } else {
           items.push(item)
@@ -145,19 +150,17 @@ const ImportSupplierDialog = ({
       }
 
       const payload = { items }
-      await dispatch(importSupplier(payload)).unwrap()
+      await dispatch(importTax(payload)).unwrap()
 
-      toast.success(`Đã import thành công ${items.length} nhà cung cấp`)
+      toast.success(`Đã import thành công ${items.length} loại thuế`)
       onOpenChange(false)
       setFile(null)
 
     } catch (error) {
       console.error('Import error:', error)
 
-      // Handle structured import errors
       let importErrors = null
 
-      // Check multiple possible locations for importErrors
       if (error?.message?.importErrors && Array.isArray(error.message.importErrors)) {
         importErrors = error.message.importErrors
       } else if (error?.importErrors && Array.isArray(error.importErrors)) {
@@ -167,7 +170,6 @@ const ImportSupplierDialog = ({
       }
 
       if (importErrors && importErrors.length > 0) {
-        // Sanitize errors to ensure no objects are rendered
         const sanitizedErrors = importErrors.map(err => ({
           row: err.row,
           errors: Array.isArray(err.errors) ? err.errors.map(e => ({
@@ -203,14 +205,14 @@ const ImportSupplierDialog = ({
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await api.get('/suppliers/import-template?type=excel', {
+      const response = await api.get('/taxes/import-template?type=excel', {
         responseType: 'blob',
       })
 
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', 'supplier_import_template.xlsx')
+      link.setAttribute('download', 'tax_import_template.xlsx')
       document.body.appendChild(link)
       link.click()
       link.parentNode.removeChild(link)
@@ -225,9 +227,9 @@ const ImportSupplierDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange} {...props}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Import Excel Nhà Cung Cấp</DialogTitle>
+          <DialogTitle>Import Excel Thuế</DialogTitle>
           <DialogDescription>
-            Chọn file Excel chứa danh sách nhà cung cấp để nhập liệu.
+            Chọn file Excel chứa danh sách thuế để nhập liệu.
             <br />
             <span className="text-xs text-muted-foreground">Đảm bảo file theo đúng mẫu template.</span>
           </DialogDescription>
@@ -304,4 +306,4 @@ const ImportSupplierDialog = ({
   )
 }
 
-export default ImportSupplierDialog
+export default ImportTaxDialog

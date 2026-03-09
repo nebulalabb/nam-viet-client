@@ -177,8 +177,8 @@ const ExportUnitView = ({
                 {props?.data?.map((unit) => (
                   <TableRow key={unit.id}>
                     <TableCell>{indexTable++}</TableCell>
-                    <TableCell>{unit.name}</TableCell>
-                    <TableCell>{unit.code}</TableCell>
+                    <TableCell>{unit.unitName}</TableCell>
+                    <TableCell>{unit.unitCode}</TableCell>
                     <TableCell>{dateFormat(unit.createdAt)}</TableCell>
                     <TableCell>{dateFormat(unit.updatedAt)}</TableCell>
                   </TableRow>

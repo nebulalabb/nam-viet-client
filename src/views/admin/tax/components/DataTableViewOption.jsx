@@ -14,6 +14,7 @@ const DataTableViewOptions = ({ table }) => {
   const options = {
     title: 'Tên thuế',
     percentage: 'Phần trăm',
+    creator: 'Người tạo',
     status: 'Trạng thái',
     createdAt: 'Ngày tạo',
     updatedAt: 'Cập nhật',

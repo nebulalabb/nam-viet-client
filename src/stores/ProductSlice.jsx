@@ -123,112 +123,29 @@ export const getProductSaleHistory = createAsyncThunk(
   },
 )
 
-// =====================
-// FormData helpers (support nested arrays/objects)
-// =====================
-
-const buildFormData = (data) => {
-  const formData = new FormData()
-
-  const appendIfPresent = (key, val) => {
-    if (val === null || val === undefined) return
-    formData.append(key, val)
-  }
-
-  const appendArray = (key, arr) => {
-    if (Array.isArray(arr) && arr.length) {
-      arr.forEach((item, i) => {
-        if (item === null || item === undefined) return
-        formData.append(`${key}[${i}]`, item)
-      })
-    } else {
-      formData.append(`${key}[]`, '')
-    }
-  }
-
-  const appendArrayObjects = (key, arr, fields) => {
-    if (Array.isArray(arr) && arr.length) {
-      arr.forEach((obj, i) => {
-        fields.forEach((f) => {
-          const v = obj?.[f]
-          if (v === null || v === undefined) return
-          formData.append(`${key}[${i}][${f}]`, v)
-        })
-      })
-    } else {
-      formData.append(`${key}[]`, '')
-    }
-  }
-
-  appendArray('taxIds', data.taxIds)
-
-  appendArrayObjects('attributeIdsWithValue', data.attributeIdsWithValue, [
-    'attributeId',
-    'value',
-  ])
-
-  appendArrayObjects('unitConversions', data.unitConversions, [
-    'unitId',
-    'conversionFactor',
-  ])
-
-  ;[
-    'code',
-    'categoryId',
-    'supplierId',
-    'unitId',
-    'basePrice',
-    'price',
-    'name',
-    'description',
-    'note',
-    'type',
-    'applyWarranty',
-    'manageSerial',
-  ].forEach((field) => appendIfPresent(field, data[field]))
-
-  if (data.salaryCoefficient) {
-    const sc = data.salaryCoefficient
-    appendIfPresent('salaryCoefficient[coefficient]', sc.coefficient)
-    appendIfPresent('salaryCoefficient[type]', sc.type)
-    appendIfPresent('salaryCoefficient[effectiveDate]', sc.effectiveDate)
-  }
-
-  if (data.image) {
-    formData.append('image', data.image)
-  }
-
-  if (data.hasExpiry !== undefined) {
-    formData.append('hasExpiry', !!data.hasExpiry)
-  }
-
-  if ((data.applyWarranty !== undefined ? data.applyWarranty : !!data.warrantyPolicy) && data.warrantyPolicy) {
-    const wp = data.warrantyPolicy
-    appendIfPresent('warrantyPolicy[periodMonths]', wp.periodMonths)
-    formData.append('warrantyPolicy[conditions]', wp.conditions || '')
-    appendIfPresent('warrantyPolicy[warrantyCost]', wp.warrantyCost || 0)
-    appendIfPresent('warrantyPolicy[status]', wp.status)
-  }
-
-  if (data.syncEnabled !== undefined) {
-    formData.append('syncEnabled', !!data.syncEnabled)
-  }
-  if (data.syncExternalCode) {
-    formData.append('syncExternalCode', data.syncExternalCode)
-  }
-
-  return formData
-}
-
 export const createProduct = createAsyncThunk(
   'product/create',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      const formData = buildFormData(data)
-      const response = await api.post('/products', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const { image, code, name, basePrice, price, minStockLevel, ...rest } = data
+
+      const payload = {
+        sku: code,
+        productName: name,
+        productType: 'goods',
+        purchasePrice: basePrice,
+        sellingPriceRetail: price,
+        minStockLevel: minStockLevel ? Number(minStockLevel) : 0,
+        ...rest
+      }
+
+      const response = await api.post('/products', payload)
       const newProduct = response.data.data
+
+      if (image && image instanceof File) {
+        await dispatch(uploadProductImages({ id: newProduct.id, files: [image] })).unwrap()
+      }
+
       await dispatch(getProducts()).unwrap()
       toast.success('Tạo sản phẩm thành công')
       return newProduct
@@ -242,10 +159,24 @@ export const updateProduct = createAsyncThunk(
   'product/update',
   async ({ id, data }, { rejectWithValue, dispatch }) => {
     try {
-      const formData = buildFormData(data)
-      await api.put(`/products/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const { image, code, name, basePrice, price, minStockLevel, ...rest } = data
+
+      const payload = {
+        sku: code,
+        productName: name,
+        productType: 'goods',
+        purchasePrice: basePrice,
+        sellingPriceRetail: price,
+        minStockLevel: minStockLevel ? Number(minStockLevel) : 0,
+        ...rest
+      }
+
+      await api.put(`/products/${id}`, payload)
+
+      if (image && image instanceof File) {
+        await dispatch(uploadProductImages({ id, files: [image] })).unwrap()
+      }
+
       await dispatch(getProducts()).unwrap()
       toast.success('Cập nhật dữ liệu thành công')
     } catch (error) {

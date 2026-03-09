@@ -2,12 +2,12 @@ import { IconCircleCheck, IconLock } from '@tabler/icons-react'
 
 export const statuses = [
   {
-    value: 'published',
+    value: 'active',
     label: 'Cho phép sử dụng',
     icon: IconCircleCheck,
   },
   {
-    value: 'pending',
+    value: 'inactive',
     label: 'Chưa sẵn dùng',
     icon: IconLock,
   },

@@ -30,14 +30,12 @@ import { IconDownload } from '@tabler/icons-react'
 // E Người đại diện
 // F Số điện thoại
 // G Email
-// H Nhóm NCC
-// I Địa chỉ
-// J Tỉnh/Thành
-// K Công nợ
-// L Trạng thái
-// M Người tạo
-// N Ghi chú
-// O Ngày tạo
+// H Địa chỉ
+// I Công nợ
+// J Trạng thái
+// K Người tạo
+// L Ghi chú
+// M Ngày tạo
 
 const ExportSupplierView = ({
   open,
@@ -52,7 +50,7 @@ const ExportSupplierView = ({
     })
     const table = document.getElementById('exportSupplierTable')
 
-    worksheet.mergeCells('A1:O1')
+    worksheet.mergeCells('A1:M1')
     worksheet.getCell('A1').value = 'Báo cáo danh sách nhà cung cấp'
 
     const rows = table.querySelectorAll('tr')
@@ -120,14 +118,12 @@ const ExportSupplierView = ({
       25, // E Người đại diện
       18, // F Số điện thoại
       25, // G Email
-      20, // H Nhóm NCC
-      40, // I Địa chỉ
-      18, // J Tỉnh/Thành
-      20, // K Công nợ
-      18, // L Trạng thái
-      25, // M Người tạo
-      35, // N Ghi chú
-      20, // O Ngày tạo
+      40, // H Địa chỉ
+      20, // I Công nợ
+      18, // J Trạng thái
+      25, // K Người tạo
+      35, // L Ghi chú
+      20, // M Ngày tạo
     ]
     worksheet.columns.forEach((column, index) => {
       column.width = customColumnWidths[index] || 15
@@ -193,9 +189,7 @@ const ExportSupplierView = ({
                   <TableHead className="min-w-32">Người đại diện</TableHead>
                   <TableHead className="min-w-28">Số điện thoại</TableHead>
                   <TableHead className="min-w-40">Email</TableHead>
-                  <TableHead className="min-w-28">Nhóm NCC</TableHead>
                   <TableHead className="min-w-56">Địa chỉ</TableHead>
-                  <TableHead className="min-w-28">Tỉnh/Thành</TableHead>
                   <TableHead className="min-w-32">Công nợ</TableHead>
                   <TableHead className="min-w-28">Trạng thái</TableHead>
                   <TableHead className="min-w-32">Người tạo</TableHead>
@@ -213,9 +207,7 @@ const ExportSupplierView = ({
                     <TableCell>{supplier.contactName}</TableCell>
                     <TableCell>{supplier.phone}</TableCell>
                     <TableCell>{supplier.email}</TableCell>
-                    <TableCell>{supplier.group?.name || '—'}</TableCell>
                     <TableCell>{supplier.address}</TableCell>
-                    <TableCell>{supplier.province}</TableCell>
                     <TableCell>{supplier.debt ? supplier.debt.toLocaleString('vi-VN') : 0}</TableCell>
                     <TableCell>
                       {supplier.status === 'active' ? 'Đang hoạt động' : 'Ngừng hoạt động'}

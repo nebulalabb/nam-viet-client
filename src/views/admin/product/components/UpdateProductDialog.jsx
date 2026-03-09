@@ -155,7 +155,7 @@ const UpdateProductDialog = ({
       name: product?.name ?? '',
       description: product?.description ?? '',
       note: product?.note ?? '',
-      type: product?.type ?? '',
+      minStockLevel: product?.minStockLevel?.toString?.() ?? '0',
       source: product?.source ?? '',
       salaryCoefficient: product?.coefficient
         ? {
@@ -235,7 +235,7 @@ const UpdateProductDialog = ({
       price: product.price?.toString?.() ?? '',
       description: product.description ?? '',
       note: product.note ?? '',
-      type: product.type ?? '',
+      minStockLevel: product.minStockLevel?.toString?.() ?? '0',
       source: product.source ?? '',
       categoryId: product.categoryId?.toString?.() ?? '',
       unitId:
@@ -330,7 +330,7 @@ const UpdateProductDialog = ({
         name: data.name,
         description: data.description,
         note: data.note,
-        type: data.type,
+        minStockLevel: data.minStockLevel,
         // Only include salaryCoefficient if it has valid data
         ...(data.salaryCoefficient?.coefficient ? {
           salaryCoefficient: {
@@ -354,7 +354,6 @@ const UpdateProductDialog = ({
           }
           : null,
 
-        // NEW
         unitConversions: dedupUnitConversions,
       }
 
@@ -389,7 +388,7 @@ const UpdateProductDialog = ({
   }
 
   const baseUnitName =
-    units?.find((u) => String(u.id) === String(selectedBaseUnitId))?.name || ''
+    units?.find((u) => String(u.id) === String(selectedBaseUnitId))?.unitName || ''
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} {...props}>
@@ -504,14 +503,14 @@ const UpdateProductDialog = ({
                             {categories
                               ?.filter(
                                 (category) =>
-                                  category.status === CATEGORY_STATUS.PUBLISHED,
+                                  category.status === 'active',
                               )
                               .map((category) => (
                                 <SelectItem
                                   key={category.id}
                                   value={category.id.toString()}
                                 >
-                                  {category.name}
+                                  {category.categoryName}
                                 </SelectItem>
                               ))}
                           </SelectGroup>
@@ -555,7 +554,7 @@ const UpdateProductDialog = ({
                                 key={unit.id}
                                 value={unit.id.toString()}
                               >
-                                {unit.name}
+                                {unit.unitName}
                               </SelectItem>
                             ))}
                           </SelectGroup>
@@ -602,7 +601,7 @@ const UpdateProductDialog = ({
                                   key={supplier.id}
                                   value={supplier.id.toString()}
                                 >
-                                  {supplier.name}
+                                  {supplier.supplierName}
                                 </SelectItem>
                               ))}
                           </SelectGroup>
@@ -612,8 +611,6 @@ const UpdateProductDialog = ({
                     </FormItem>
                   )}
                 />
-
-
 
                 <FormField
                   control={form.control}
@@ -651,37 +648,12 @@ const UpdateProductDialog = ({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Loại sản phẩm</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn loại sản phẩm" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="z-[100031]">
-                          <SelectGroup>
-                            {PRODUCT_TYPE?.map((type) => (
-                              <SelectItem
-                                key={type.id}
-                                value={type.value.toString()}
-                              >
-                                {type.name}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <MoneyInput
+                  form={form}
+                  label="Tồn kho tối thiểu"
+                  name="minStockLevel"
+                  required={true}
+                  placeholder="Nhập mức tồn kho tối thiểu"
                 />
 
                 {/* <FormField
@@ -871,7 +843,7 @@ const UpdateProductDialog = ({
                                           key={unit.id}
                                           value={unit.id.toString()}
                                         >
-                                          {unit.name}
+                                          {unit.unitName}
                                         </SelectItem>
                                       ))}
                                   </SelectGroup>
@@ -1025,7 +997,7 @@ const UpdateProductDialog = ({
                         <FormLabel>Các loại thuế áp dụng</FormLabel>
                       </div>
                       {taxes
-                        ?.filter((tax) => tax.status === TAX_STATUS.PUBLISHED)
+                        ?.filter((tax) => tax.status === TAX_STATUS.ACTIVE)
                         .map((tax) => (
                           <FormItem
                             key={tax.id}
@@ -1057,7 +1029,7 @@ const UpdateProductDialog = ({
                   )}
                 />
 
-                {/* <FormField
+                <FormField
                   control={form.control}
                   name="hasExpiry"
                   render={({ field }) => (
@@ -1080,9 +1052,9 @@ const UpdateProductDialog = ({
                       <FormMessage />
                     </FormItem>
                   )}
-                /> */}
+                />
 
-                {/* <FormField
+                <FormField
                   control={form.control}
                   name="manageSerial"
                   render={({ field }) => (
@@ -1109,7 +1081,7 @@ const UpdateProductDialog = ({
                       <FormMessage />
                     </FormItem>
                   )}
-                /> */}
+                />
 
                 <FormField
                   control={form.control}

@@ -67,12 +67,22 @@ export const columns = [
       const statusValue = row.getValue('status')
       const status = statuses.find((status) => status.value === statusValue)
 
+      if (!status) {
+        return (
+          <div className="flex w-[150px] items-center">
+            <Badge variant="outline" className="border-transparent bg-transparent px-0 text-gray-500">
+              {statusValue || 'Không xác định'}
+            </Badge>
+          </div>
+        )
+      }
+
       return (
         <div className="flex w-[150px] items-center">
           <Badge
             variant="outline"
             className={
-              status.value === 'published'
+              status.value === 'published' || status.value === 'active'
                 ? 'border-transparent bg-transparent px-0 text-green-600'
                 : 'border-transparent bg-transparent px-0 text-red-600'
             }
@@ -88,6 +98,22 @@ export const columns = [
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id))
     },
+  },
+  {
+    accessorKey: 'creator',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Người tạo" />
+    ),
+    cell: ({ row }) => {
+      const creator = row.original.creator
+      return (
+        <div className="w-32">
+          {creator?.fullName || '—'}
+        </div>
+      )
+    },
+    enableSorting: false,
+    enableHiding: true,
   },
   {
     accessorKey: 'createdAt',

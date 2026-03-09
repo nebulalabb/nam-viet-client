@@ -25,13 +25,19 @@ const MobileTaxCard = ({ tax, isSelected, onSelectChange }) => {
 
   const getStatusBadge = (statusValue) => {
     const statusObj = statuses.find((s) => s.value === statusValue)
-    if (!statusObj) return null
+    if (!statusObj) {
+      return (
+        <Badge variant="outline" className="border-transparent bg-transparent px-0 text-gray-500">
+          {statusValue || 'Không xác định'}
+        </Badge>
+      )
+    }
 
     return (
       <Badge
         variant="outline"
         className={
-          statusObj.value === 'published'
+          statusObj.value === 'published' || statusObj.value === 'active'
             ? 'border-transparent bg-transparent px-0 text-green-600'
             : 'border-transparent bg-transparent px-0 text-red-600'
         }
@@ -100,6 +106,12 @@ const MobileTaxCard = ({ tax, isSelected, onSelectChange }) => {
             <div className="text-right">
               <div className="text-xs text-muted-foreground mb-1">Trạng thái:</div>
               <div className="flex justify-end">{getStatusBadge(status)}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Người tạo:</div>
+              <div className="text-sm break-words">{tax.creator?.fullName || '—'}</div>
             </div>
           </div>
         </div>

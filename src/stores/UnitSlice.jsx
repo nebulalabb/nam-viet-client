@@ -46,6 +46,19 @@ export const createUnit = createAsyncThunk(
   },
 )
 
+export const importUnit = createAsyncThunk(
+  'unit/import',
+  async (data, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await api.post('/units/import', data)
+      await dispatch(getUnits()).unwrap()
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error)
+    }
+  },
+)
+
 export const deleteUnit = createAsyncThunk(
   'unit/delete',
   async (data, { rejectWithValue, dispatch }) => {

@@ -8,7 +8,9 @@ import Can from '@/utils/can'
 import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import CreateUnitDialog from './CreateUnitDialog'
+import ImportUnitDialog from './ImportUnitDialog'
 import { IconFileTypeXls } from '@tabler/icons-react'
+import { FileSpreadsheet } from 'lucide-react'
 import ExportUnitDialog from './ExportUnitDialog'
 import { useDispatch } from 'react-redux'
 import { deleteMultipleUnits } from '@/stores/UnitSlice'
@@ -19,6 +21,7 @@ const DataTableToolbar = ({ table }) => {
   const dispatch = useDispatch()
   const isFiltered = table.getState().columnFilters.length > 0
   const [showCreateUnitDialog, setShowCreateUnitDialog] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -62,7 +65,7 @@ const DataTableToolbar = ({ table }) => {
 
       <div className="flex items-center gap-2">
         {selectedCount > 0 && (
-          <Can permission={'DELETE_CATEGORY'}>
+          <Can permission={'DELETE_UNIT'}>
             <Button
               variant="destructive"
               size="sm"
@@ -75,7 +78,7 @@ const DataTableToolbar = ({ table }) => {
           </Can>
         )}
 
-        <Can permission={'CREATE_CATEGORY'}>
+        <Can permission={'CREATE_UNIT'}>
           <Button
             onClick={() => setShowCreateUnitDialog(true)}
             className="bg-green-600 hover:bg-green-700 text-white"
@@ -110,6 +113,23 @@ const DataTableToolbar = ({ table }) => {
               open={showExportDialog}
               onOpenChange={setShowExportDialog}
               showTrigger={false}
+            />
+          )}
+
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+            variant="outline"
+            size="sm"
+          >
+            <FileSpreadsheet className="mr-2 size-4" aria-hidden="true" />
+            Import Excel
+          </Button>
+
+          {showImportDialog && (
+            <ImportUnitDialog
+              open={showImportDialog}
+              onOpenChange={setShowImportDialog}
             />
           )}
         </Can>
