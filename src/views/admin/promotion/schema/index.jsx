@@ -20,6 +20,8 @@ export const createPromotionSchema = z.object({
     buyQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng mua').optional(),
     getQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng tặng').optional(),
     customerId: z.coerce.number().optional(),
+    customerType: z.enum(['individual', 'company']).optional(),
+    unit: z.string().optional(),
 })
 
 export const updatePromotionSchema = z.object({
@@ -41,4 +43,6 @@ export const updatePromotionSchema = z.object({
     buyQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng mua').optional(),
     getQuantity: z.coerce.number().min(1, 'Vui lòng nhập số lượng tặng').optional(),
     customerId: z.coerce.number().optional(),
+    customerType: z.enum(['individual', 'company']).optional(),
+    unit: z.string().optional(),
 })

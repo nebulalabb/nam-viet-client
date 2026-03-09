@@ -1,95 +1,150 @@
 import { Cross2Icon } from '@radix-ui/react-icons'
-import { Button } from '@/components/ui/button'
+
+import { Button } from '@/components/custom/Button'
 import { Input } from '@/components/ui/input'
+
 import { DataTableViewOptions } from './DataTableViewOption'
+import Can from '@/utils/can'
+import { PlusIcon } from 'lucide-react'
+import { useState } from 'react'
 import CreateUnitDialog from './CreateUnitDialog'
-import DeleteMultipleUnitsDialog from './DeleteMultipleUnitsDialog'
-import { unitStatuses } from '../data'
-import { useEffect, useState } from 'react'
+import ImportUnitDialog from './ImportUnitDialog'
+import { IconFileTypeXls } from '@tabler/icons-react'
+import { FileSpreadsheet } from 'lucide-react'
+import ExportUnitDialog from './ExportUnitDialog'
+import { useDispatch } from 'react-redux'
+import { deleteMultipleUnits } from '@/stores/UnitSlice'
+import { DeleteMultipleUnitsDialog } from './DeleteMultipleUnitsDialog'
+import { TrashIcon } from '@radix-ui/react-icons'
 
-export function DataTableToolbar({
-    table,
-    columnFilters,
-    setColumnFilters,
-    globalFilter,
-    setGlobalFilter,
-}) {
-    const isFiltered = columnFilters.length > 0 || !!globalFilter
-    const selectedRows = table.getFilteredSelectedRowModel().rows
-    const hasSelectedRows = selectedRows.length > 0
+const DataTableToolbar = ({ table }) => {
+  const dispatch = useDispatch()
+  const isFiltered = table.getState().columnFilters.length > 0
+  const [showCreateUnitDialog, setShowCreateUnitDialog] = useState(false)
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-    const [searchInput, setSearchInput] = useState(globalFilter || '')
+  const selectedRows = table.getSelectedRowModel().rows
+  const selectedCount = selectedRows.length
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setGlobalFilter(searchInput)
-        }, 500)
-
-        return () => clearTimeout(timer)
-    }, [searchInput, setGlobalFilter])
-
-    const handleStatusChange = (e) => {
-        const value = e.target.value
-        if (value) {
-            setColumnFilters([{ id: 'status', value }])
-        } else {
-            setColumnFilters([])
-        }
+  const handleBulkDelete = async () => {
+    const ids = selectedRows.map((row) => row.original.id)
+    try {
+      await dispatch(deleteMultipleUnits(ids)).unwrap()
+      setShowDeleteDialog(false)
+      table.resetRowSelection()
+    } catch (error) {
+      console.log(error)
     }
+  }
 
-    const selectedStatus = columnFilters.find((f) => f.id === 'status')?.value || ''
+  return (
+    <div className="flex w-full items-center justify-between space-x-2 overflow-auto">
+      <div className="flex flex-1 items-center space-x-2">
+        <Input
+          placeholder="Tìm kiếm..."
+          value={table.getColumn('unitName')?.getFilterValue() || ''}
+          onChange={(event) =>
+            table.getColumn('unitName')?.setFilterValue(event.target.value)
+          }
+          className="h-8 w-[150px] lg:w-[250px]"
+        />
 
-    return (
-        <div className="flex items-center justify-between">
-            <div className="flex flex-1 items-center space-x-2">
-                <Input
-                    placeholder="Tìm theo mã, tên..."
-                    value={searchInput}
-                    onChange={(event) => setSearchInput(event.target.value)}
-                    className="h-8 w-[150px] lg:w-[250px]"
-                />
+        {isFiltered && (
+          <Button
+            variant="ghost"
+            onClick={() => table.resetColumnFilters()}
+            className="h-8 px-2 lg:px-3"
+          >
+            Đặt lại
+            <Cross2Icon className="ml-2 h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
-                <select
-                    value={selectedStatus}
-                    onChange={handleStatusChange}
-                    className="h-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                    <option value="">Tất cả trạng thái</option>
-                    {unitStatuses.map((status) => (
-                        <option key={status.value} value={status.value}>
-                            {status.label}
-                        </option>
-                    ))}
-                </select>
+      <div className="flex items-center gap-2">
+        {selectedCount > 0 && (
+          <Can permission={'DELETE_UNIT'}>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-8"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <TrashIcon className="mr-2 size-4" aria-hidden="true" />
+              Xóa ({selectedCount})
+            </Button>
+          </Can>
+        )}
 
-                {isFiltered && (
-                    <Button
-                        variant="ghost"
-                        onClick={() => {
-                            setColumnFilters([])
-                            setGlobalFilter('')
-                            setSearchInput('')
-                        }}
-                        className="h-8 px-2 lg:px-3"
-                    >
-                        Xóa lọc
-                        <Cross2Icon className="ml-2 h-4 w-4" />
-                    </Button>
-                )}
-            </div>
+        <Can permission={'CREATE_UNIT'}>
+          <Button
+            onClick={() => setShowCreateUnitDialog(true)}
+            className="bg-green-600 hover:bg-green-700 text-white"
+            size="sm"
+          >
+            <PlusIcon className="mr-2 size-4" aria-hidden="true" />
+            Thêm mới
+          </Button>
 
-            <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                    {hasSelectedRows && (
-                        <DeleteMultipleUnitsDialog
-                            units={selectedRows.map((row) => row.original)}
-                            onSuccess={() => table.toggleAllRowsSelected(false)}
-                        />
-                    )}
-                </div>
-                <CreateUnitDialog />
-                <DataTableViewOptions table={table} />
-            </div>
-        </div>
-    )
+          {showCreateUnitDialog && (
+            <CreateUnitDialog
+              open={showCreateUnitDialog}
+              onOpenChange={setShowCreateUnitDialog}
+              showTrigger={false}
+            />
+          )}
+        </Can>
+
+        <Can permission={'GET_UNIT'}>
+          <Button
+            onClick={() => setShowExportDialog(true)}
+            className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
+            variant="outline"
+            size="sm"
+          >
+            <IconFileTypeXls className="mr-2 size-4" aria-hidden="true" />
+            Xuất Excel
+          </Button>
+
+          {showExportDialog && (
+            <ExportUnitDialog
+              open={showExportDialog}
+              onOpenChange={setShowExportDialog}
+              showTrigger={false}
+            />
+          )}
+
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+            variant="outline"
+            size="sm"
+          >
+            <FileSpreadsheet className="mr-2 size-4" aria-hidden="true" />
+            Import Excel
+          </Button>
+
+          {showImportDialog && (
+            <ImportUnitDialog
+              open={showImportDialog}
+              onOpenChange={setShowImportDialog}
+            />
+          )}
+        </Can>
+
+        <DataTableViewOptions table={table} />
+
+        <DeleteMultipleUnitsDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onConfirm={handleBulkDelete}
+          count={selectedCount}
+        />
+      </div>
+    </div>
+  )
 }
+
+export { DataTableToolbar }

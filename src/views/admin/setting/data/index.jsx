@@ -2,6 +2,7 @@ import {
   IconInfoSquareRounded,
   IconLogs,
   IconSettings2,
+  IconReceiptDollar,
 } from '@tabler/icons-react'
 
 const settings = [
@@ -28,6 +29,7 @@ const settings = [
     action: 'Xem',
     description: 'Cài đặt thông tin hệ thống',
   },
+
 ]
 
 export { settings }

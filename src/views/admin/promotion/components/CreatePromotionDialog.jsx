@@ -66,6 +66,8 @@ const CreatePromotionDialog = ({
             buyQuantity: undefined,
             getQuantity: undefined,
             customerId: undefined,
+            customerType: undefined,
+            unit: undefined,
         },
     })
 
@@ -141,6 +143,9 @@ const CreatePromotionDialog = ({
         if (open) fetchData()
     }, [open])
 
+    const uniqueUnits = useMemo(() => {
+        return [...new Set(productsList.map(p => p.unit).filter(Boolean))]
+    }, [productsList])
 
     const loading = useSelector((state) => state.promotion.loading)
 
@@ -149,6 +154,11 @@ const CreatePromotionDialog = ({
         try {
             if (!data.startDate || !data.endDate) {
                 toast.error('Vui lòng chọn ngày bắt đầu và kết thúc')
+                return
+            }
+
+            if (new Date(data.startDate) >= new Date(data.endDate)) {
+                toast.error('Ngày bắt đầu phải nhỏ hơn ngày kết thúc')
                 return
             }
 
@@ -174,6 +184,13 @@ const CreatePromotionDialog = ({
                 }]
             }
 
+            if (data.applicableTo === 'product_group' && data.unit) {
+                payload.conditions = {
+                    ...(payload.conditions || {}),
+                    unit: data.unit
+                }
+            }
+
             if (data.promotionType === 'gift') {
                 payload.conditions = {
                     ...(payload.conditions || {}),
@@ -183,6 +200,10 @@ const CreatePromotionDialog = ({
 
                 if (data.applicableTo === 'specific_customer' && data.customerId) {
                     payload.conditions.customer_id = Number(data.customerId)
+                }
+
+                if (data.applicableTo === 'customer_group' && data.customerType) {
+                    payload.conditions.applicable_customer_types = [data.customerType]
                 }
             }
 
@@ -212,6 +233,8 @@ const CreatePromotionDialog = ({
                 buyQuantity: undefined,
                 getQuantity: undefined,
                 customerId: undefined,
+                customerType: undefined,
+                unit: undefined,
             })
             onOpenChange?.(false)
         } catch (error) {
@@ -337,6 +360,63 @@ const CreatePromotionDialog = ({
                                         </FormItem>
                                     )}
                                 />
+
+                                {watchApplicableTo === 'customer_group' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="customerType"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Loại khách hàng</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value || undefined}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn loại khách hàng" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="individual">Cá nhân</SelectItem>
+                                                        <SelectItem value="company">Doanh nghiệp</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {watchApplicableTo === 'product_group' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="unit"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Đơn vị sản phẩm</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value || undefined}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn đơn vị sản phẩm" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {uniqueUnits.map((unit) => (
+                                                            <SelectItem key={unit} value={unit}>
+                                                                {unit}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
 
                                 {watchApplicableTo === 'specific_customer' && (
                                     <FormField

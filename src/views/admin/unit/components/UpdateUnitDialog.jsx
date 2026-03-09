@@ -1,136 +1,138 @@
-import { useState, useEffect } from 'react'
-import { useDispatch } from 'react-redux'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { updateUnit } from '@/stores/UnitSlice'
+import { Button } from '@/components/custom/Button'
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTrigger,
+  DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { PlusIcon } from '@radix-ui/react-icons'
+
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form'
+
+import { useForm } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Loader2 } from 'lucide-react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useDispatch, useSelector } from 'react-redux'
+import { updateUnit } from '@/stores/UnitSlice'
+import { updateUnitSchema } from '../schema'
 
-const formSchema = z.object({
-    unitCode: z.string().min(1, 'Mã đơn vị tính là bắt buộc'),
-    unitName: z.string().min(1, 'Tên đơn vị tính là bắt buộc'),
-    description: z.string().optional(),
-})
+const UpdateUnitDialog = ({
+  unit,
+  open,
+  onOpenChange,
+  showTrigger = true,
+  ...props
+}) => {
+  const loading = useSelector((state) => state.unit.loading)
 
-export default function UpdateUnitDialog({ unit, open, onOpenChange }) {
-    const [isLoading, setIsLoading] = useState(false)
-    const dispatch = useDispatch()
+  const form = useForm({
+    resolver: zodResolver(updateUnitSchema),
+    defaultValues: {
+      unitName: unit.unitName || '',
+      unitCode: unit.unitCode || '',
+    },
+  })
 
-    const form = useForm({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            unitCode: unit?.unitCode || '',
-            unitName: unit?.unitName || '',
-            description: unit?.description || '',
-        },
-    })
-
-    useEffect(() => {
-        if (unit) {
-            form.reset({
-                unitCode: unit.unitCode,
-                unitName: unit.unitName,
-                description: unit.description || '',
-            })
-        }
-    }, [unit, form])
-
-    const onSubmit = async (values) => {
-        setIsLoading(true)
-        try {
-            await dispatch(updateUnit({ id: unit.id, data: values })).unwrap()
-            onOpenChange(false)
-        } catch (error) {
-        } finally {
-            setIsLoading(false)
-        }
+  const dispatch = useDispatch()
+  const onSubmit = async (data) => {
+    try {
+      await dispatch(updateUnit({ id: unit.id, data })).unwrap()
+      form.reset()
+      onOpenChange?.(false)
+    } catch (error) {
+      console.log('Submit error: ', error)
     }
+  }
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Cập nhật đơn vị tính</DialogTitle>
-                    <DialogDescription>
-                        Cập nhật thông tin của đơn vị tính.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="unitCode"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Mã đơn vị</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="unitName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Tên đơn vị</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Mô tả</FormLabel>
-                                    <FormControl>
-                                        <Textarea {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="flex justify-end gap-2 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                                disabled={isLoading}
-                            >
-                                Hủy
-                            </Button>
-                            <Button type="submit" disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Lưu thay đổi
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
-    )
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} {...props}>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button className="mx-2" variant="outline" size="sm">
+            <PlusIcon className="mr-2 size-4" aria-hidden="true" />
+            Thêm mới
+          </Button>
+        </DialogTrigger>
+      )}
+
+      <DialogContent className="md:h-auto">
+        <DialogHeader>
+          <DialogTitle>Cập nhật đơn vị tính mới</DialogTitle>
+          <DialogDescription>
+            Điền vào chi tiết phía dưới để cập nhật đơn vị tính mới
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[65vh] overflow-auto md:max-h-[75vh]">
+          <Form {...form}>
+            <form id="update-unit" onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="grid gap-4 md:grid-cols-1">
+                <FormField
+                  control={form.control}
+                  name="unitCode"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>
+                        Mã đơn vị tính <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="VD: THOI" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="unitName"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>
+                        Tên đơn vị tính <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="VD: Thỏi" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </form>
+          </Form>
+        </div>
+
+        <DialogFooter className="flex gap-2 sm:space-x-0">
+          <DialogClose asChild>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                form.reset()
+              }}
+            >
+              Hủy
+            </Button>
+          </DialogClose>
+
+          <Button form="update-unit" loading={loading}>
+            Cập nhật
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
+
+export default UpdateUnitDialog

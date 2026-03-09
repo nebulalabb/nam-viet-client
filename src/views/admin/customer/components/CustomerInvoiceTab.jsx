@@ -14,6 +14,7 @@ import { useDispatch } from 'react-redux'
 import { statuses, invoiceTypes } from '../data'
 import Can from '@/utils/can'
 import { toast } from 'sonner'
+import { ViewInvoiceDialog } from './ViewInvoiceDialog'
 
 const InvoiceHistoryTab = ({ customerId, dateFrom, dateTo, status }) => {
   const dispatch = useDispatch()
@@ -56,7 +57,8 @@ const InvoiceHistoryTab = ({ customerId, dateFrom, dateTo, status }) => {
   }, [customerId, page, limit, dateFrom, dateTo, status])
 
   const handleOpenInvoice = (invoiceId) => {
-    toast.info('Tính năng xem chi tiết hóa đơn đang được xây dựng ở module Hóa Đơn.')
+    setSelectedInvoiceId(invoiceId)
+    setShowViewInvoiceDialog(true)
   }
 
   const getInvoiceTypeLabel = (type) => {
@@ -160,7 +162,12 @@ const InvoiceHistoryTab = ({ customerId, dateFrom, dateTo, status }) => {
         </div>
       </div>
 
-      {/* Temporarily disabled ViewInvoiceDialog and InvoiceDialog as fact the Invoice module is not ported yet */}
+      <ViewInvoiceDialog
+        open={showViewInvoiceDialog}
+        onOpenChange={setShowViewInvoiceDialog}
+        invoiceId={selectedInvoiceId}
+      />
+      {/* Temporarily disabled UpdateInvoiceDialog as the Invoice module is not ported yet */}
     </>
   )
 }

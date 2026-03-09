@@ -83,7 +83,7 @@ export function DataTableToolbar({ table }) {
 
             <div className="flex items-center gap-2">
                 {table.getFilteredSelectedRowModel().rows.length > 0 &&
-                    table.getFilteredSelectedRowModel().rows.every(row => row.original.status === 'cancelled') ? (
+                    table.getFilteredSelectedRowModel().rows.every(row => ['cancelled', 'expired'].includes(row.original.status)) ? (
                     <Can permission="DELETE_PROMOTION">
                         <Button
                             variant="destructive"
@@ -113,7 +113,7 @@ export function DataTableToolbar({ table }) {
                 ) : null}
 
                 {table.getFilteredSelectedRowModel().rows.length > 0 &&
-                    table.getFilteredSelectedRowModel().rows.every(row => row.original.status === 'cancelled') ? (
+                    table.getFilteredSelectedRowModel().rows.every(row => ['cancelled', 'expired'].includes(row.original.status)) ? (
                     <Can permission="UPDATE_PROMOTION">
                         <Button
                             variant="default"
