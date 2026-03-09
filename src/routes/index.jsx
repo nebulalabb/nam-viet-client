@@ -48,6 +48,9 @@ import MyPaymentPage from '@/views/admin/payment/MyPaymentPage'
 import WarehouseInPage from '@/views/admin/warehouse-receipt/WarehouseInPage'
 import WarehouseOutPage from '@/views/admin/warehouse-receipt/WarehouseOutPage'
 
+import SalaryPage from '@/views/admin/salary/SalaryPage'
+import SalaryCalculatePage from '@/views/admin/salary/SalaryCalculatePage'
+
 const routes = [
   {
     path: '/attendance',
@@ -57,6 +60,16 @@ const routes = [
   {
     path: '/overtime',
     element: OvertimePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary',
+    element: SalaryPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/salary/calculate',
+    element: SalaryCalculatePage,
     layout: AdminLayout,
   },
   {
