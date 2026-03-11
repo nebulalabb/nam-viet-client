@@ -39,40 +39,50 @@ const DataTableRowActions = ({ row }) => {
 
     return (
         <>
-            <DeletePromotionDialog
-                open={showCancelPromotionDialog}
-                onOpenChange={setShowCancelPromotionDialog}
-                promotion={row.original}
-                isDeleteAction={false}
-                showTrigger={false}
-            />
+            {showCancelPromotionDialog && (
+                <DeletePromotionDialog
+                    open={showCancelPromotionDialog}
+                    onOpenChange={setShowCancelPromotionDialog}
+                    promotion={row.original}
+                    isDeleteAction={false}
+                    showTrigger={false}
+                />
+            )}
 
-            <DeletePromotionDialog
-                open={showExplicitDeleteDialog}
-                onOpenChange={setShowExplicitDeleteDialog}
-                promotion={row.original}
-                isDeleteAction={true}
-                showTrigger={false}
-            />
+            {showExplicitDeleteDialog && (
+                <DeletePromotionDialog
+                    open={showExplicitDeleteDialog}
+                    onOpenChange={setShowExplicitDeleteDialog}
+                    promotion={row.original}
+                    isDeleteAction={true}
+                    showTrigger={false}
+                />
+            )}
 
-            <UpdatePromotionDialog
-                open={showUpdatePromotionDialog}
-                onOpenChange={setShowUpdatePromotionDialog}
-                promotion={row.original}
-                showTrigger={false}
-            />
+            {showUpdatePromotionDialog && (
+                <UpdatePromotionDialog
+                    open={showUpdatePromotionDialog}
+                    onOpenChange={setShowUpdatePromotionDialog}
+                    promotion={row.original}
+                    showTrigger={false}
+                />
+            )}
 
-            <ApprovePromotionDialog
-                open={showApprovePromotionDialog}
-                onOpenChange={setShowApprovePromotionDialog}
-                promotion={row.original}
-            />
+            {showApprovePromotionDialog && (
+                <ApprovePromotionDialog
+                    open={showApprovePromotionDialog}
+                    onOpenChange={setShowApprovePromotionDialog}
+                    promotion={row.original}
+                />
+            )}
 
-            <RestorePromotionDialog
-                open={showRestorePromotionDialog}
-                onOpenChange={setShowRestorePromotionDialog}
-                promotion={row.original}
-            />
+            {showRestorePromotionDialog && (
+                <RestorePromotionDialog
+                    open={showRestorePromotionDialog}
+                    onOpenChange={setShowRestorePromotionDialog}
+                    promotion={row.original}
+                />
+            )}
 
             <div className="flex items-center justify-end gap-2 text-right">
                 {canDelete && (

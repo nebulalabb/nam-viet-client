@@ -36,11 +36,17 @@ import {
     Trash2,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useSelector } from 'react-redux'
 import UpdateMaterialDialog from './UpdateMaterialDialog'
 import DeleteMaterialDialog from './DeleteMaterialDialog'
 
-export function MaterialDetailDialog({ material, open, onOpenChange, loading = false }) {
+export function MaterialDetailDialog({ material: propMaterial, open, onOpenChange, loading: propLoading }) {
     const [showEdit, setShowEdit] = useState(false)
+    const reduxMaterial = useSelector((state) => state.material.material)
+    const reduxLoading = useSelector((state) => state.material.detailLoading)
+
+    const material = propMaterial || reduxMaterial
+    const loading = propLoading !== undefined ? propLoading : reduxLoading
     const [showDelete, setShowDelete] = useState(false)
 
     if (!material && !loading) return null

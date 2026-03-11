@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { IconEdit, IconTrash, IconEye } from '@tabler/icons-react'
 import UpdateMaterialDialog from './UpdateMaterialDialog'
 import DeleteMaterialDialog from './DeleteMaterialDialog'
@@ -22,8 +22,6 @@ const DataTableRowActions = ({ row }) => {
     const [showDetail, setShowDetail] = useState(false)
 
     const dispatch = useDispatch()
-    const materialDetail = useSelector((state) => state.material.material)
-    const detailLoading = useSelector((state) => state.material.detailLoading)
 
     const handleViewDetail = () => {
         dispatch(getMaterialById(row.original.id))
@@ -53,8 +51,6 @@ const DataTableRowActions = ({ row }) => {
                 <MaterialDetailDialog
                     open={showDetail}
                     onOpenChange={setShowDetail}
-                    material={materialDetail}
-                    loading={detailLoading}
                 />
             )}
 

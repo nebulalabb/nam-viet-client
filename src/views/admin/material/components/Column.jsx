@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { DataTableColumnHeader } from './DataTableColumnHeader'
@@ -11,8 +11,6 @@ import MaterialDetailDialog from './MaterialDetailDialog'
 const MaterialCodeCell = ({ row }) => {
     const [showDetail, setShowDetail] = useState(false)
     const dispatch = useDispatch()
-    const materialDetail = useSelector((state) => state.material.material)
-    const detailLoading = useSelector((state) => state.material.detailLoading)
 
     const handleClick = () => {
         dispatch(getMaterialById(row.original.id))
@@ -32,8 +30,6 @@ const MaterialCodeCell = ({ row }) => {
                 <MaterialDetailDialog
                     open={showDetail}
                     onOpenChange={setShowDetail}
-                    material={materialDetail}
-                    loading={detailLoading}
                 />
             )}
         </>
