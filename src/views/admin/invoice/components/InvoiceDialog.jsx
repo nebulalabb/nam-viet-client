@@ -43,6 +43,7 @@ import { getSetting } from '@/stores/SettingSlice'
 import { getUsers } from '@/stores/UserSlice'
 import { getCategories } from '@/stores/CategorySlice'
 import { createInvoice, updateInvoice } from '@/stores/InvoiceSlice'
+import { findPromotionByCode, previewPromotion, getPromotionsForCart } from '@/stores/PromotionSlice'
 import { toast } from 'sonner'
 import { paymentMethods } from '../../receipt/data'
 import { moneyFormat } from '@/utils/money-format'
@@ -161,6 +162,14 @@ const InvoiceDialog = ({
   const [invoice, setInvoice] = useState(null)
   const [banks, setBanks] = useState([])
 
+  // ====== PROMOTION STATE ======
+  const [promoCode, setPromoCode] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [appliedPromotion, setAppliedPromotion] = useState(null)
+  const [promoError, setPromoError] = useState('')
+  const [cartPromotions, setCartPromotions] = useState([]) // applicable promotions auto-detected
+  const [cartPromosLoading, setCartPromosLoading] = useState(false)
+
   // ====== CONTRACT LOGIC REMOVED ======
   const [localInvoiceData, setLocalInvoiceData] = useState(null)
 
@@ -208,10 +217,13 @@ const InvoiceDialog = ({
     setGiveaway({})
     setSelectedTaxes({})
     setApplyWarrantyItems({})
-    setIsCreateReceipt(false)
     setHasPrintQuotation(false)
     setHasPrintInvoice(false)
     setLocalInvoiceData(null)
+    setAppliedPromotion(null)
+    setPromoCode('')
+    setPromoError('')
+    setCartPromotions([])
   }, [open])
 
   // Load invoice data when dialog opens with invoiceId
@@ -247,13 +259,13 @@ const InvoiceDialog = ({
         // Load customer data into edit form
         if (customer) {
           setCustomerEditData({
-            name: customer.name || '',
+            customerName: customer.customerName || customer.name || '',
             phone: customer.phone || '',
             email: customer.email || '',
             address: customer.address || '',
-            identityCard: customer.identityCard || '',
-            identityDate: customer.identityDate || null,
-            identityPlace: customer.identityPlace || '',
+            cccd: customer.cccd || '',
+            issuedAt: customer.issuedAt || null,
+            issuedBy: customer.issuedBy || '',
           })
         }
 
@@ -347,17 +359,15 @@ const InvoiceDialog = ({
     defaultValues: {
       schoolId: '',
       customerId: '',
-      status: 'pending',
       note: '',
       revenueSharing: null,
-      paymentMethod: paymentMethods[0].value,
-      paymentNote: '',
       orderDate: new Date().toISOString(),
       isPickupOrder: true,
       recipientName: '',
       recipientPhone: '',
       deliveryAddress: '',
       shippingFee: 0,
+      expectedDeliveryDate: null,
     },
   })
 
@@ -591,6 +601,97 @@ const InvoiceDialog = ({
     return hasPriceError
   }
 
+  // ====== PROMOTION HANDLERS ======
+
+  // Auto-fetch applicable promotions when cart changes
+  useEffect(() => {
+    if (!open || selectedProducts.length === 0) {
+      setCartPromotions([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      setCartPromosLoading(true)
+      try {
+        const productIds = selectedProducts.map((p) => p.id)
+        const customerId = form.getValues('customerId') ? Number(form.getValues('customerId')) : undefined
+        const result = await dispatch(getPromotionsForCart({ productIds, customerId })).unwrap()
+        setCartPromotions(result || [])
+        // If currently applied promotion is no longer applicable, clear it
+        if (appliedPromotion && !result.find((r) => r.id === appliedPromotion.id)) {
+          setAppliedPromotion(null)
+        }
+      } catch {
+        setCartPromotions([])
+      } finally {
+        setCartPromosLoading(false)
+      }
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [selectedProducts, selectedCustomer, open])
+
+  // User selects a promotion from the list → preview
+  const handleSelectPromotion = async (promo) => {
+    // Toggle off if same promotion selected
+    if (appliedPromotion?.id === promo.id) {
+      setAppliedPromotion(null)
+      return
+    }
+    setPromoError('')
+    setPromoLoading(true)
+    try {
+      const orderAmount = handleCalculateSubTotalInvoice()
+      const orderItems = selectedProducts.map((p) => ({
+        productId: p.id,
+        quantity: quantities[p.id] || 1,
+        unitPrice: getDisplayPrice(p),
+      }))
+      const result = await dispatch(previewPromotion({
+        id: promo.id,
+        orderAmount,
+        orderItems,
+        customerId: form.getValues('customerId') ? Number(form.getValues('customerId')) : undefined,
+      })).unwrap()
+
+      if (!result.applicable) {
+        setPromoError(result.message || 'Khuyến mãi không thể áp dụng cho đơn hàng này')
+        return
+      }
+      setAppliedPromotion({
+        id: promo.id,
+        name: promo.promotionName,
+        code: promo.promotionCode,
+        discountAmount: result.discountAmount,
+        giftProducts: result.giftProducts || [],
+      })
+      toast.success(`Áp dụng "${promo.promotionCode}" thành công!`)
+    } catch (err) {
+      setPromoError(typeof err === 'string' ? err : 'Không thể áp dụng khuyến mãi này')
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  // Also keep manual code entry as fallback
+  const handleApplyPromotion = async () => {
+    if (!promoCode.trim()) return
+    setPromoError('')
+    setPromoLoading(true)
+    try {
+      const promo = await dispatch(findPromotionByCode(promoCode.trim())).unwrap()
+      await handleSelectPromotion(promo)
+    } catch (err) {
+      setPromoError(typeof err === 'string' ? err : 'Mã khuyến mãi không hợp lệ')
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  const handleRemovePromotion = () => {
+    setAppliedPromotion(null)
+    setPromoCode('')
+    setPromoError('')
+  }
+
   const onInvalidSubmit = () => {
     if (validatePrices()) {
       toast.error('Vui lòng kiểm tra lại giá sản phẩm')
@@ -631,12 +732,12 @@ const InvoiceDialog = ({
     // If !hasSelectedCustomer -> Must have valid newCustomerData.
 
     // Always validate customer data (new or existing)
-    if (!customerEditData?.name?.trim()) errors.name = "Tên khách hàng là bắt buộc"
+    if (!customerEditData?.customerName?.trim()) errors.customerName = "Tên khách hàng là bắt buộc"
 
-    if (!customerEditData?.identityCard?.trim()) {
-      errors.identityCard = "CCCD là bắt buộc"
-    } else if (customerEditData.identityCard.trim().length !== 12) {
-      errors.identityCard = "CCCD phải đủ 12 số"
+    if (!customerEditData?.cccd?.trim()) {
+      errors.cccd = "CCCD là bắt buộc"
+    } else if (customerEditData.cccd.trim().length !== 12) {
+      errors.cccd = "CCCD phải đủ 12 số"
     }
 
     if (!customerEditData?.phone?.trim()) {
@@ -680,7 +781,6 @@ const InvoiceDialog = ({
 
       return {
         productId: product.id,
-        image: product.image,
         productName: product.name,
         productType: product.type,
 
@@ -696,7 +796,6 @@ const InvoiceDialog = ({
         // optional: backend nên tự lookup lại factor từ DB
         conversionFactor: factor,
 
-        giveaway: giveaway[product.id] || 0,
         price: priceUnit,
 
         // taxRate = tổng % thuế đã chọn
@@ -715,13 +814,6 @@ const InvoiceDialog = ({
         total:
           calculateSubTotal(product.id) + calculateTaxForProduct(product.id),
 
-        note: notes[product.id] || '',
-        options: product.attributes || [],
-
-        conditions:
-          applyWarrantyItems[product.id] && product?.warrantyPolicy
-            ? product?.warrantyPolicy?.conditions
-            : '',
         periodMonths:
           applyWarrantyItems[product.id] && product?.warrantyPolicy
             ? product?.warrantyPolicy?.periodMonths
@@ -743,18 +835,16 @@ const InvoiceDialog = ({
       amount: calculateTotalAmount(),
       discount: calculateTotalDiscount(),
       subTotal: handleCalculateSubTotalInvoice(),
-      status: data.status,
       items,
-      createReceipt: isCreateReceipt,
-      paymentMethod: data.paymentMethod,
-      paymentNote: data.paymentNote,
       isPickupOrder: data.isPickupOrder,
       recipientName: data.recipientName || undefined,
       recipientPhone: data.recipientPhone || undefined,
       deliveryAddress: data.deliveryAddress || undefined,
       shippingFee: data.shippingFee || 0,
       totalAmount: calculateTotalAmount(),
-      dueDate: data.dueDate || null,
+      expectedDeliveryDate: data.expectedDeliveryDate || null,
+      requireApproval: data.requireApproval,
+      ...(appliedPromotion && { promotionId: appliedPromotion.id }),
       ...(otherExpenses?.price > 0 && { otherExpenses: [otherExpenses] }),
 
       // Support Update Invoice ID
@@ -777,10 +867,6 @@ const InvoiceDialog = ({
       ...((data.customerId && customerEditData) && {
         newCustomer: customerEditData
       }),
-
-      // ========== OPTIONS IN ẤN ==========
-      hasPrintInvoice: shouldPrintInvoice || false,
-      hasPrintQuotation: shouldPrintQuotation || false,
     }
 
     if (data.revenueSharing) {
@@ -1051,8 +1137,9 @@ const InvoiceDialog = ({
   }
 
   const calculateTotalAmount = () => {
+    const shippingFee = Number(form.watch('shippingFee')) || 0;
     const total =
-      calculateInvoiceTotal() + calculateTotalTax() + calculateExpenses()
+      calculateInvoiceTotal() + calculateTotalTax() + calculateExpenses() + shippingFee
     return total
   }
 
@@ -1077,14 +1164,13 @@ const InvoiceDialog = ({
 
     // Initialize customerEditData with customer info
     setCustomerEditData({
-      name: customer?.name || '',
+      customerName: customer?.customerName || customer?.name || '',
       phone: customer?.phone || '',
       email: customer?.email || '',
       address: customer?.address || '',
-      represent: customer?.represent || '',
-      identityCard: customer?.identityCard || '',
-      identityDate: customer?.identityDate || null,
-      identityPlace: customer?.identityPlace || '',
+      cccd: customer?.cccd || '',
+      issuedAt: customer?.issuedAt || null,
+      issuedBy: customer?.issuedBy || '',
     })
 
     // Bỏ qua theo yêu cầu: không tự động gọi API expiry khi chọn khách hàng
@@ -1482,6 +1568,16 @@ const InvoiceDialog = ({
                         calculateTaxForProduct={calculateTaxForProduct}
                         calculatePreDiscountTotal={handleCalculateSubTotalInvoice}
                         calculateTotalDiscount={calculateTotalDiscount}
+                        promoCode={promoCode}
+                        promoLoading={promoLoading}
+                        appliedPromotion={appliedPromotion}
+                        promoError={promoError}
+                        onPromoCodeChange={setPromoCode}
+                        onApplyPromotion={handleApplyPromotion}
+                        onRemovePromotion={handleRemovePromotion}
+                        cartPromotions={cartPromotions}
+                        cartPromosLoading={cartPromosLoading}
+                        onSelectPromotion={handleSelectPromotion}
                       />
                     </div>
 
@@ -1757,6 +1853,16 @@ const InvoiceDialog = ({
                   calculateTotalDiscount={calculateTotalDiscount}
                   applyWarrantyItems={applyWarrantyItems}
                   onApplyWarrantyChange={handleApplyWarrantyChange}
+                  promoCode={promoCode}
+                  promoLoading={promoLoading}
+                  appliedPromotion={appliedPromotion}
+                  promoError={promoError}
+                  onPromoCodeChange={setPromoCode}
+                  onApplyPromotion={handleApplyPromotion}
+                  onRemovePromotion={handleRemovePromotion}
+                  cartPromotions={cartPromotions}
+                  cartPromosLoading={cartPromosLoading}
+                  onSelectPromotion={handleSelectPromotion}
                 />
 
                 {/* COLUMN 4: Invoice Sidebar */}
@@ -1774,17 +1880,7 @@ const InvoiceDialog = ({
                     setSelectedCustomer(customer)
                     if (customer) {
                       form.setValue('customerId', customer.id.toString())
-                      setCustomerEditData({
-                        name: customer.name || '',
-                        phone: customer.phone || '',
-                        email: customer.email || '',
-                        address: customer.address || '',
-                        identityCard: customer.identityCard || '',
-                        identityDate: customer.identityDate || null,
-                        identityPlace: customer.identityPlace || '',
-                      })
                       handleSelectCustomer(customer)
-                      setCustomerErrors({})
                     } else {
                       form.setValue('customerId', '')
                       setCustomerEditData(null)

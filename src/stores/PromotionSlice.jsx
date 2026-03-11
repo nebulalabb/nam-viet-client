@@ -34,6 +34,60 @@ export const getActivePromotions = createAsyncThunk(
   },
 )
 
+// Find promotion by code (for cart apply)
+export const findPromotionByCode = createAsyncThunk(
+  'promotion/findByCode',
+  async (code, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/promotions?search=${encodeURIComponent(code)}&status=active&limit=5`)
+      const list = response.data.data || []
+      const match = list.find(
+        (p) => p.promotionCode?.toLowerCase() === code.toLowerCase()
+      )
+      if (!match) return rejectWithValue('Mã khuyến mãi không tồn tại hoặc chưa được kích hoạt')
+      return match
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+// Preview applying a promotion to current cart (does NOT create order)
+export const previewPromotion = createAsyncThunk(
+  'promotion/preview',
+  async ({ id, orderAmount, orderItems, customerId }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/promotions/${id}/apply`, {
+        orderAmount,
+        orderItems,
+        customerId,
+      })
+      return response.data.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+// Get promotions applicable for current cart (auto-detect)
+export const getPromotionsForCart = createAsyncThunk(
+  'promotion/forCart',
+  async ({ productIds, customerId }, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams()
+      if (productIds?.length) params.append('productIds', productIds.join(','))
+      if (customerId) params.append('customerId', customerId)
+      const response = await api.get(`/promotions/for-cart?${params.toString()}`)
+      return response.data.data || []
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
 // Create promotion
 export const createPromotion = createAsyncThunk(
   'promotion/create',

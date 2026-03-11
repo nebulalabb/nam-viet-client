@@ -173,7 +173,7 @@ export const createInvoice = createAsyncThunk(
   'invoice/create-invoice',
   async (dataToSend, { rejectWithValue }) => {
     try {
-      const response = await api.post('/invoice/create', dataToSend)
+      const response = await api.post('/invoices', dataToSend)
       toast.success('Tạo đơn bán thành công')
       const { data } = response.data
       return data

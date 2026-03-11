@@ -21,7 +21,7 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { Separator } from '@/components/ui/separator'
-import { X, ShoppingCart as CartIcon, Minus, Plus, Package, Check as CheckIcon, ChevronsUpDown } from 'lucide-react'
+import { X, ShoppingCart as CartIcon, Minus, Plus, Package, Check as CheckIcon, ChevronsUpDown, Tag, Loader2, Gift } from 'lucide-react'
 import { moneyFormat } from '@/utils/money-format'
 import { MoneyInputQuick } from '@/components/custom/MoneyInputQuick'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -54,6 +54,18 @@ const ShoppingCart = ({
   calculateTotalDiscount,
   applyWarrantyItems,
   onApplyWarrantyChange,
+  // Promotion props
+  promoCode = '',
+  promoLoading = false,
+  appliedPromotion = null,
+  promoError = '',
+  onPromoCodeChange,
+  onApplyPromotion,
+  onRemovePromotion,
+  // Auto-detect promotion props
+  cartPromotions = [],
+  cartPromosLoading = false,
+  onSelectPromotion,
 }) => {
   if (selectedProducts.length === 0) {
     return (
@@ -436,6 +448,177 @@ const ShoppingCart = ({
 
       {/* Cart Summary */}
       <div className="border-t bg-muted/30 p-4 space-y-1.5">
+
+        {/* ── AUTO-DETECT PROMOTIONS ────────────────────────────── */}
+        {(cartPromotions.length > 0 || cartPromosLoading) && (
+          <div className="mb-3 space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-primary" />
+              <p className="text-xs font-semibold text-foreground">Khuyến mãi áp dụng</p>
+              {cartPromosLoading && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-auto" />
+              )}
+            </div>
+
+            <div className="space-y-1">
+              {cartPromotions.map((promo, idx) => {
+                const isApplied = appliedPromotion?.id === promo.id
+                const isLoading = promoLoading && !isApplied
+                // Recommend the one with highest discountValue (or first if tie)
+                const maxVal = Math.max(...cartPromotions.map(p => Number(p.discountValue || 0)))
+                const isRecommended = idx === 0 || (Number(promo.discountValue || 0) === maxVal && idx === cartPromotions.findIndex(p => Number(p.discountValue || 0) === maxVal))
+                const promoTypeLabel = promo.promotionType === 'buy_x_get_y' ? 'Mua X Tặng Y' : 'Tặng quà'
+
+                return (
+                  <button
+                    key={promo.id}
+                    type="button"
+                    disabled={promoLoading}
+                    onClick={() => onSelectPromotion?.(promo)}
+                    className={cn(
+                      "w-full flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left transition-all",
+                      isApplied
+                        ? "border-green-400 bg-green-50/80 dark:border-green-700 dark:bg-green-950/40"
+                        : "border-border/60 bg-background hover:border-primary/40 hover:bg-muted/50"
+                    )}
+                  >
+                    {/* Checkbox indicator */}
+                    <div className={cn(
+                      "mt-0.5 h-3.5 w-3.5 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors",
+                      isApplied
+                        ? "border-green-500 bg-green-500"
+                        : "border-muted-foreground/40"
+                    )}>
+                      {isApplied && <CheckIcon className="h-2 w-2 text-white" strokeWidth={3} />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={cn(
+                          "text-xs font-semibold truncate",
+                          isApplied ? "text-green-700 dark:text-green-400" : "text-foreground"
+                        )}>
+                          {promo.promotionName}
+                        </span>
+                        {isRecommended && !isApplied && (
+                          <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 uppercase tracking-wide leading-none shrink-0">
+                            ⭐ Gợi ý
+                          </span>
+                        )}
+                        <span className="inline-flex rounded px-1 py-0.5 text-[9px] font-medium bg-muted text-muted-foreground uppercase tracking-wide leading-none shrink-0">
+                          {promoTypeLabel}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className="text-[10px] font-mono text-primary">{promo.promotionCode}</span>
+                        {promo.minOrderValue > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Đơn tối thiểu {moneyFormat(Number(promo.minOrderValue))}
+                          </span>
+                        )}
+                        {promo.discountValue > 0 && (
+                          <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
+                            -{moneyFormat(Number(promo.discountValue))}
+                          </span>
+                        )}
+                      </div>
+                      {/* Gift products */}
+                      {promo.products?.some(pp => pp.giftProduct) && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <Gift className="h-3 w-3 text-amber-500 shrink-0" />
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 truncate">
+                            {promo.products.filter(pp => pp.giftProduct).map(pp =>
+                              `${pp.giftProduct.productName} x${pp.giftQuantity}`
+                            ).join(', ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {isApplied && (
+                      <div
+                        role="button"
+                        onClick={(e) => { e.stopPropagation(); onRemovePromotion?.() }}
+                        className="shrink-0 rounded-full p-0.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Gift products banner (when applied) */}
+            {appliedPromotion?.giftProducts?.length > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 px-3 py-2 space-y-1">
+                <p className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+                  <Gift className="h-3 w-3" />
+                  Quà tặng kèm
+                </p>
+                {appliedPromotion.giftProducts.map((g, i) => (
+                  <p key={i} className="text-[10px] text-amber-600 dark:text-amber-500">
+                    • {g.productName || g.name} × {g.quantity}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {promoError && (
+              <p className="text-[10px] font-medium text-destructive">{promoError}</p>
+            )}
+          </div>
+        )}
+
+        {/* ── MANUAL CODE ENTRY (fallback / no auto-detect) ──────── */}
+        {cartPromotions.length === 0 && !cartPromosLoading && !appliedPromotion && (
+          <div className="mb-3 space-y-1">
+            <div className="flex gap-1.5">
+              <div className="relative flex-1">
+                <Tag className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Nhập mã khuyến mãi..."
+                  value={promoCode}
+                  onChange={(e) => onPromoCodeChange?.(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onApplyPromotion?.() } }}
+                  className="h-8 pl-8 text-xs uppercase tracking-wider"
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 shrink-0 text-xs px-3"
+                disabled={!promoCode?.trim() || promoLoading}
+                onClick={onApplyPromotion}
+              >
+                {promoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Áp dụng'}
+              </Button>
+            </div>
+            {promoError && (
+              <p className="text-[10px] font-medium text-destructive">{promoError}</p>
+            )}
+          </div>
+        )}
+
+        {/* Applied promotion (manual code - no auto list) */}
+        {appliedPromotion && cartPromotions.length === 0 && (
+          <div className="flex items-center justify-between mb-3 rounded-lg border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30 px-3 py-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Tag className="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-green-700 dark:text-green-400 truncate">{appliedPromotion.code}</p>
+                <p className="text-[10px] text-green-600 dark:text-green-500 truncate">{appliedPromotion.name}</p>
+              </div>
+            </div>
+            <button type="button" onClick={onRemovePromotion} className="ml-2 shrink-0 rounded-full p-0.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+        {/* ─────────────────────────────────────────────────────────── */}
+
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Tạm tính:</span>
           <span className="text-sm font-medium">
@@ -448,13 +631,22 @@ const ShoppingCart = ({
             <span className="text-sm font-medium">-{moneyFormat(calculateTotalDiscount())}</span>
           </div>
         )}
+        {appliedPromotion?.discountAmount > 0 && (
+          <div className="flex items-center justify-between text-green-600 dark:text-green-400">
+            <span className="text-sm flex items-center gap-1">
+              <Tag className="h-3 w-3" />
+              KM ({appliedPromotion.code}):
+            </span>
+            <span className="text-sm font-medium">-{moneyFormat(appliedPromotion.discountAmount)}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between border-t pt-1.5">
           <span className="text-sm font-semibold">Tổng:</span>
           <span className="text-lg font-bold text-primary">
             {moneyFormat(
               selectedProducts.reduce((total, product) => {
                 return total + calculateSubTotal(product.id)
-              }, 0),
+              }, 0) - (appliedPromotion?.discountAmount || 0),
             )}
           </span>
         </div>

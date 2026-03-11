@@ -4,7 +4,6 @@ const createInvoiceSchema = z
   .object({
     schoolId: z.string().nullable(),
     customerId: z.string().optional().nullable(),
-    status: z.string().nonempty('Trạng thái là bắt buộc'),
     note: z.string().max(120).nullable(),
     revenueSharing: z
       .union([
@@ -15,8 +14,6 @@ const createInvoiceSchema = z
         }),
       ])
       .optional(),
-    paymentMethod: z.string().nonempty('Bắt buộc'),
-    paymentNote: z.string().max(190, 'Tối đa 190 ký tự'),
     isPickupOrder: z.boolean().default(true),
     dueDate: z.string().nullable().optional(),
     orderDate: z.string().nullable().optional(),
@@ -24,6 +21,8 @@ const createInvoiceSchema = z
     recipientPhone: z.string().optional().nullable(),
     deliveryAddress: z.string().optional().nullable(),
     shippingFee: z.number().min(0, 'Phí vận chuyển phải >= 0').optional().nullable(),
+    expectedDeliveryDate: z.string().optional().nullable(),
+    requireApproval: z.boolean().default(true),
   })
 
 const updateInvoiceSchema = z.object({
@@ -39,8 +38,6 @@ const updateInvoiceSchema = z.object({
       }),
     ])
     .optional(),
-  paymentMethod: z.string().nonempty('Bắt buộc'),
-  paymentNote: z.string().max(190, 'Tối đa 190 ký tự'),
   dueDate: z.string().nullable().optional(),
   orderDate: z.string().nullable().optional(),
   isPickupOrder: z.boolean().default(true),
@@ -48,6 +45,8 @@ const updateInvoiceSchema = z.object({
   recipientPhone: z.string().optional().nullable(),
   deliveryAddress: z.string().optional().nullable(),
   shippingFee: z.number().min(0).optional().nullable(),
+  expectedDeliveryDate: z.string().optional().nullable(),
+  requireApproval: z.boolean().default(true),
 })
 
 const createOtherExpensesSchema = z.object({
