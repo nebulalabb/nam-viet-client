@@ -61,9 +61,9 @@ const DataTableToolbar = ({ table }) => {
       <div className="flex w-full items-center justify-between gap-2 p-1">
         <Input
           placeholder="Tìm kiếm..."
-          value={table.getColumn('name')?.getFilterValue() || ''}
+          value={table.getColumn('productName')?.getFilterValue() || ''}
           onChange={(event) =>
-            table.getColumn('name')?.setFilterValue(event.target.value)
+            table.getColumn('productName')?.setFilterValue(event.target.value)
           }
           className="h-8 flex-1 text-xs"
         />
@@ -236,9 +236,9 @@ const DataTableToolbar = ({ table }) => {
       <div className="flex flex-1 items-center space-x-2 min-w-0">
         <Input
           placeholder="Tìm kiếm..."
-          value={table.getColumn('name')?.getFilterValue() || ''}
+          value={table.getColumn('productName')?.getFilterValue() || ''}
           onChange={(event) =>
-            table.getColumn('name')?.setFilterValue(event.target.value)
+            table.getColumn('productName')?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />

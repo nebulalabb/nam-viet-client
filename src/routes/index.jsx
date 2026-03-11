@@ -31,9 +31,6 @@ import InventoryWarningPage from '../views/admin/inventory-warning/InventoryWarn
 import AttributePage from '../views/admin/attribute/AttributePage'
 import TaxPage from '../views/admin/tax/TaxPage'
 import RevenuePage from '../views/admin/report/RevenuePage'
-import InventoryReportPage from '../views/admin/report/InventoryReportPage'
-import SalesReportPage from '../views/admin/report/SalesReportPage'
-import FinancialReportPage from '../views/admin/report/FinancialReportPage'
 
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
