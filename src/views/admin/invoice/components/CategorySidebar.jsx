@@ -18,6 +18,52 @@ const CategorySidebar = ({
     ...categories
   ]
 
+  const renderCategoryNode = (category, level = 0) => {
+    const Icon = category.icon || Tag
+    const isActive = selectedCategory === category.id
+    // If it's the "all" category, count is already calculated. Otherwise, use `productCounts` or fallback
+    const count = category.id === 'all' ? category.count : (productCounts[category.id] || 0)
+
+    // Check if the current category has children
+    const hasChildren = category.children && category.children.length > 0
+
+    return (
+      <div key={category.id}>
+        <button
+          type="button"
+          onClick={() => onCategoryChange(category.id)}
+          className={cn(
+            "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all mb-1",
+            "hover:bg-accent hover:text-accent-foreground",
+            isActive && "bg-primary text-primary-foreground hover:bg-primary/90",
+            level > 0 && "pl-" + (level * 4 + 3) // Add indentation based on level
+          )}
+          style={{ paddingLeft: level > 0 ? `${level * 1.5 + 0.75}rem` : undefined }}
+        >
+          <Icon className={cn("h-4 w-4 shrink-0", level > 0 && "opacity-70 h-3.5 w-3.5")} />
+          <span className="flex-1 text-left truncate">{category.categoryName || category.name}</span>
+          {count > 0 && (
+            <span className={cn(
+              "text-xs px-1.5 py-0.5 rounded-full",
+              isActive
+                ? "bg-primary-foreground/20 text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}>
+              {count}
+            </span>
+          )}
+        </button>
+
+        {/* Recursively render children if they exist */}
+        {hasChildren && (
+          <div className="ml-1 border-l border-border/50 pl-1 mt-1 mb-2">
+            {category.children.map(child => renderCategoryNode(child, level + 1))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="w-56 border-r bg-gradient-to-b from-muted/50 to-muted/30 flex flex-col shadow-sm relative">
       {/* Subtle right edge highlight */}
@@ -29,37 +75,7 @@ const CategorySidebar = ({
 
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {allCategories.map((category) => {
-            const Icon = category.icon || Tag
-            const isActive = selectedCategory === category.id
-            const count = productCounts[category.id] || category.count || 0
-
-            return (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => onCategoryChange(category.id)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-all mb-1",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  isActive && "bg-primary text-primary-foreground hover:bg-primary/90"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="flex-1 text-left truncate">{category.name}</span>
-                {count > 0 && (
-                  <span className={cn(
-                    "text-xs px-1.5 py-0.5 rounded-full",
-                    isActive
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+          {allCategories.map((category) => renderCategoryNode(category, 0))}
         </div>
       </ScrollArea>
     </div>

@@ -40,7 +40,7 @@ const ProductGrid = ({
             {products.map((product) => {
               const isSelected = selectedProductIds.includes(product.id)
               const imagePath = getPublicUrl(product.image);
-              const stock = Number(product.currentStock) || 0
+              const stock = Number(product.totalStock) || 0
               const isOutOfStock = stock <= 0
 
               return (
@@ -65,7 +65,7 @@ const ProductGrid = ({
                         {product.image ? (
                           <img
                             src={imagePath}
-                            alt={product.name}
+                            alt={product.productName || product.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -85,7 +85,7 @@ const ProductGrid = ({
                       {/* Info Section (Name, Code + Desktop Price/Stock) */}
                       <div className="flex flex-col min-w-0 md:flex-1">
                         <h4 className="font-medium text-sm">
-                          {product.name}
+                          {product.productName || product.name}
                         </h4>
 
                         {product.code && (

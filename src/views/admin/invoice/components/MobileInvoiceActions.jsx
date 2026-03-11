@@ -21,7 +21,6 @@ const MobileInvoiceActions = ({
   handleCreateReceipt,
   handleCreateWarehouseReceipt,
   handlePrintInvoice,
-  handlePrintAgreement,
   handleDeleteInvoice,
   onCloseDialog,
 }) => {
@@ -90,15 +89,6 @@ const MobileInvoiceActions = ({
                   <Printer className="h-4 w-4" />
                   In Hóa Đơn
                 </Button>
-                <Button
-                  variant="outline"
-                  className="justify-start gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
-                  onClick={() => handleAction(handlePrintAgreement)}
-                >
-                  <IconFileTypePdf className="h-4 w-4" />
-                  In Thỏa Thuận
-                </Button>
-
               </div>
             </div>
 

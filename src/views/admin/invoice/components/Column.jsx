@@ -365,38 +365,6 @@ export const columns = [
     enableHiding: true,
   },
   {
-    accessorKey: 'expectedDeliveryDate',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Ngày dự kiến giao" />
-    ),
-    cell: ({ row }) => {
-      const deliveryDate = row.original.salesContract?.deliveryDate
-      const status = row.original.status
-
-      if (!deliveryDate) {
-        return <span className="text-muted-foreground italic">Đơn hàng không <br /> có Hợp Đồng</span>
-      }
-
-      const date = new Date(deliveryDate)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-
-      // Check if overdue: date < today AND status is not delivered
-      const isOverdue = date < today && status !== 'delivered'
-
-      return (
-        <span
-          className={isOverdue ? 'text-red-500 font-bold' : ''}
-          title={isOverdue ? 'Quá hạn giao hàng' : ''}
-        >
-          {dateFormat(deliveryDate)}
-        </span>
-      )
-    },
-    enableSorting: true,
-    enableHiding: true,
-  },
-  {
     id: 'user',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Người tạo" />

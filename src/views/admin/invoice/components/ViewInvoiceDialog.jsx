@@ -73,7 +73,6 @@ import UpdateReceiptStatusDialog from '../../receipt/components/UpdateReceiptSta
 import { DeleteReceiptDialog } from '../../receipt/components/DeleteReceiptDialog'
 import { warehouseReceiptStatuses } from '../../warehouse-receipt/data'
 import PrintInvoiceView from './PrintInvoiceView'
-import { buildAgreementData } from '../helpers/BuildAgreementData'
 import MobileInvoiceActions from './MobileInvoiceActions'
 import PaymentQRCodeDialog from '../../receipt/components/PaymentQRCodeDialog'
 import { Badge } from '@/components/ui/badge'
@@ -121,10 +120,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
   // State specific for ViewInvoiceDialog actions
   const [printInvoice, setPrintInvoice] = useState(null)
-  const [showAgreementPreview, setShowAgreementPreview] = useState(false)
-  const [agreementData, setAgreementData] = useState(null)
-  const [agreementFileName, setAgreementFileName] = useState('thoa-thuan-mua-ban.pdf')
-  const [agreementExporting, setAgreementExporting] = useState(false)
 
   // State for updating receipt status
   const [showUpdateReceiptStatus, setShowUpdateReceiptStatus] = useState(false)
@@ -294,21 +289,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
   // View Product Dialog
   const [showViewProductDialog, setShowViewProductDialog] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState(null)
-
-  const handlePrintAgreement = async () => {
-    if (!invoice) return
-    try {
-      const baseAgreementData = buildAgreementData(invoice)
-      setAgreementData(baseAgreementData)
-      setAgreementFileName(`thoa-thuan-mua-ban-${invoice.code || 'agreement'}.pdf`)
-      setShowAgreementPreview(true)
-    } catch (error) {
-      console.error('Load agreement data error:', error)
-      toast.error('Không lấy được dữ liệu thỏa thuận mua bán')
-    }
-  }
-
-
 
   const handleUpdateStatus = async (status, id) => {
     try {
@@ -932,15 +912,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                     : invoice.paymentMethod === 'transfer'
                                       ? 'Chuyển khoản'
                                       : invoice.paymentMethod}
-                                </span>
-                              </div>
-                            )}
-
-                            {invoice?.expectedDeliveryDate && (
-                              <div className="flex justify-between">
-                                <strong>Ngày giao hàng dự kiến:</strong>
-                                <span className="font-medium text-orange-600">
-                                  {dateFormat(invoice.expectedDeliveryDate)}
                                 </span>
                               </div>
                             )}
@@ -2011,17 +1982,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                   <Printer className="h-4 w-4" />
                   In Hóa Đơn
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={cn("gap-2 text-blue-600 border-blue-200 hover:bg-blue-50", !isDesktop && "w-full")}
-                  onClick={handlePrintAgreement}
-                >
-                  <IconFileTypePdf className="h-4 w-4" />
-                  In Thỏa Thuận
-                </Button>
-
-
                 {invoice.status === 'pending' && (
                   <Button
                     size="sm"
@@ -2075,7 +2035,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
             handleCreateReceipt={handleCreateReceipt}
             handleCreateWarehouseReceipt={handleCreateWarehouseReceipt}
             handlePrintInvoice={handlePrintInvoice}
-            handlePrintAgreement={handlePrintAgreement}
 
             handleDeleteInvoice={handleDeleteInvoice}
             onCloseDialog={() => props.onOpenChange && props.onOpenChange(false)}
@@ -2253,36 +2212,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
           <PrintInvoiceView invoice={printInvoice} setting={setting} />
         )
       }
-
-      {/* Agreement Preview Dialog */}
-      {
-        agreementData && (
-          <AgreementPreviewDialog
-            open={showAgreementPreview}
-            onOpenChange={(open) => {
-              if (!open) setShowAgreementPreview(false)
-            }}
-            initialData={agreementData}
-            onConfirm={async (finalData) => {
-              try {
-                setAgreementExporting(true)
-                // await exportAgreementPdf(finalData, agreementFileName)
-                // toast.success('Đã in thỏa thuận mua bán thành công')
-                setShowAgreementPreview(false)
-              } catch (error) {
-                console.error('Export agreement error:', error)
-                toast.error('In thỏa thuận mua bán thất bại')
-              } finally {
-                setAgreementExporting(false)
-              }
-            }}
-            contentClassName="z-[100020]"
-            overlayClassName="z-[100019]"
-          />
-        )
-      }
-
-
 
       {/* View Product Dialog */}
       {

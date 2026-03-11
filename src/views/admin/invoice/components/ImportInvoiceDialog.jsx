@@ -125,16 +125,12 @@ const ImportInvoiceDialog = ({
           orderDate: getDateVal(9),
           transactionType: String(getVal(10) || 'RETAIL'),
           note: String(getVal(11)),
-          isPrintContract: getBoolVal(12),
-          expectedDeliveryDate: getDateVal(13),
           // Product Info
           productCode: String(getVal(14)),
           unitCode: String(getVal(15)),
           taxAmount: getNumVal(16),
           quantity: getNumVal(17),
-          price: getNumVal(18),
           discount: getNumVal(19),
-          isContractItem: getBoolVal(20),
         })
       })
 
@@ -179,10 +175,7 @@ const ImportInvoiceDialog = ({
             transactionType: row.transactionType,
             note: row.note,
             items: [],
-            isPrintContract: row.isPrintContract,
             hasPrintInvoice: true,
-            hasPrintQuotation: true,
-            expectedDeliveryDate: row.expectedDeliveryDate,
             // rowNumbers: [],
           })
         }
@@ -205,10 +198,6 @@ const ImportInvoiceDialog = ({
           invoice.orderDate = row.orderDate
           invoice.transactionType = row.transactionType
           invoice.note = row.note
-          invoice.isPrintContract = row.isPrintContract // Update contract flag from header row
-          if (row.expectedDeliveryDate) {
-            invoice.expectedDeliveryDate = row.expectedDeliveryDate
-          }
         }
 
         // Calculate line totals
@@ -250,10 +239,7 @@ const ImportInvoiceDialog = ({
             price: row.price,
             taxAmount: row.taxAmount || 0, // Using the parsed number (or 0)
             // taxCode: row.taxVal, // If we needed code
-            subTotal: lineSubTotal,
-            discount: row.discount,
             total: lineTotal,
-            isContractItem: row.isContractItem,
           })
         }
       })

@@ -32,8 +32,6 @@ import { updateInvoiceStatus } from '@/stores/InvoiceSlice'
 
 import { toast } from 'sonner'
 import PrintInvoiceView from './PrintInvoiceView'
-import AgreementPreviewDialog from './AgreementPreviewDialog'
-import { buildAgreementData } from '../helpers/BuildAgreementData'
 import { IconPlus, IconPackageExport, IconCheck, IconPackage } from '@tabler/icons-react'
 import ReceiptDialog from '../../receipt/components/ReceiptDialog'
 import ConfirmWarehouseReceiptDialog from '../../warehouse-receipt/components/ConfirmWarehouseReceiptDialog'
@@ -58,10 +56,6 @@ const MobileInvoiceCard = ({
 
   // Print states
   const [printInvoice, setPrintInvoice] = useState(null)
-  const [showAgreementPreview, setShowAgreementPreview] = useState(false)
-  const [agreementData, setAgreementData] = useState(null)
-  const [agreementFileName, setAgreementFileName] = useState('thoa-thuan-mua-ban.pdf')
-  const [agreementExporting, setAgreementExporting] = useState(false)
 
   // New actions state
   const [showReceiptDialog, setShowReceiptDialog] = useState(false)
@@ -306,25 +300,6 @@ const MobileInvoiceCard = ({
     }
   }
 
-  const handlePrintAgreement = async () => {
-    const invoiceId = invoice?.id
-    const getAdminInvoice = JSON.parse(
-      localStorage.getItem('permissionCodes'),
-    ).includes('GET_INVOICE')
-
-    try {
-      const data = await dispatch(getInvoiceDetail(invoice.id)).unwrap()
-      const baseAgreementData = buildAgreementData(data)
-      setAgreementData(baseAgreementData)
-      setAgreementFileName(`thoa-thuan-mua-ban-${data.code || 'agreement'}.pdf`)
-      setShowAgreementPreview(true)
-    } catch (error) {
-      console.error('Load agreement data error:', error)
-      toast.error('Không lấy được dữ liệu thỏa thuận mua bán')
-    }
-  }
-
-
   return (
     <>
       {/* Dialogs */}
@@ -440,12 +415,6 @@ const MobileInvoiceCard = ({
               <DropdownMenuItem onClick={handlePrintInvoice} className="text-purple-600">
                 <IconFileTypePdf className="mr-2 h-4 w-4" />
                 In HĐ
-              </DropdownMenuItem>
-
-              {/* In Thỏa Thuận Mua Bán */}
-              <DropdownMenuItem onClick={handlePrintAgreement} className="text-purple-600">
-                <IconFileTypePdf className="mr-2 h-4 w-4" />
-                In Thỏa Thuận
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
@@ -684,31 +653,6 @@ const MobileInvoiceCard = ({
             onAfterPrint={() => setPrintInvoice(null)}
           />
         )}
-
-        {/* Print Agreement Dialog */}
-        {agreementData && (
-          <AgreementPreviewDialog
-            open={showAgreementPreview}
-            onOpenChange={(open) => {
-              if (!open) setShowAgreementPreview(false)
-            }}
-            initialData={agreementData}
-            onConfirm={async (finalData) => {
-              try {
-                setAgreementExporting(true)
-                // await exportAgreementPdf(finalData, agreementFileName)
-                // toast.success('Đã in thỏa thuận mua bán thành công')
-                setShowAgreementPreview(false)
-              } catch (error) {
-                console.error('Export agreement error:', error)
-                toast.error('In thỏa thuận mua bán thất bại')
-              } finally {
-                setAgreementExporting(false)
-              }
-            }}
-          />
-        )}
-
 
       </div>
     </>

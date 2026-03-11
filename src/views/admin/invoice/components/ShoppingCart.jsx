@@ -38,8 +38,6 @@ const ShoppingCart = ({
   selectedTaxes,
   notes,
   giveaway,
-  selectedContractProducts = {},
-  onContractProductToggle,
   onQuantityChange,
   onUnitChange,
   onPriceChange,
@@ -85,22 +83,6 @@ const ShoppingCart = ({
     )
   }
 
-  // Calculate if all products are selected for contract
-  const allProductsSelected =
-    selectedProducts.length > 0 &&
-    selectedProducts.every((product) => selectedContractProducts[product.id])
-
-  const someProductsSelected = selectedProducts.some(
-    (product) => selectedContractProducts[product.id],
-  )
-
-  // Handle select all / deselect all
-  const handleSelectAllForContract = (checked) => {
-    selectedProducts.forEach((product) => {
-      onContractProductToggle?.(product.id, checked)
-    })
-  }
-
   return (
     <div className="relative flex flex-1 flex-col border-l bg-gradient-to-b from-background to-muted/20">
       {/* Left divider */}
@@ -119,29 +101,6 @@ const ShoppingCart = ({
             ({selectedProducts.length})
           </span>
         </h3>
-
-        {/* Select All Checkbox */}
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={allProductsSelected}
-            onCheckedChange={handleSelectAllForContract}
-            className="h-4 w-4"
-            ref={(el) => {
-              if (el && someProductsSelected && !allProductsSelected) {
-                el.setAttribute('data-state', 'indeterminate')
-              }
-            }}
-          />
-          <label
-            className="flex-1 cursor-pointer text-xs text-muted-foreground"
-            onClick={() => handleSelectAllForContract(!allProductsSelected)}
-          >
-            <span className="hidden sm:inline">
-              Chọn tất cả sản phẩm để tạo hợp đồng
-            </span>
-            <span className="sm:hidden">Chọn tất cả để tạo hợp đồng</span>
-          </label>
-        </div>
       </div>
 
       {/* Cart Items */}
@@ -158,10 +117,8 @@ const ShoppingCart = ({
             const subtotal = calculateSubTotal(product.id)
             const taxAmount = calculateTaxForProduct(product.id)
             const total = subtotal + taxAmount
-            const productTaxes = product?.prices?.[0]?.taxes || []
+            const productTaxes = product?.taxes || []
             const selectedProductTaxes = selectedTaxes[product.id] || []
-            const isSelectedForContract =
-              selectedContractProducts[product.id] || false
             const imagePath = getPublicUrl(product.image)
 
             return (
@@ -171,23 +128,12 @@ const ShoppingCart = ({
               >
                 {/* Main Product Row Header */}
                 <div className="flex items-start gap-3">
-                  {/* Contract Selection Checkbox */}
-                  <div className="flex items-center pt-2">
-                    <Checkbox
-                      checked={isSelectedForContract}
-                      onCheckedChange={(checked) =>
-                        onContractProductToggle?.(product.id, checked)
-                      }
-                      className="h-4 w-4"
-                    />
-                  </div>
-
                   {/* Product Image */}
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-muted">
                     {product.image ? (
                       <img
                         src={imagePath}
-                        alt={product.name}
+                        alt={product.productName || product.name}
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -202,7 +148,7 @@ const ShoppingCart = ({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <h4 className="line-clamp-1 text-sm font-medium">
-                          {product.name}
+                          {product.productName || product.name}
                         </h4>
                         {product.code && (
                           <p className="mt-0.5 text-[10px] text-muted-foreground">
@@ -222,7 +168,7 @@ const ShoppingCart = ({
                           </p>
                         )}
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          Tồn kho: {Number(product.currentStock) || 0}
+                          Tồn kho: {Number(product.totalStock) || 0}
                         </p>
                       </div>
                       <Button

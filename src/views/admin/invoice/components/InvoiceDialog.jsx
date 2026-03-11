@@ -18,7 +18,7 @@ import {
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { X, Search, Check, ChevronsUpDown } from 'lucide-react'
+import { X, Check, ChevronsUpDown, Tag } from 'lucide-react'
 import {
   Command,
   CommandEmpty,
@@ -29,8 +29,6 @@ import {
 } from '@/components/ui/command'
 import { useDispatch, useSelector } from 'react-redux'
 import { getProducts, updateProductInStore } from '@/stores/ProductSlice'
-import { Input } from '@/components/ui/input'
-import useSocketEvent from '@/hooks/UseSocketEvent'
 import {
   Popover,
   PopoverContent,
@@ -43,6 +41,7 @@ import CreateCustomerDialog from '../../customer/components/CreateCustomerDialog
 import { createInvoiceSchema } from '../schema'
 import { getSetting } from '@/stores/SettingSlice'
 import { getUsers } from '@/stores/UserSlice'
+import { getCategories } from '@/stores/CategorySlice'
 import { createInvoice, updateInvoice } from '@/stores/InvoiceSlice'
 import { toast } from 'sonner'
 import { paymentMethods } from '../../receipt/data'
@@ -50,7 +49,6 @@ import { moneyFormat } from '@/utils/money-format'
 import { getInvoiceDetail } from '@/stores/InvoiceSlice'
 import PrintInvoiceView from './PrintInvoiceView'
 import CreateOtherExpenses from './CreateOtherExpenses'
-import { getExpiriesByCustomerId } from '@/stores/ExpirySlice'
 
 
 import CategorySidebar from './CategorySidebar'
@@ -59,7 +57,6 @@ import ShoppingCart from './ShoppingCart'
 import InvoiceSidebar from './InvoiceSidebar'
 import AgreementPreviewDialog from './AgreementPreviewDialog'
 import { buildAgreementData } from '../helpers/BuildAgreementData'
-import api from '@/utils/axios'
 
 const InvoiceDialog = ({
   open,
@@ -73,11 +70,35 @@ const InvoiceDialog = ({
   const products = useSelector((state) => state.product.products)
   // Ensure products have currentStock (defaulting to 0 if missing)
   const processedProducts = useMemo(() => {
-    return products.map(p => ({
-      ...p,
-      currentStock: Number(p.currentStock || 0)
-    }))
+    return products.map(p => {
+      return {
+        ...p,
+        totalStock: Number(p.totalStock || p.currentStock || 0),
+      }
+    })
   }, [products])
+
+  const flatCategories = useSelector((state) => state.category.categories)
+  const categories = useMemo(() => {
+    if (!flatCategories?.length) return []
+
+    const map = {}
+    const roots = []
+
+    for (const cat of flatCategories) {
+      map[cat.id] = { ...cat, children: [] }
+    }
+
+    for (const cat of flatCategories) {
+      if (cat.parentId && map[cat.parentId]) {
+        map[cat.parentId].children.push(map[cat.id])
+      } else {
+        roots.push(map[cat.id])
+      }
+    }
+
+    return roots
+  }, [flatCategories])
 
   const customers = useSelector((state) => state.customer.customers)
   const loading = useSelector((state) => state.invoice.loading)
@@ -93,7 +114,7 @@ const InvoiceDialog = ({
   const [hasPrintQuotation, setHasPrintQuotation] = useState(false)
   const [applyWarrantyItems, setApplyWarrantyItems] = useState({})
 
-  // Agreement State
+  // Agreement State (legacy logic, safe to keep or remove as needed)
   const [showAgreementPreview, setShowAgreementPreview] = useState(false)
   const [agreementData, setAgreementData] = useState(null)
   const [agreementFileName, setAgreementFileName] = useState('thoa-thuan-mua-ban.pdf')
@@ -140,12 +161,7 @@ const InvoiceDialog = ({
   const [invoice, setInvoice] = useState(null)
   const [banks, setBanks] = useState([])
 
-  // ====== CONTRACT PRODUCT SELECTION ======
-  // ====== CONTRACT PRODUCT SELECTION ======
-  const [selectedContractProducts, setSelectedContractProducts] = useState({})
-  const [isPrintContract, setIsPrintContract] = useState(false)
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(null)
-  const [deliveryDateError, setDeliveryDateError] = useState('')
+  // ====== CONTRACT LOGIC REMOVED ======
   const [localInvoiceData, setLocalInvoiceData] = useState(null)
 
   const cartRef = useRef(null)
@@ -155,48 +171,15 @@ const InvoiceDialog = ({
       cartRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }
-
-  const handleStartDateChange = (productId, date) => {
-    // This function is no longer needed if productStartDate is removed.
-    // Keeping it as a placeholder or removing it entirely depends on other usages.
-    // For now, removing its body.
-  }
-
-  // Handle contract product selection
-  const handleContractProductToggle = (productId, checked) => {
-    setSelectedContractProducts((prev) => {
-      const next = { ...prev, [productId]: checked }
-
-      // Auto-sync isPrintContract checkbox
-      const hasAnySelected = Object.values(next).some(val => val === true)
-      setIsPrintContract(hasAnySelected)
-
-      return next
-    })
-  }
+  // Handle contract product selection (REMOVED)
 
   useEffect(() => {
     dispatch(getProducts())
     dispatch(getCustomers())
+    dispatch(getCategories())
     dispatch(getSetting('sharing_ratio'))
     dispatch(getUsers())
   }, [dispatch])
-
-  // Listen for real-time price updates
-  useSocketEvent({
-    product_price_updated: (updatedProduct) => {
-      dispatch(updateProductInStore(updatedProduct))
-
-      const isSelected = selectedProducts.some(p => p.id === updatedProduct.id)
-      if (isSelected) {
-        toast.info(`Giá "${updatedProduct.name}" đã cập nhật`, {
-          description: `Giá mới: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(updatedProduct.price)}`,
-          duration: 3000,
-        })
-      }
-    }
-  })
-
   useEffect(() => {
     if (!open) return
 
@@ -228,10 +211,6 @@ const InvoiceDialog = ({
     setIsCreateReceipt(false)
     setHasPrintQuotation(false)
     setHasPrintInvoice(false)
-    setSelectedContractProducts({})
-    setIsPrintContract(false)
-    setExpectedDeliveryDate(null)
-    setDeliveryDateError('')
     setLocalInvoiceData(null)
   }, [open])
 
@@ -254,7 +233,11 @@ const InvoiceDialog = ({
           paymentMethod: data.paymentMethod || paymentMethods[0].value,
           paymentNote: data.paymentNote || '',
           orderDate: data.date || data.orderDate || new Date().toISOString(),
-          transactionType: data.transactionType || 'WHOLESALE',
+          isPickupOrder: data.isPickupOrder !== undefined ? !!data.isPickupOrder : true,
+          recipientName: data.recipientName || '',
+          recipientPhone: data.recipientPhone || '',
+          deliveryAddress: data.deliveryAddress || '',
+          shippingFee: data.shippingFee || 0,
         })
 
         // Set customer
@@ -347,20 +330,8 @@ const InvoiceDialog = ({
 
         setOtherExpenses(data.otherExpenses?.[0] || { price: 0, description: 'Phí vận chuyển' })
 
-        // Load contract data
-        if (data.salesContractId && data.salesContract) {
-          setIsPrintContract(true)
-          setExpectedDeliveryDate(data.salesContract.deliveryDate || null)
+        setOtherExpenses(data.otherExpenses?.[0] || { price: 0, description: 'Phí vận chuyển' })
 
-          // Load which products are in contract
-          const contractProductIds = {}
-          if (data.salesContract.items && Array.isArray(data.salesContract.items)) {
-            data.salesContract.items.forEach(item => {
-              contractProductIds[item.productId] = true
-            })
-          }
-          setSelectedContractProducts(contractProductIds)
-        }
       } catch (err) {
         console.error(err)
         toast.error(err?.response?.data?.message || 'Không tải được hóa đơn')
@@ -382,6 +353,11 @@ const InvoiceDialog = ({
       paymentMethod: paymentMethods[0].value,
       paymentNote: '',
       orderDate: new Date().toISOString(),
+      isPickupOrder: true,
+      recipientName: '',
+      recipientPhone: '',
+      deliveryAddress: '',
+      shippingFee: 0,
     },
   })
 
@@ -395,10 +371,10 @@ const InvoiceDialog = ({
   // UNIT CONVERSION HELPERS
   // =========================
   const getBaseUnitId = (product) =>
-    product?.baseUnitId || product?.prices?.[0]?.unitId || null
+    product?.unitId || product?.baseUnitId || product?.prices?.[0]?.unitId || null
 
   const getBaseUnitName = (product) =>
-    product?.baseUnit?.name || product?.prices?.[0]?.unitName || '—'
+    product?.unit?.unitName || product?.baseUnit?.name || product?.prices?.[0]?.unitName || '—'
 
   const getUnitOptions = useCallback((product) => {
     const baseId = getBaseUnitId(product)
@@ -420,7 +396,7 @@ const InvoiceDialog = ({
       const factor = Number(c?.conversionFactor || 0)
       options.push({
         unitId: uId,
-        unitName: c?.unit?.name || '—',
+        unitName: c?.unit?.unitName || c?.unit?.name || '—',
         factor: factor > 0 ? factor : 1,
       })
     }
@@ -472,32 +448,6 @@ const InvoiceDialog = ({
     [baseUnitPrices, priceOverrides, selectedUnitIds, getFactor, getBaseUnitId],
   )
 
-  // ====== CATEGORY EXTRACTION ======
-  const categories = useMemo(() => {
-    if (!products || products.length === 0) return []
-
-    const categoryMap = new Map()
-
-    products.forEach(product => {
-      const categoryId = product.categoryId || 'uncategorized'
-      const categoryName = product.category?.name || 'Chưa phân loại'
-
-      if (!categoryMap.has(categoryId)) {
-        categoryMap.set(categoryId, {
-          id: categoryId,
-          name: categoryName,
-          icon: product.category?.icon,
-          count: 0
-        })
-      }
-
-      const category = categoryMap.get(categoryId)
-      category.count++
-    })
-
-    return Array.from(categoryMap.values())
-  }, [products])
-
   const productCounts = useMemo(() => {
     const counts = {}
     products.forEach(product => {
@@ -520,7 +470,7 @@ const InvoiceDialog = ({
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(query) ||
+        (p.productName || p.name).toLowerCase().includes(query) ||
         p.code?.toLowerCase().includes(query)
       )
     }
@@ -649,11 +599,8 @@ const InvoiceDialog = ({
 
   const onSubmit = async (data, options = {}) => {
     const shouldPrintInvoice = options.printInvoice || hasPrintInvoice
-    // Only print agreement if explicitly requested via options (button click)
     const shouldPrintAgreement = options.printAgreement
     const shouldPrintQuotation = options.printQuotation || hasPrintQuotation
-    // Validation still runs if state is active OR explicitly requested
-    const effectiveIsPrintContract = isPrintContract || options.printAgreement
 
     // Validate: must have at least one product
     if (!selectedProducts || selectedProducts.length === 0) {
@@ -714,48 +661,8 @@ const InvoiceDialog = ({
       return
     }
 
+    // Contract validation removed
     setCustomerErrors({})
-
-    // Validate: if printing contract, check all required customer info
-    // Validate: if printing contract, check all required customer info
-    if (effectiveIsPrintContract) {
-      // Use customerEditData as the single source of truth since it contains the current form values
-      // (whether from selected customer or manually entered/edited)
-      const contractCustomerData = customerEditData || {}
-
-      // Check required fields: name, phone, address, identityCard, identityDate
-      // Email is optional
-      const missingFields = []
-
-      if (!contractCustomerData?.name?.trim()) {
-        missingFields.push('Tên khách hàng')
-      }
-      if (!contractCustomerData?.phone?.trim()) {
-        missingFields.push('Số điện thoại')
-      }
-      // if (!contractCustomerData?.address?.trim()) {
-      //   missingFields.push('Địa chỉ')
-      // }
-      if (!contractCustomerData?.identityCard?.trim()) {
-        missingFields.push('CCCD')
-      }
-
-      // Check Delivery Date and set inline error state
-      if (!expectedDeliveryDate) {
-        setDeliveryDateError('Ngày dự kiến giao hàng là bắt buộc')
-        missingFields.push('Ngày dự kiến giao hàng')
-      } else {
-        setDeliveryDateError('')
-      }
-
-      if (missingFields.length > 0) {
-        toast.error(`Để in hợp đồng, vui lòng điền đầy đủ: ${missingFields.join(', ')}`)
-        document.getElementById('invoice-sidebar-top')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        return
-      }
-    }
-
-    setDeliveryDateError('') // Clear error if not printing contract or validation passed
 
     const items = selectedProducts.map((product) => {
       // ===== unit conversion fields =====
@@ -795,7 +702,7 @@ const InvoiceDialog = ({
         // taxRate = tổng % thuế đã chọn
         taxRate: (() => {
           const productTaxes = selectedTaxes[product.id] || []
-          const allTaxes = product?.prices?.[0]?.taxes || []
+          const allTaxes = product?.taxes || []
           return allTaxes
             .filter((t) => productTaxes.includes(t.id))
             .reduce((sum, t) => sum + t.percentage, 0)
@@ -824,9 +731,6 @@ const InvoiceDialog = ({
             ? product?.warrantyPolicy?.warrantyCost
             : 0,
         applyWarranty: !!applyWarrantyItems[product.id],
-
-        // ========== IN HỢP ĐỒNG ==========
-        isContractItem: !!selectedContractProducts[product.id],
       }
     })
 
@@ -844,7 +748,11 @@ const InvoiceDialog = ({
       createReceipt: isCreateReceipt,
       paymentMethod: data.paymentMethod,
       paymentNote: data.paymentNote,
-      transactionType: data.transactionType || 'RETAIL',
+      isPickupOrder: data.isPickupOrder,
+      recipientName: data.recipientName || undefined,
+      recipientPhone: data.recipientPhone || undefined,
+      deliveryAddress: data.deliveryAddress || undefined,
+      shippingFee: data.shippingFee || 0,
       totalAmount: calculateTotalAmount(),
       dueDate: data.dueDate || null,
       ...(otherExpenses?.price > 0 && { otherExpenses: [otherExpenses] }),
@@ -871,12 +779,8 @@ const InvoiceDialog = ({
       }),
 
       // ========== OPTIONS IN ẤN ==========
-      isPrintContract: effectiveIsPrintContract || false,
       hasPrintInvoice: shouldPrintInvoice || false,
       hasPrintQuotation: shouldPrintQuotation || false,
-      ...(effectiveIsPrintContract && {
-        expectedDeliveryDate: expectedDeliveryDate ? new Date(expectedDeliveryDate).toISOString() : null
-      }),
     }
 
     if (data.revenueSharing) {
@@ -1128,7 +1032,7 @@ const InvoiceDialog = ({
     const basePrice = price * quantity
 
     const selectedProductTaxes = selectedTaxes[productId] || []
-    const taxes = product?.prices?.[0]?.taxes || []
+    const taxes = product?.taxes || []
 
     const taxAmount = taxes
       .filter((tax) => selectedProductTaxes.includes(tax.id))
@@ -1372,7 +1276,7 @@ const InvoiceDialog = ({
                                 return (
                                   <CommandItem
                                     key={product.id}
-                                    value={product.name}
+                                    value={product.productName || product.name}
                                     onSelect={() => {
                                       handleAddProduct(product)
                                       setOpenCombobox(false)
@@ -1387,11 +1291,11 @@ const InvoiceDialog = ({
                                         )}
                                       />
                                       <div className='flex-1'>
-                                        <div className='font-medium'>{product.name}</div>
+                                        <div className='font-medium'>{product.productName || product.name}</div>
                                         <div className='text-xs text-muted-foreground flex flex-wrap gap-2 mt-1'>
                                           <span>{product.code}</span>
                                           <span>•</span>
-                                          <span>Tồn: {product.currentStock}</span>
+                                          <span>Tồn: {product.totalStock ?? product.currentStock ?? 0}</span>
                                           <span>•</span>
                                           <span className='text-primary'>{moneyFormat(product.price)}</span>
                                         </div>
@@ -1490,27 +1394,40 @@ const InvoiceDialog = ({
                               Tất cả danh mục
                             </button>
 
-                            {categories?.length > 0 ? categories.map((category) => {
-                              const isActive = selectedCategory === category.id
-                              return (
-                                <button
-                                  key={category.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedCategory(category.id)
-                                    setShowCategoryDropdown(false)
-                                  }}
-                                  className={cn(
-                                    "w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors",
-                                    isActive
-                                      ? "bg-primary text-primary-foreground"
-                                      : "text-muted-foreground hover:bg-muted"
-                                  )}
-                                >
-                                  {category.name}
-                                </button>
-                              )
-                            }) : (
+                            {categories?.length > 0 ? (
+                              function renderMobileCategories(catList, level = 0) {
+                                return catList.map(category => {
+                                  const isActive = selectedCategory === category.id
+                                  return (
+                                    <div key={category.id} className="flex flex-col">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedCategory(category.id)
+                                          setShowCategoryDropdown(false)
+                                        }}
+                                        className={cn(
+                                          "w-full flex items-center gap-2 text-left px-3 py-1.5 rounded-md text-xs transition-colors",
+                                          isActive
+                                            ? "bg-primary text-primary-foreground"
+                                            : "text-muted-foreground hover:bg-muted",
+                                          level > 0 && "pl-" + (level * 4 + 3)
+                                        )}
+                                        style={{ paddingLeft: level > 0 ? `${level * 1.5 + 0.75}rem` : undefined }}
+                                      >
+                                        <Tag className={cn("h-4 w-4 shrink-0 mr-1", level > 0 && "opacity-70 h-3.5 w-3.5")} />
+                                        <span className="truncate flex-1">{category.categoryName || category.name}</span>
+                                      </button>
+                                      {category.children && category.children.length > 0 && (
+                                        <div className="flex flex-col ml-2 border-l border-border/40 pl-1 mt-0.5">
+                                          {renderMobileCategories(category.children, level + 1)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                })
+                              }(categories)
+                            ) : (
                               <div className="px-3 py-2 text-xs text-muted-foreground text-center">
                                 Không có danh mục
                               </div>
@@ -1550,8 +1467,6 @@ const InvoiceDialog = ({
                         selectedTaxes={selectedTaxes}
                         notes={notes}
                         giveaway={giveaway}
-                        selectedContractProducts={selectedContractProducts}
-                        onContractProductToggle={handleContractProductToggle}
                         onQuantityChange={handleQuantityChange}
                         onUnitChange={handleUnitChange}
                         onPriceChange={handlePriceChange}
@@ -1601,11 +1516,6 @@ const InvoiceDialog = ({
                         onShowUpdateCustomer={() => setShowUpdateCustomerDialog(true)}
                         onPrintInvoice={() => setHasPrintInvoice(true)}
                         onPrintQuotation={() => setHasPrintQuotation(true)}
-                        isPrintContract={isPrintContract}
-                        setIsPrintContract={setIsPrintContract}
-                        selectedContractProducts={selectedContractProducts}
-                        expectedDeliveryDate={expectedDeliveryDate}
-                        onExpectedDeliveryDateChange={setExpectedDeliveryDate}
                         onScrollToCart={scrollToCart}
                         customerErrors={customerErrors}
                         deliveryDateError={deliveryDateError}
@@ -1762,7 +1672,7 @@ const InvoiceDialog = ({
                                 return (
                                   <CommandItem
                                     key={product.id}
-                                    value={product.name} // Needed for internal logic, but we handle select manually
+                                    value={product.productName || product.name} // Needed for internal logic, but we handle select manually
                                     onSelect={() => {
                                       handleAddProduct(product)
                                       setOpenCombobox(false)
@@ -1777,11 +1687,11 @@ const InvoiceDialog = ({
                                         )}
                                       />
                                       <div className='flex-1'>
-                                        <div className='font-medium'>{product.name}</div>
+                                        <div className='font-medium'>{product.productName || product.name}</div>
                                         <div className='text-xs text-muted-foreground flex gap-2'>
                                           <span>{product.code}</span>
                                           <span>•</span>
-                                          <span>Tồn: {product.currentStock}</span>
+                                          <span>Tồn: {product.totalStock ?? product.currentStock ?? 0}</span>
                                           <span>•</span>
                                           <span className='text-primary'>{moneyFormat(product.price)}</span>
                                         </div>
@@ -1831,8 +1741,6 @@ const InvoiceDialog = ({
                   selectedTaxes={selectedTaxes}
                   notes={notes}
                   giveaway={giveaway}
-                  selectedContractProducts={selectedContractProducts}
-                  onContractProductToggle={handleContractProductToggle}
                   onQuantityChange={handleQuantityChange}
                   onUnitChange={handleUnitChange}
                   onPriceChange={handlePriceChange}
@@ -1896,15 +1804,6 @@ const InvoiceDialog = ({
                   onShowUpdateCustomer={() => setShowUpdateCustomerDialog(true)}
                   onPrintInvoice={() => setHasPrintInvoice(true)}
                   onPrintQuotation={() => setHasPrintQuotation(true)}
-                  isPrintContract={isPrintContract}
-                  setIsPrintContract={setIsPrintContract}
-                  selectedContractProducts={selectedContractProducts}
-                  expectedDeliveryDate={expectedDeliveryDate}
-                  onExpectedDeliveryDateChange={(date) => {
-                    setExpectedDeliveryDate(date)
-                    setDeliveryDateError('')
-                  }}
-                  deliveryDateError={deliveryDateError}
                   onScrollToCart={scrollToCart}
                   isUpdate={!!invoiceId}
                 />

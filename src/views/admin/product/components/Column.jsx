@@ -66,9 +66,9 @@ export const columns = [
             <div className="font-medium text-blue-600 hover:underline">
               {row.getValue('code')}
             </div>
-            {row.original.prices?.length > 1 ? (
+            {row.original.priceHistories?.length > 0 ? (
               <div className="text-xs text-orange-500 mt-1 font-normal">
-                {row.original.prices.length} lịch sử giá
+                {row.original.priceHistories.length} lần đổi giá
               </div>
             ) : null}
           </div>
@@ -79,7 +79,7 @@ export const columns = [
     enableHiding: true,
   },
   {
-    accessorKey: 'name',
+    accessorKey: 'productName',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Tên sản phẩm" />
     ),
@@ -89,12 +89,12 @@ export const columns = [
 
       return (
         <div className="flex flex-col gap-2">
-          <div className="w-28 font-medium">{row.getValue('name')}</div>
+          <div className="w-28 font-medium">{row.getValue('productName')}</div>
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded border bg-muted">
             {publicImageUrl ? (
               <img
                 src={publicImageUrl}
-                alt={row.original.name}
+                alt={row.original.productName}
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -109,7 +109,7 @@ export const columns = [
     enableSorting: true,
     enableHiding: true,
     filterFn: (row, id, value) => {
-      const name = normalizeText(row.original.name)
+      const name = normalizeText(row.original.productName)
       const searchValue = normalizeText(value)
 
       return name.includes(searchValue)
@@ -121,7 +121,7 @@ export const columns = [
       <DataTableColumnHeader column={column} title="Danh mục" />
     ),
     cell: ({ row }) => {
-      return <div className="w-28">{row.original?.category?.name}</div>
+      return <div className="w-28">{row.original?.category?.categoryName}</div>
     },
     filterFn: (row, id, value) => {
       return value.includes(row.original?.categoryId)
@@ -130,12 +130,12 @@ export const columns = [
     enableHiding: false,
   },
   {
-    accessorKey: 'currentStock',
+    accessorKey: 'totalStock',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Tồn kho" />
     ),
     cell: ({ row }) => {
-      const stock = Number(row.original?.currentStock)
+      const stock = Number(row.original?.totalStock)
       return (
         <div className="w-16 text-center">
           {isNaN(stock) ? 0 : stock}

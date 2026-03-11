@@ -18,8 +18,8 @@ const MobileProductCard = ({ product, isSelected, onSelectChange, onCopy }) => {
   // Get unit name from price or unit object
   const unitName =
     product?.prices?.[0]?.unitName ||
-    product?.prices?.[0]?.unit?.name ||
-    product?.unit?.name ||
+    product?.prices?.[0]?.unit?.unitName ||
+    product?.unit?.unitName ||
     'Chưa có đơn vị'
 
   return (
@@ -47,7 +47,7 @@ const MobileProductCard = ({ product, isSelected, onSelectChange, onCopy }) => {
                 {publicImageUrl ? (
                   <img
                     src={publicImageUrl}
-                    alt={product.name}
+                    alt={product.productName}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -61,7 +61,7 @@ const MobileProductCard = ({ product, isSelected, onSelectChange, onCopy }) => {
                   className="line-clamp-2 cursor-pointer text-sm font-semibold hover:text-primary"
                   onClick={() => setShowViewDialog(true)}
                 >
-                  {product.name}
+                  {product.productName}
                 </CardTitle>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {product.code}
@@ -78,7 +78,7 @@ const MobileProductCard = ({ product, isSelected, onSelectChange, onCopy }) => {
             <div>
               <p className="text-[10px] text-muted-foreground">Danh mục</p>
               <p className="line-clamp-1 font-medium">
-                {product.category?.name}
+                {product.category?.categoryName}
               </p>
             </div>
             <div>
@@ -96,10 +96,10 @@ const MobileProductCard = ({ product, isSelected, onSelectChange, onCopy }) => {
           </div>
 
           {/* Lịch sử giá */}
-          {product.prices?.length > 1 && (
+          {product.priceHistories?.length > 0 && (
             <div className="text-xs">
               <span className="font-medium text-orange-500">
-                {product.prices.length} lịch sử giá
+                {product.priceHistories.length} lịch sử giá
               </span>
             </div>
           )}

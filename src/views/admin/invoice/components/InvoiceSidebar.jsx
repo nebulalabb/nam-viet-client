@@ -63,11 +63,6 @@ const InvoiceSidebar = ({
   onShowUpdateCustomer,
   onPrintInvoice,
   onPrintQuotation,
-  isPrintContract,
-  setIsPrintContract,
-  selectedContractProducts = {},
-  expectedDeliveryDate,
-  onExpectedDeliveryDateChange,
   isUpdate = false,
   customerErrors = {}, // Receive validation errors
   deliveryDateError = '', // Receive delivery date error
@@ -219,21 +214,7 @@ const InvoiceSidebar = ({
     onCustomerEditDataChange(null)
   }
 
-  // Handle print contract checkbox with validation
-  const handlePrintContractChange = (checked) => {
-    if (checked) {
-      // Check if at least one product is selected for contract
-      const hasSelectedProducts = Object.values(selectedContractProducts).some(val => val === true)
-
-      if (!hasSelectedProducts) {
-        toast.error('Vui lòng chọn ít nhất 1 sản phẩm để in hợp đồng')
-        if (onScrollToCart) onScrollToCart()
-        return
-      }
-    }
-
-    setIsPrintContract(checked)
-  }
+  // Removed handlePrintContractChange function
 
   const subtotal = calculateSubTotal()
   const tax = calculateTotalTax()
@@ -728,28 +709,96 @@ const InvoiceSidebar = ({
 
 
 
-          {/* Transaction Type */}
+          {/* Order Type */}
           <FormField
             control={form.control}
-            name="transactionType"
+            name="isPickupOrder"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Loại giao dịch <span className="text-destructive"> *</span></FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || 'RETAIL'}>
+                <FormLabel>Loại đơn hàng <span className="text-destructive"> *</span></FormLabel>
+                <Select onValueChange={(val) => field.onChange(val === 'true')} value={field.value ? 'true' : 'false'}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn loại giao dịch" />
+                      <SelectValue placeholder="Chọn loại đơn hàng" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="RETAIL">Không cần duyệt đơn</SelectItem>
-                    <SelectItem value="WHOLESALE">Cần duyệt đơn</SelectItem>
+                    <SelectItem value="true">Đơn bán tại chỗ</SelectItem>
+                    <SelectItem value="false">Đơn bán cần vận chuyển</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {!form.watch('isPickupOrder') && (
+            <div className="space-y-3 p-3 border rounded-lg bg-orange-50/50">
+              <div className="text-xs font-medium text-orange-800">Thông tin giao hàng</div>
+
+              <FormField
+                control={form.control}
+                name="recipientName"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs">Tên người nhận</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Tên người nhận" className="h-8 text-xs" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-[10px]" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="recipientPhone"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs">SĐT người nhận</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Số điện thoại" className="h-8 text-xs" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-[10px]" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="deliveryAddress"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs">Địa chỉ giao hàng</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Địa chỉ chi tiết" className="h-8 text-xs" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-[10px]" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="shippingFee"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel className="text-xs">Phí giao hàng</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Nhập phí giao hàng"
+                        className="h-8 text-xs"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-[10px]" />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
 
           {/* Note */}
           <FormField
@@ -820,64 +869,6 @@ const InvoiceSidebar = ({
 
       {/* Footer Actions */}
       <div className="p-4 border-t space-y-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Checkbox
-            id="print-contract"
-            checked={isPrintContract}
-            onCheckedChange={handlePrintContractChange}
-          />
-          <label
-            htmlFor="print-contract"
-            className="text-sm font-medium cursor-pointer"
-          >
-            In hợp đồng
-          </label>
-        </div>
-
-        {isPrintContract && (
-          <div className="mb-2 flex flex-col">
-            <label className="text-sm font-medium">Ngày dự kiến giao hàng <span className="text-destructive"> *</span></label>
-            <Popover open={openDeliveryDatePicker} onOpenChange={setOpenDeliveryDatePicker}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-full justify-start text-left font-normal mt-1',
-                    !expectedDeliveryDate && 'text-muted-foreground',
-                    deliveryDateError && 'border-destructive'
-                  )}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {expectedDeliveryDate
-                    ? new Date(expectedDeliveryDate).toLocaleDateString('vi-VN')
-                    : 'Chọn ngày'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <DatePicker
-                  mode="single"
-                  selected={expectedDeliveryDate ? new Date(expectedDeliveryDate) : undefined}
-                  onSelect={(date) => {
-                    onExpectedDeliveryDateChange(date ? date.toISOString() : null)
-                    setOpenDeliveryDatePicker(false)
-                  }}
-                  disabled={(date) => {
-                    const orderDate = form.getValues('orderDate')
-                    const minDate = orderDate ? new Date(orderDate) : new Date()
-                    // Disable dates <= orderDate (delivery must be strictly after order date)
-                    const minDay = new Date(minDate)
-                    minDay.setHours(0, 0, 0, 0)
-                    const checkDay = new Date(date)
-                    checkDay.setHours(0, 0, 0, 0)
-                    return checkDay <= minDay
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-            {deliveryDateError && <span className="text-[10px] text-destructive mt-1">{deliveryDateError}</span>}
-          </div>
-        )}
-
         {/* Main Button */}
         <Button
           className="w-full"
