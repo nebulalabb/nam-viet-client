@@ -135,6 +135,15 @@ export const authSlice = createSlice({
           state.requireOTP = true
           state.emailForOTP = action.payload.data.email
           toast.success('Đã gửi mã xác nhận đến email của bạn')
+        } else if (action.payload?.data?.requireOTP === false && action.payload?.data?.token) {
+          // Development bypass logic
+          state.requireOTP = false
+          localStorage.setItem('accessToken', action.payload.data.token)
+          toast.success('Đăng nhập thành công')
+          // Optional: Force a redirect to dashboard on the next tick
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 500)
         }
       })
       .addCase(login.rejected, (state, action) => {

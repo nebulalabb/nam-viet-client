@@ -13,9 +13,11 @@ export const useDashboardSocket = () => {
         // Khởi tạo kết nối Socket.io
         const newSocket = io(SOCKET_URL, {
             path: '/socket.io',
-            transports: ['websocket'],
+            transports: ['polling', 'websocket'], // polling first for compatibility
             autoConnect: true,
-            withCredentials: true
+            withCredentials: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 3000,
         })
 
         newSocket.on('connect', () => {

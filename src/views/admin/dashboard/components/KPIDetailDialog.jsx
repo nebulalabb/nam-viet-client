@@ -6,17 +6,11 @@ import {
     DialogTitle,
     DialogDescription,
 } from '../../../../components/ui/dialog'
-import { Loader2, TrendingUp, ShoppingBag, CreditCard, Activity, ExternalLink, AlertTriangle, CheckCircle2, Clock, PhoneMissed, TrendingDown, Eye } from 'lucide-react'
+import { Loader2, TrendingUp, ShoppingBag, CreditCard, Activity, AlertTriangle, CheckCircle2, Clock, PhoneMissed, TrendingDown, Eye } from 'lucide-react'
 import { Button } from '../../../../components/ui/button'
 import api from '../../../../utils/axios'
-import { PagePreviewDialog } from './PagePreviewDialog'
 
-// Lazy imports for page embeds
-import InvoicePage from '../../../../views/admin/invoice/InvoicePage'
-import CustomerDebtPage from '../../../../views/admin/debt/CustomerDebtPage'
-import RevenueReportPage from '../../../../views/admin/reports/revenue/RevenueReportPage'
-import ProductionReportPage from '../../../../views/admin/reports/production/ProductionReportPage'
-import WarehousePage from '../../../../views/admin/warehouse/WarehousePage'
+// Page imports moved to DashboardPage (for PagePreviewDialog rendering)
 
 // Safe Vietnamese money formatter (handles Prisma Decimal / BigInt)
 const vndFormat = (value) => {
@@ -28,11 +22,10 @@ const vndFormat = (value) => {
 // Recharts
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 
-export const KPIDetailDialog = ({ open, type, onClose }) => {
+export const KPIDetailDialog = ({ open, type, onClose, onOpenPreview }) => {
     const [loading, setLoading] = useState(false)
     const [data, setData] = useState(null)
     const [error, setError] = useState(null)
-    const [previewPage, setPreviewPage] = useState(null) // { component, title, route }
 
     useEffect(() => {
         if (open && type) {
@@ -78,11 +71,18 @@ export const KPIDetailDialog = ({ open, type, onClose }) => {
                 }
                 case 'production':
                 case 'delayed_production': {
-                    const res = await api.get('/production-orders')
-                    let list = res.data?.data?.items || res.data?.data || []
-                    if (kpiType === 'production') list = list.filter(o => o.status === 'in_progress')
-                    if (kpiType === 'delayed_production') list = list.filter(o => o.status === 'delayed')
-                    finalData.listData = list
+                    // /api/production-orders chưa có route riêng — dùng report stats để lấy data production
+                    try {
+                        const res = await api.get('/reports/dashboard/stats')
+                        const statsData = res.data?.data
+                        // Nếu có production data trong stats thì dùng, ngược lại để list rỗng
+                        let list = statsData?.production_orders || statsData?.recent?.production_orders || []
+                        if (kpiType === 'production') list = list.filter(o => o.status === 'in_progress' || o.status === 'active')
+                        if (kpiType === 'delayed_production') list = list.filter(o => o.status === 'delayed' || o.status === 'overdue')
+                        finalData.listData = list
+                    } catch {
+                        finalData.listData = []
+                    }
                     break
                 }
                 case 'low_stock':
@@ -133,22 +133,27 @@ export const KPIDetailDialog = ({ open, type, onClose }) => {
     }
 
     const handleNavigate = () => {
+        let preview = null
         switch (type) {
             case 'revenue':
-                setPreviewPage({ component: RevenueReportPage, title: 'Báo cáo Doanh thu', route: '/revenue' }); break;
+                preview = { pageKey: 'revenue-report', title: 'Báo cáo Doanh thu', route: '/revenue' }; break;
             case 'orders':
             case 'pending_orders':
-                setPreviewPage({ component: InvoicePage, title: 'Quản lý Đơn bán', route: '/invoice' }); break;
+                preview = { pageKey: 'invoice', title: 'Quản lý Đơn bán', route: '/invoice' }; break;
             case 'debt':
             case 'overdue_debts':
-                setPreviewPage({ component: CustomerDebtPage, title: 'Công nợ Khách hàng', route: '/customer-debt' }); break;
+                preview = { pageKey: 'customer-debt', title: 'Công nợ Khách hàng', route: '/customer-debt' }; break;
             case 'production':
             case 'delayed_production':
-                setPreviewPage({ component: ProductionReportPage, title: 'Báo cáo Sản xuất', route: '/production-report' }); break;
+                preview = { pageKey: 'production-report', title: 'Báo cáo Sản xuất', route: '/production-report' }; break;
             case 'low_stock':
             case 'expiring':
-                setPreviewPage({ component: WarehousePage, title: 'Quản lý Kho', route: '/warehouse-list' }); break;
+                preview = { pageKey: 'warehouse', title: 'Quản lý Kho', route: '/warehouse-list' }; break;
             default: break;
+        }
+        if (preview && onOpenPreview) {
+            onClose() // Đóng KPIDetailDialog trước
+            onOpenPreview(preview)
         }
     }
 
@@ -263,71 +268,58 @@ export const KPIDetailDialog = ({ open, type, onClose }) => {
     }
 
     return (
-        <>
-            <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-                <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
-                    <div className="p-6 pb-2">
-                        <DialogHeader>
-                            <div className="flex items-center gap-2">
-                                {getKpiIcon(type)}
-                                <DialogTitle className="text-lg">{getKpiTitle(type)}</DialogTitle>
-                            </div>
-                            <DialogDescription>
-                                Dữ liệu thực tế được lấy trực tiếp từ hệ thống.
-                            </DialogDescription>
-                        </DialogHeader>
-                    </div>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+                <div className="p-6 pb-2">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2">
+                            {getKpiIcon(type)}
+                            <DialogTitle className="text-lg">{getKpiTitle(type)}</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                            Dữ liệu thực tế được lấy trực tiếp từ hệ thống.
+                        </DialogDescription>
+                    </DialogHeader>
+                </div>
 
-                    <div className="px-6 pb-6 pt-2 bg-muted/10 min-h-[200px] flex flex-col">
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center text-muted-foreground py-12">
-                                <Loader2 className="h-8 w-8 animate-spin mb-4 text-primary" />
-                                <p>Đang tải dữ liệu thực tế từ backend...</p>
-                            </div>
-                        ) : error ? (
-                            <div className="flex flex-col items-center justify-center text-red-500 py-12">
-                                <AlertTriangle className="h-8 w-8 mb-3" />
-                                <p className="text-sm text-center">{error}</p>
-                                <Button variant="outline" size="sm" className="mt-4" onClick={() => fetchDetailData(type)}>Thử lại</Button>
-                            </div>
-                        ) : data ? (
-                            <div className="w-full text-left flex flex-col pt-2">
-                                {/* Render Trend Chart if it exists */}
-                                {renderChart()}
+                <div className="px-6 pb-6 pt-2 bg-muted/10 min-h-[200px] flex flex-col">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center text-muted-foreground py-12">
+                            <Loader2 className="h-8 w-8 animate-spin mb-4 text-primary" />
+                            <p>Đang tải dữ liệu thực tế từ backend...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="flex flex-col items-center justify-center text-red-500 py-12">
+                            <AlertTriangle className="h-8 w-8 mb-3" />
+                            <p className="text-sm text-center">{error}</p>
+                            <Button variant="outline" size="sm" className="mt-4" onClick={() => fetchDetailData(type)}>Thử lại</Button>
+                        </div>
+                    ) : data ? (
+                        <div className="w-full text-left flex flex-col pt-2">
+                            {/* Render Trend Chart if it exists */}
+                            {renderChart()}
 
-                                {/* Render List View */}
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-3 px-1">
-                                        <h4 className="text-sm font-semibold text-foreground">Danh sách liên quan</h4>
-                                        <p className="text-xs text-muted-foreground">
-                                            Cập nhật: {new Date(data.timestamp).toLocaleTimeString('vi-VN')}
-                                        </p>
-                                    </div>
-                                    {renderList()}
+                            {/* Render List View */}
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between mb-3 px-1">
+                                    <h4 className="text-sm font-semibold text-foreground">Danh sách liên quan</h4>
+                                    <p className="text-xs text-muted-foreground">
+                                        Cập nhật: {new Date(data.timestamp).toLocaleTimeString('vi-VN')}
+                                    </p>
                                 </div>
-
-                                <Button onClick={handleNavigate} className="mt-6 flex items-center justify-center gap-2 w-full">
-                                    <Eye className="h-4 w-4" />
-                                    Xem trang quản lý đầy đủ
-                                </Button>
+                                {renderList()}
                             </div>
-                        ) : (
-                            <div className="text-muted-foreground text-center py-12">Không có dữ liệu.</div>
-                        )}
-                    </div>
-                </DialogContent>
-            </Dialog>
 
-            {previewPage && (
-                <PagePreviewDialog
-                    open={!!previewPage}
-                    onClose={() => setPreviewPage(null)}
-                    title={previewPage.title}
-                    route={previewPage.route}
-                >
-                    <previewPage.component />
-                </PagePreviewDialog>
-            )}
-        </>
+                            <Button onClick={handleNavigate} className="mt-6 flex items-center justify-center gap-2 w-full">
+                                <Eye className="h-4 w-4" />
+                                Xem trang quản lý đầy đủ
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="text-muted-foreground text-center py-12">Không có dữ liệu.</div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
     )
 }

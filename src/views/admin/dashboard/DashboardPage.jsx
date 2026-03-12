@@ -30,6 +30,23 @@ import { KPIDetailDialog } from './components/KPIDetailDialog'
 import { TodayStatsBar } from './components/TodayStatsBar'
 import { RevenueTargetWidget } from './components/RevenueTargetWidget'
 import { DashboardHeader } from './components/DashboardHeader'
+import { PagePreviewDialog } from './components/PagePreviewDialog'
+
+// Page components for preview
+import InvoicePage from '../invoice/InvoicePage'
+import CustomerDebtPage from '../debt/CustomerDebtPage'
+import RevenueReportPage from '../reports/revenue/RevenueReportPage'
+import ProductionReportPage from '../reports/production/ProductionReportPage'
+import WarehousePage from '../warehouse/WarehousePage'
+
+// Map pageKey -> component
+const PAGE_COMPONENTS = {
+  'revenue-report': RevenueReportPage,
+  'invoice': InvoicePage,
+  'customer-debt': CustomerDebtPage,
+  'production-report': ProductionReportPage,
+  'warehouse': WarehousePage,
+}
 
 // Map of Widget IDs to their component renders, now accepting data props
 const renderWidgetContent = (widgetId, { kpi, charts, recent, alerts, loading, onOpenDialog }) => {
@@ -116,6 +133,9 @@ const DashboardPage = () => {
 
   // 5. State for Drill-down Modal (KPIDetailDialog)
   const [dialogType, setDialogType] = useState(null)
+
+  // 6. State for Page Preview Dialog (rendered at top-level to avoid z-index conflicts)
+  const [previewPage, setPreviewPage] = useState(null) // { pageKey, title, route }
 
   // 3. Trigger Cập nhật Dữ liệu qua Redux Thunk
   React.useEffect(() => {
@@ -230,7 +250,23 @@ const DashboardPage = () => {
         open={!!dialogType}
         type={dialogType}
         onClose={() => setDialogType(null)}
+        onOpenPreview={(page) => setPreviewPage(page)}
       />
+
+      {/* PagePreviewDialog rendered at DashboardPage level — outside KPIDetailDialog — to avoid z-index conflicts */}
+      {previewPage && (() => {
+        const PageComp = PAGE_COMPONENTS[previewPage.pageKey]
+        return (
+          <PagePreviewDialog
+            open={!!previewPage}
+            onClose={() => setPreviewPage(null)}
+            title={previewPage.title}
+            route={previewPage.route}
+          >
+            {PageComp ? <PageComp /> : null}
+          </PagePreviewDialog>
+        )
+      })()}
     </div>
   )
 }
