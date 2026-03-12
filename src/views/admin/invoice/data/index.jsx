@@ -1,8 +1,5 @@
 import {
   IconAlertTriangleFilled,
-  IconExclamationCircle,
-  IconFileInvoiceFilled,
-  IconFilesOff,
   IconRefreshDot,
   IconX,
 } from '@tabler/icons-react'
@@ -19,17 +16,17 @@ const statuses = [
   },
   {
     value: 'preparing',
-    label: 'Đang chuẩn bị',
+    label: 'Đã duyệt',
     icon: IconRefreshDot,
-    color: 'bg-orange-500 text-white',
-    textColor: 'text-orange-500',
+    color: 'bg-blue-500 text-white',
+    textColor: 'text-blue-500',
   },
   {
     value: 'delivering',
     label: 'Đang giao hàng',
     icon: TruckIcon,
-    color: 'bg-blue-500 text-white',
-    textColor: 'text-blue-500',
+    color: 'bg-indigo-500 text-white',
+    textColor: 'text-indigo-500',
   },
   {
     value: 'completed',
@@ -42,8 +39,8 @@ const statuses = [
     value: 'cancelled',
     label: 'Đã hủy',
     icon: IconX,
-    color: 'bg-gray-500 text-white',
-    textColor: 'text-gray-500',
+    color: 'bg-red-500 text-white',
+    textColor: 'text-red-500',
   },
 ]
 
@@ -69,49 +66,4 @@ const paymentStatuses = [
   },
 ]
 
-const attributes = {
-  months: 'tháng',
-  users: 'người dùng',
-  orders: 'đơn hàng',
-}
-
-const eInvoiceStatuses = [
-  {
-    value: 'none',
-    label: 'Chưa lập HĐĐT',
-    icon: IconFilesOff,
-    color: 'text-slate-400',
-  },
-  {
-    value: 'draft',
-    label: 'Nháp HĐĐT',
-    icon: IconFileInvoiceFilled,
-    color: 'text-blue-500',
-  },
-  {
-    value: 'published',
-    label: 'Đã phát hành HĐĐT',
-    icon: CheckCircleIcon,
-    color: 'text-green-500',
-  },
-  {
-    value: 'failed',
-    label: 'Lập HĐĐT lỗi',
-    icon: IconAlertTriangleFilled,
-    color: 'text-red-500',
-  },
-  {
-    value: 'canceled',
-    label: 'HĐĐT đã hủy',
-    icon: IconExclamationCircle,
-    color: 'text-gray-500',
-  },
-]
-
-const productTypeMap = {
-  physical: 'vật lý',
-  digital: 'phần mềm',
-  service: 'dịch vụ',
-}
-
-export { statuses, paymentStatuses, attributes, eInvoiceStatuses, productTypeMap }
+export { statuses, paymentStatuses }

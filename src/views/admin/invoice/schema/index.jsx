@@ -22,7 +22,7 @@ const createInvoiceSchema = z
     deliveryAddress: z.string().optional().nullable(),
     shippingFee: z.number().min(0, 'Phí vận chuyển phải >= 0').optional().nullable(),
     expectedDeliveryDate: z.string().optional().nullable(),
-    requireApproval: z.boolean().default(true),
+    requireApproval: z.boolean().default(false),
   })
 
 const updateInvoiceSchema = z.object({
@@ -46,7 +46,7 @@ const updateInvoiceSchema = z.object({
   deliveryAddress: z.string().optional().nullable(),
   shippingFee: z.number().min(0).optional().nullable(),
   expectedDeliveryDate: z.string().optional().nullable(),
-  requireApproval: z.boolean().default(true),
+  requireApproval: z.boolean().default(false),
 })
 
 const createOtherExpensesSchema = z.object({

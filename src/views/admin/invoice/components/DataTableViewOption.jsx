@@ -12,7 +12,7 @@ import {
 
 const DataTableViewOptions = ({ table }) => {
   const options = {
-    code: 'Mã HĐ',
+    orderCode: 'Mã ĐB',
     amount: 'Tổng tiền',
     taxAmount: 'Thuế',
     discount: 'Giảm giá',

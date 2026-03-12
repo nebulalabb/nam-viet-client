@@ -134,7 +134,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
   // -- LOGIC FOR MOBILE SELECT STATUS --
   const isPaid = invoice?.paymentStatus === 'paid'
-  const isLocked = ['delivered', 'rejected'].includes(invoice?.status)
+  const isLocked = ['completed', 'cancelled'].includes(invoice?.orderStatus)
   const isActionDisabled = isPaid || isLocked
 
   const permissions = JSON.parse(localStorage.getItem('permissionCodes') || '[]')
@@ -152,24 +152,11 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
     const canRevert = permissions.includes('REVERT_INVOICE')
 
     return statuses.filter((s) => {
-      // Hide 'completed' status as it is automated
-      if (s.value === 'delivered') return false
-
-      // Permission check for 'rejected'
-      if (s.value === 'rejected') {
-        if (!canReject) return false
-        // Only allow switching to 'rejected' if current status is 'pending'
-        if (invoice.status !== 'pending') return false
-      }
-
-      // Permission check for 'pending' (revert)
-      if (s.value === 'pending') {
-        if (!canRevert) return false
-      }
-
+      // Hide 'completed' and 'cancelled' as they are final states
+      if (s.value === 'completed' || s.value === 'cancelled') return false
       return true
     })
-  }, [invoice?.status])
+  }, [invoice?.orderStatus])
 
   const handleSelectStatusChange = (val) => {
     if (invoice?.id) {
@@ -191,28 +178,18 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-
     try {
-      const getAdminInvoice = JSON.parse(
-        localStorage.getItem('permissionCodes'),
-      ).includes('GET_INVOICE')
-
-      const data = getAdminInvoice
-        ? await getInvoiceDetail(invoiceId)
-        : await getInvoiceDetailByUser(invoiceId)
-
+      const data = await dispatch(getInvoiceDetail(invoiceId)).unwrap()
       setInvoice(data)
     } catch (error) {
-      setLoading(false)
       console.log('Fetch invoice detail error:', error)
     } finally {
       setLoading(false)
     }
-  }, [invoiceId])
+  }, [invoiceId, dispatch])
 
   useEffect(() => {
     fetchData()
-    dispatch(getCreditNotesByInvoiceId(invoiceId))
   }, [invoiceId, fetchData, dispatch])
 
   const handleApproveCreditNote = async (creditNote) => {
@@ -509,7 +486,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         >
           <DialogHeader className={cn(!isDesktop && "px-4 pt-4")}>
             <DialogTitle className={cn(!isDesktop && "text-base")}>
-              Thông tin chi tiết đơn bán: <span className={cn(!isDesktop && "block")}>{invoice?.code}</span>
+              Thông tin chi tiết đơn bán: <span className={cn(!isDesktop && "block")}>{invoice?.orderCode}</span>
             </DialogTitle>
           </DialogHeader>
 
@@ -575,38 +552,43 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {invoice?.invoiceItems.map((product, index) => (
-                                <TableRow key={product.id}>
+                              {invoice?.details?.map((item, index) => (
+                                <TableRow key={item.id}>
                                   <TableCell>{index + 1}</TableCell>
                                   <TableCell>
                                     <div
                                       className="flex items-start gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                                       onClick={() => {
-                                        if (product?.productId) {
-                                          setSelectedProductId(product.productId)
+                                        if (item?.productId) {
+                                          setSelectedProductId(item.productId)
                                           setShowViewProductDialog(true)
                                         }
                                       }}
                                     >
-                                      {product.image && (
+                                      {item?.product?.image && (
                                         <div className="size-16 overflow-hidden rounded-md border shrink-0">
                                           <img
-                                            src={getPublicUrl(product.image)}
-                                            alt={product.productName}
+                                            src={getPublicUrl(item.product.image)}
+                                            alt={item?.product?.productName}
                                             className="h-full w-full object-cover"
                                           />
                                         </div>
                                       )}
                                       <div>
-                                        <div className="font-medium text-blue-600 hover:underline">
-                                          {product.productName}
+                                        <div className="font-medium text-blue-600 flex items-center gap-2 flex-wrap">
+                                          <span className="hover:underline">{item?.product?.productName}</span>
+                                          {item.gift && (
+                                            <span className="rounded-md bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 border border-purple-200 leading-none whitespace-nowrap">
+                                              Quà tặng
+                                            </span>
+                                          )}
                                         </div>
                                         <div className="text-xs text-muted-foreground">
-                                          {product.productCode || product.code}
+                                          {item?.product?.code || item?.product?.productCode}
                                         </div>
-                                        {product?.options && (
+                                        {item?.options && (
                                           <div className="break-words text-sm text-muted-foreground">
-                                            {product?.options
+                                            {item?.options
                                               ?.filter((option) => !!option.code)
                                               ?.map(
                                                 (option) =>
@@ -618,37 +600,44 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                       </div>
                                     </div>
                                   </TableCell>
-                                  <TableCell className="text-end">{product.quantity}</TableCell>
+                                  <TableCell className="text-end">{item.quantity}</TableCell>
                                   <TableCell>
-                                    {product.unitName || 'Không có'}
+                                    {item.unitName || item.product?.unit?.unitName || 'Không có'}
                                   </TableCell>
-                                  <TableCell className="text-end">
-                                    {moneyFormat(product.unitPrice)}
-                                  </TableCell>
-                                  <TableCell className="text-end">
-                                    {moneyFormat(product.grossAmount)}
-                                  </TableCell>
-                                  <TableCell className="text-end">
-                                    {product.taxRate > 0 ? `${product.taxRate}%` : '—'}
-                                  </TableCell>
-                                  <TableCell className="text-end">
-                                    {product.taxAmount > 0 ? moneyFormat(product.taxAmount) : '—'}
-                                  </TableCell>
-                                  <TableCell className="text-end">
-                                    {product.discountRate > 0 ? `${product.discountRate}%` : '—'}
-                                  </TableCell>
-                                  <TableCell className="text-end text-destructive">
-                                    {product.discountAmount > 0 ? moneyFormat(product.discountAmount) : '—'}
-                                  </TableCell>
-                                  <TableCell className="text-end">
-                                    {moneyFormat(product.totalAmount)}
-                                  </TableCell>
-                                  <TableCell>
-                                    {product?.warranties[0]?.periodMonths &&
-                                      product.warranty
-                                      ? `${product.warranty}`
-                                      : 'Không có'}
-                                  </TableCell>
+                                  {item.gift ? (
+                                    <TableCell colSpan={8} className="pr-5 text-end text-purple-600 font-semibold italic border-l border-dashed bg-muted/20">
+                                      Hàng Quà Tặng
+                                    </TableCell>
+                                  ) : (
+                                    <>
+                                      <TableCell className="text-end">
+                                        {moneyFormat(item.price || item.unitPrice)}
+                                      </TableCell>
+                                      <TableCell className="text-end">
+                                        {moneyFormat(Number(item.quantity) * Number(item.price || item.unitPrice))}
+                                      </TableCell>
+                                      <TableCell className="text-end">
+                                        {Number(item.taxRate) > 0 ? `${Number(item.taxRate)}%` : '—'}
+                                      </TableCell>
+                                      <TableCell className="text-end">
+                                        {item.taxAmount > 0 ? moneyFormat(item.taxAmount) : '—'}
+                                      </TableCell>
+                                      <TableCell className="text-end">
+                                        {Number(item.discountRate) > 0 ? `${Number(item.discountRate)}%` : '—'}
+                                      </TableCell>
+                                      <TableCell className="text-end text-destructive">
+                                        {item.discountAmount > 0 ? moneyFormat(item.discountAmount) : '—'}
+                                      </TableCell>
+                                      <TableCell className="text-end">
+                                        {moneyFormat(item.total || item.totalAmount)}
+                                      </TableCell>
+                                      <TableCell>
+                                        {item.periodMonths
+                                          ? `${item.periodMonths} tháng`
+                                          : 'Không có'}
+                                      </TableCell>
+                                    </>
+                                  )}
                                   {/* <TableCell>
                                     {product.note || 'Không có'}
                                   </TableCell> */}
@@ -660,37 +649,42 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {invoice?.invoiceItems.map((product, index) => (
-                            <div key={product.id} className="border rounded-lg p-3 space-y-2 bg-card">
+                          {invoice?.details?.map((item, index) => (
+                            <div key={item.id} className="border rounded-lg p-3 space-y-2 bg-card">
                               {/* Header: STT + Image + Product Name */}
                               <div
                                 className="flex gap-3 items-start cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() => {
-                                  if (product?.productId) {
-                                    setSelectedProductId(product.productId)
+                                  if (item?.productId) {
+                                    setSelectedProductId(item.productId)
                                     setShowViewProductDialog(true)
                                   }
                                 }}
                               >
-                                {product.image && (
+                                {item?.product?.image && (
                                   <div className="size-16 rounded border overflow-hidden shrink-0">
-                                    <img src={getPublicUrl(product.image)} alt={product.productName} className="h-full w-full object-cover" />
+                                    <img src={getPublicUrl(item.product.image)} alt={item?.product?.productName} className="h-full w-full object-cover" />
                                   </div>
                                 )}
                                 <div>
-                                  <div className="font-medium text-sm text-blue-600 hover:underline">
-                                    {index + 1}. {product.productName}
+                                  <div className="font-medium text-sm text-blue-600 flex items-center gap-2 flex-wrap">
+                                    <span className="hover:underline">{index + 1}. {item?.product?.productName}</span>
+                                    {item.gift && (
+                                      <span className="rounded-md bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 border border-purple-200 leading-none whitespace-nowrap">
+                                        Quà tặng
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-xs text-muted-foreground">
-                                    {product.productCode || product.code}
+                                    {item?.product?.code || item?.product?.productCode}
                                   </div>
                                 </div>
                               </div>
 
                               {/* Options if any */}
-                              {product?.options && (
+                              {item?.options && (
                                 <div className="text-xs text-muted-foreground">
-                                  {product.options
+                                  {item.options
                                     ?.filter((option) => !!option.code)
                                     ?.map((option) => `${option.name} ${option?.pivot?.value || ''}`)
                                     .join(', ')}
@@ -698,69 +692,81 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               )}
 
                               {/* Grid of details */}
-                              <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                  <span className="text-muted-foreground">SL: </span>
-                                  <span className="font-medium">{product.quantity}</span>
-                                </div>
-
-                                <div>
-                                  <span className="text-muted-foreground">ĐVT: </span>
-                                  <span className="font-medium">{product.unitName || 'Không có'}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Giá: </span>
-                                  <span className="font-medium">{moneyFormat(product.unitPrice)}</span>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Thuế: </span>
-                                  <span className="font-medium">
-                                    {product.taxRate > 0 ? `${product.taxRate}%` : '—'}
-                                  </span>
-                                </div>
-                                {product.taxAmount > 0 && (
+                              {item.gift ? (
+                                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground bg-muted/20 p-2 rounded border border-dashed text-purple-600 font-semibold italic">
                                   <div>
-                                    <span className="text-muted-foreground">Tiền thuế: </span>
-                                    <span className="font-medium">{moneyFormat(product.taxAmount)}</span>
+                                    <span className="text-muted-foreground mr-1">SL:</span>{item.quantity}
+                                    <span className="text-muted-foreground mx-1">| ĐVT:</span>{item.unitName || item.product?.unit?.unitName || 'Không có'}
                                   </div>
-                                )}
-                                <div>
-                                  <span className="text-muted-foreground">Tổng trước giảm: </span>
-                                  <span className="font-medium">{moneyFormat(product.grossAmount)}</span>
+                                  <div className="text-end">Hàng Quà Tặng</div>
                                 </div>
-                                {product.discountRate > 0 && (
-                                  <>
+                              ) : (
+                                <>
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
                                     <div>
-                                      <span className="text-muted-foreground">Giảm: </span>
-                                      <span className="font-medium text-destructive">{product.discountRate}%</span>
+                                      <span className="text-muted-foreground">SL: </span>
+                                      <span className="font-medium">{item.quantity}</span>
+                                    </div>
+
+                                    <div>
+                                      <span className="text-muted-foreground">ĐVT: </span>
+                                      <span className="font-medium">{item.unitName || item.product?.unit?.unitName || 'Không có'}</span>
                                     </div>
                                     <div>
-                                      <span className="text-muted-foreground">Tiền giảm: </span>
-                                      <span className="font-medium text-destructive">{moneyFormat(product.discountAmount)}</span>
+                                      <span className="text-muted-foreground">Giá: </span>
+                                      <span className="font-medium">{moneyFormat(item.price || item.unitPrice)}</span>
                                     </div>
-                                  </>
-                                )}
-                              </div>
-
-                              {/* Total - prominent */}
-                              <div className="flex justify-between border-t pt-2 font-semibold text-sm">
-                                <span>Tổng cộng:</span>
-                                <span className="text-primary">{moneyFormat(product.totalAmount)}</span>
-                              </div>
-
-                              {/* Warranty & Note */}
-                              <div className="text-xs space-y-1 border-t pt-2">
-                                <div>
-                                  <span className="text-muted-foreground">BH: </span>
-                                  <span>{product?.warranties[0]?.periodMonths && product.warranty ? product.warranty : 'Không có'}</span>
-                                </div>
-                                {product.note && (
-                                  <div>
-                                    <span className="text-muted-foreground">Ghi chú: </span>
-                                    <span>{product.note}</span>
+                                    <div>
+                                      <span className="text-muted-foreground">Thuế: </span>
+                                      <span className="font-medium">
+                                        {Number(item.taxRate) > 0 ? `${Number(item.taxRate)}%` : '—'}
+                                      </span>
+                                    </div>
+                                    {item.taxAmount > 0 && (
+                                      <div>
+                                        <span className="text-muted-foreground">Tiền thuế: </span>
+                                        <span className="font-medium">{moneyFormat(item.taxAmount)}</span>
+                                      </div>
+                                    )}
+                                    <div>
+                                      <span className="text-muted-foreground">Tổng trước giảm: </span>
+                                      <span className="font-medium">{moneyFormat(Number(item.quantity) * Number(item.price || item.unitPrice))}</span>
+                                    </div>
+                                    {item.discountRate > 0 && (
+                                      <>
+                                        <div>
+                                          <span className="text-muted-foreground">Giảm: </span>
+                                          <span className="font-medium text-destructive">{Number(item.discountRate)}%</span>
+                                        </div>
+                                        <div>
+                                          <span className="text-muted-foreground">Tiền giảm: </span>
+                                          <span className="font-medium text-destructive">{moneyFormat(item.discountAmount)}</span>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
-                                )}
-                              </div>
+
+                                  {/* Total - prominent */}
+                                  <div className="flex justify-between border-t pt-2 font-semibold text-sm">
+                                    <span>Tổng cộng:</span>
+                                    <span className="text-primary">{moneyFormat(item.total || item.totalAmount)}</span>
+                                  </div>
+
+                                  {/* Warranty & Note */}
+                                  <div className="text-xs space-y-1 border-t pt-2">
+                                    <div>
+                                      <span className="text-muted-foreground">BH: </span>
+                                      <span>{item.periodMonths ? `${item.periodMonths} tháng` : 'Không có'}</span>
+                                    </div>
+                                    {item.note && (
+                                      <div>
+                                        <span className="text-muted-foreground">Ghi chú: </span>
+                                        <span>{item.note}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -777,12 +783,12 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                           <div className="flex justify-between">
                             <strong>Tổng tiền: </strong>
                             <span>
-                              {moneyFormat(invoice?.subTotal || 0)}
+                              {moneyFormat(invoice?.amount || 0)}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <strong>Giảm giá:</strong>
-                            <span className='text-red-600'>{moneyFormat(invoice?.discount)}</span>
+                            <span className='text-red-600'>{moneyFormat(invoice?.discountAmount)}</span>
                           </div>
                           <div className="flex justify-between">
                             <strong>Thuế:</strong>
@@ -790,27 +796,27 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                           </div>
                           <div className="flex justify-between">
                             <strong>Tổng cộng:</strong>
-                            <span>{moneyFormat(invoice?.amount)}</span>
+                            <span>{moneyFormat(invoice?.totalAmount)}</span>
                           </div>
                           <div className="flex justify-start border-t py-2">
                             <div className={cn("font-bold", isDesktop ? "text-sm" : "text-xs")}>
                               Số tiền viết bằng chữ:{' '}
                               <span className="font-bold">
-                                {toVietnamese(invoice?.amount)}
+                                {toVietnamese(invoice?.totalAmount)}
                               </span>
                             </div>
                           </div>
 
                           <div className="flex justify-start border-t py-2 items-center">
                             <strong>Trạng thái đơn bán: </strong>
-                            {invoice?.status && (
+                            {invoice?.orderStatus && (
                               <>
                                 {showUpdateStatusDialog && (
                                   <UpdateInvoiceStatusDialog
                                     open={showUpdateStatusDialog}
                                     onOpenChange={setShowUpdateStatusDialog}
                                     invoiceId={invoice.id}
-                                    currentStatus={invoice.status}
+                                    currentStatus={invoice.orderStatus}
                                     paymentStatus={invoice.paymentStatus}
                                     statuses={statuses}
                                     onSubmit={handleUpdateStatus}
@@ -818,26 +824,26 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                 )}
                                 <div className="ml-2 flex flex-col gap-2">
                                   {(() => {
-                                    const statusObj = statuses.find(s => s.value === invoice.status)
+                                    const statusObj = statuses.find(s => s.value === invoice.orderStatus)
                                     const paymentStatusObj = paymentStatuses.find(s => s.value === invoice.paymentStatus)
                                     return (
                                       <>
                                         <Badge
-                                          variant={['delivered', 'cancelled'].includes(invoice.status) ? 'outline' : 'default'}
+                                          variant={['completed', 'cancelled'].includes(invoice.orderStatus) ? 'outline' : 'default'}
                                           className={cn(
-                                            ['delivered', 'cancelled'].includes(invoice.status)
-                                              ? `cursor-default select-none border-0 bg-transparent ${invoice.status === 'delivered' ? (statusObj?.textColor || 'text-green-500') : 'text-slate-500'} hover:bg-transparent`
+                                            ['completed', 'cancelled'].includes(invoice.orderStatus)
+                                              ? `cursor-default select-none border-0 bg-transparent ${invoice.orderStatus === 'completed' ? (statusObj?.textColor || 'text-green-500') : 'text-slate-500'} hover:bg-transparent`
                                               : `cursor-pointer select-none ${statusObj?.color || ''}`,
-                                            isActionDisabled && !['delivered', 'cancelled'].includes(invoice.status) ? "opacity-70 cursor-not-allowed" : ""
+                                            isActionDisabled && !['completed', 'cancelled'].includes(invoice.orderStatus) ? "opacity-70 cursor-not-allowed" : ""
                                           )}
                                           onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            if (!isActionDisabled && !['delivered', 'cancelled'].includes(invoice.status)) {
+                                            if (!isActionDisabled && !['completed', 'cancelled'].includes(invoice.orderStatus)) {
                                               setShowUpdateStatusDialog(true)
                                             }
                                           }}
-                                          title={['delivered', 'cancelled'].includes(invoice.status) ? '' : "Bấm để cập nhật trạng thái"}
+                                          title={['completed', 'cancelled'].includes(invoice.orderStatus) ? '' : "Bấm để cập nhật trạng thái"}
                                         >
                                           <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
                                             {statusObj?.icon ? <statusObj.icon className="h-4 w-4" /> : null}
@@ -894,11 +900,11 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               </div>
                             )}
 
-                            {invoice?.paidAmount < invoice?.amount && (
+                            {invoice?.remainingAmount > 0 && (
                               <div className="flex justify-between">
                                 <strong>Còn lại:</strong>
                                 <span className="font-medium text-red-600">
-                                  {moneyFormat(invoice.amount - (invoice.paidAmount || 0))}
+                                  {moneyFormat(invoice.remainingAmount || 0)}
                                 </span>
                               </div>
                             )}
@@ -928,7 +934,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               Ghi chú:{' '}
                             </strong>
                             <span className="text-primary">
-                              {invoice?.note || 'Không có'}
+                              {invoice?.notes || 'Không có'}
                             </span>
                           </div>
                           {invoice?.expires?.length > 0 && (
@@ -976,7 +982,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Phiếu thu</h3>
-                            {!['pending', 'delivered', 'rejected', 'cancelled'].includes(invoice?.status) ? (
+                            {!['pending', 'completed', 'cancelled'].includes(invoice?.orderStatus) ? (
                               <Button
                                 size="sm"
                                 className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
@@ -988,7 +994,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                 </span>
                               </Button>
                             ) : (
-                              invoice?.status === 'pending' ? (
+                              invoice?.orderStatus === 'pending' ? (
                                 <span className="text-[12px] text-gray-500">Đơn hàng chưa được duyệt</span>
                               ) : null
                             )}
@@ -1284,7 +1290,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Phiếu xuất kho</h3>
-                            {invoice?.status === 'accepted' ? (
+                            {invoice?.orderStatus === 'preparing' ? (
                               <Button
                                 size="sm"
                                 className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
@@ -1296,7 +1302,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                 </span>
                               </Button>
                             ) : (
-                              invoice?.status === 'pending' ? (
+                              invoice?.orderStatus === 'pending' ? (
                                 <span className="text-[12px] text-gray-500">Đơn hàng chưa được duyệt</span>
                               ) : null
                             )}
@@ -1747,8 +1753,8 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                       <div className="flex items-center gap-4">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={`https://ui-avatars.com/api/?bold=true&background=random&name=${invoice?.customer?.name}`}
-                            alt={invoice?.customer?.name}
+                            src={`https://ui-avatars.com/api/?bold=true&background=random&name=${invoice?.customer?.customerName}`}
+                            alt={invoice?.customer?.customerName}
                           />
                           <AvatarFallback>AD</AvatarFallback>
                         </Avatar>
@@ -1757,7 +1763,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                             className="font-medium cursor-pointer text-primary hover:underline"
                             onClick={() => setShowCustomerDetailDialog(true)}
                           >
-                            {invoice?.customer?.name}
+                            {invoice?.customer?.customerName}
                           </div>
                           {showCustomerDetailDialog && invoice?.customer && (
                             <CustomerDetailDialog
@@ -1792,7 +1798,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               <CreditCard className="h-4 w-4" />
                             </div>
                             <span>
-                              {invoice?.customer?.identityCard || 'Chưa cập nhật'}
+                              {invoice?.customer?.cccd || 'Chưa cập nhật'}
                             </span>
                           </div>
 
@@ -1827,14 +1833,14 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                       <div className="flex items-center gap-4">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={`https://ui-avatars.com/api/?bold=true&background=random&name=${invoice?.user?.fullName}`}
-                            alt={invoice?.user?.fullName}
+                            src={`https://ui-avatars.com/api/?bold=true&background=random&name=${invoice?.creator?.fullName}`}
+                            alt={invoice?.creator?.fullName}
                           />
                           <AvatarFallback>AD</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">
-                            {invoice?.user?.fullName} ({invoice?.user.code})
+                            {invoice?.creator?.fullName} ({invoice?.creator?.employeeCode})
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {dateFormat(invoice?.createdAt, true)}
@@ -1852,8 +1858,8 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                             <div className="mr-2 h-4 w-4 ">
                               <MobileIcon className="h-4 w-4" />
                             </div>
-                            <a href={`tel:${invoice?.user?.phone}`}>
-                              {invoice?.user?.phone || 'Chưa cập nhật'}
+                            <a href={`tel:${invoice?.creator?.phone}`}>
+                              {invoice?.creator?.phone || 'Chưa cập nhật'}
                             </a>
                           </div>
 
@@ -1861,86 +1867,13 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                             <div className="mr-2 h-4 w-4 ">
                               <Mail className="h-4 w-4" />
                             </div>
-                            <a href={`mailto:${invoice?.user?.email}`}>
-                              {invoice?.user?.email || 'Chưa cập nhật'}
+                            <a href={`mailto:${invoice?.creator?.email}`}>
+                              {invoice?.creator?.email || 'Chưa cập nhật'}
                             </a>
                           </div>
                         </div>
                       </div>
                     </div>
-
-                    {invoice?.invoiceRevenueShare && (
-                      <>
-                        <Separator className="my-4" />
-
-                        <div className="flex items-center justify-between">
-                          <h2 className="py-2 text-lg font-semibold">
-                            Tỉ lệ hưởng doanh số
-                          </h2>
-                        </div>
-
-                        <div className="space-y-4 text-sm">
-                          <div className="flex justify-between">
-                            <strong>Người được chia: </strong>
-                            <div className="flex items-center gap-1">
-                              {invoice?.invoiceRevenueShare?.user.fullName}
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <IconInfoCircle className="h-4 w-4 cursor-pointer text-primary hover:text-secondary-foreground" />
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <div className="text-sm">
-                                      <div className="font-medium">
-                                        Mã nhân viên:{' '}
-                                        {invoice?.invoiceRevenueShare?.user.code}
-                                      </div>
-
-                                      <div className="font-medium">
-                                        Số điện thoại:{' '}
-                                        <a
-                                          href={`tel:${invoice?.invoiceRevenueShare?.user.phone}`}
-                                        >
-                                          {invoice?.invoiceRevenueShare?.user
-                                            .phone || 'Chưa cập nhật'}
-                                        </a>
-                                      </div>
-
-                                      <div className="font-medium">
-                                        Địa chỉ email:{' '}
-                                        <a
-                                          href={`tel:${invoice?.invoiceRevenueShare?.user.email}`}
-                                        >
-                                          {invoice?.invoiceRevenueShare?.user
-                                            .email || 'Chưa cập nhật'}
-                                        </a>
-                                      </div>
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                          </div>
-
-                          <div className="flex justify-between">
-                            <strong>Tỉ lệ chia: </strong>
-                            <span>
-                              {invoice?.invoiceRevenueShare?.sharePercentage *
-                                100}
-                              %
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between">
-                            <strong>Số tiền được chia: </strong>
-                            <span className="text-primary">
-                              {moneyFormat(invoice?.invoiceRevenueShare?.amount)}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
                   </div>
                 </div>
               </>
@@ -1952,7 +1885,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
           )}>
             {invoice && (
               <>
-                {(!['pending', 'cancelled', 'delivered', 'rejected'].includes(invoice?.status) && invoice?.paymentStatus !== 'paid') && (
+                {(!['pending', 'cancelled', 'completed'].includes(invoice?.orderStatus) && invoice?.paymentStatus !== 'paid') && (
                   <Button
                     size="sm"
                     className={cn("gap-2 bg-green-600 text-white hover:bg-green-700", !isDesktop && "w-full")}
@@ -1962,7 +1895,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                     Tạo Phiếu Thu
                   </Button>
                 )}
-                {invoice?.status === 'accepted' && (
+                {invoice?.orderStatus === 'preparing' && (
                   <Button
                     size="sm"
                     className={cn("gap-2 bg-orange-600 text-white hover:bg-orange-700", !isDesktop && "w-full")}
@@ -1993,7 +1926,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                   </Button>
                 )}
 
-                {(canDelete && ['pending', 'rejected', 'cancelled'].includes(invoice.status)) && (
+                {(canDelete && ['pending', 'cancelled'].includes(invoice.orderStatus)) && (
                   <ConfirmActionButton
                     title="Xác nhận xóa"
                     description="Bạn có chắc chắn muốn xóa đơn bán này? Hành động này không thể hoàn tác."
@@ -2020,7 +1953,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                 type="button"
                 variant="outline"
                 size="sm"
-                className={cn("gap-2", !isDesktop && (invoice?.status === 'pending' && canDelete ? "w-full" : "w-full col-span-2"))}
+                className={cn("gap-2", !isDesktop && (invoice?.orderStatus === 'pending' && canDelete ? "w-full" : "w-full col-span-2"))}
               >
                 <X className="h-4 w-4" />
                 Đóng
@@ -2097,7 +2030,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
             open={showUpdateStatusDialog}
             onOpenChange={setShowUpdateStatusDialog}
             invoiceId={invoice?.id}
-            currentStatus={invoice?.status}
+            currentStatus={invoice?.orderStatus}
             paymentStatus={invoice?.paymentStatus}
             statuses={statuses}
             onSubmit={handleUpdateStatus}
@@ -2190,7 +2123,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         }}
         invoices={[invoice?.id]}
         receipt={receiptToEdit}
-        invoiceCode={invoice?.code}
+        invoiceCode={invoice?.orderCode}
         amount={invoice?.remainingAmount}
         onSuccess={() => {
           fetchData()

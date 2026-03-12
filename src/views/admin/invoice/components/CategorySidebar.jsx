@@ -33,15 +33,15 @@ const CategorySidebar = ({
           type="button"
           onClick={() => onCategoryChange(category.id)}
           className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all mb-1",
+            "w-full flex items-start gap-2 px-3 py-2 rounded-md text-sm transition-all mb-1",
             "hover:bg-accent hover:text-accent-foreground",
             isActive && "bg-primary text-primary-foreground hover:bg-primary/90",
             level > 0 && "pl-" + (level * 4 + 3) // Add indentation based on level
           )}
           style={{ paddingLeft: level > 0 ? `${level * 1.5 + 0.75}rem` : undefined }}
         >
-          <Icon className={cn("h-4 w-4 shrink-0", level > 0 && "opacity-70 h-3.5 w-3.5")} />
-          <span className="flex-1 text-left truncate">{category.categoryName || category.name}</span>
+          <Icon className={cn("h-4 w-4 shrink-0 mt-0.5", level > 0 && "opacity-70 h-3.5 w-3.5")} />
+          <span className="flex-1 text-left leading-tight break-words">{category.categoryName || category.name}</span>
           {count > 0 && (
             <span className={cn(
               "text-xs px-1.5 py-0.5 rounded-full",

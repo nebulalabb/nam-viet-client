@@ -8,7 +8,7 @@ export const getPromotions = createAsyncThunk(
   'promotion',
   async (query = '', { rejectWithValue }) => {
     try {
-      const response = await api.get(`/promotion?${query}`)
+      const response = await api.get(`/promotions?${query}`)
       if (response.data.data) {
         return response.data
       }
@@ -25,7 +25,7 @@ export const getActivePromotions = createAsyncThunk(
   'promotion/getActive',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/promotion?status=active')
+      const response = await api.get('/promotions?status=active')
       return response.data.data || response.data
     } catch (error) {
       const message = handleError(error)
@@ -93,7 +93,7 @@ export const createPromotion = createAsyncThunk(
   'promotion/create',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      await api.post('/promotion', data)
+      await api.post('/promotions', data)
       await dispatch(getPromotions()).unwrap()
       toast.success('Thêm mới khuyến mãi thành công')
     } catch (error) {
@@ -109,7 +109,7 @@ export const updatePromotion = createAsyncThunk(
   async (updateData, { rejectWithValue, dispatch }) => {
     try {
       const { id, data } = updateData
-      await api.put(`/promotion/${id}`, data)
+      await api.put(`/promotions/${id}`, data)
       await dispatch(getPromotions()).unwrap()
       toast.success('Cập nhật khuyến mãi thành công')
     } catch (error) {
@@ -125,7 +125,7 @@ export const approvePromotion = createAsyncThunk(
   async (updateData, { rejectWithValue, dispatch }) => {
     try {
       const { id, data } = updateData
-      await api.put(`/promotion/${id}/approve`, data)
+      await api.put(`/promotions/${id}/approve`, data)
       await dispatch(getPromotions()).unwrap()
       toast.success('Duyệt khuyến mãi thành công!')
     } catch (error) {
@@ -141,7 +141,7 @@ export const cancelPromotion = createAsyncThunk(
   async (cancelData, { rejectWithValue, dispatch }) => {
     try {
       const { id, data } = cancelData
-      await api.delete(`/promotion/${id}`, { data })
+      await api.delete(`/promotions/${id}`, { data })
       await dispatch(getPromotions()).unwrap()
       toast.success('Hủy khuyến mãi thành công')
     } catch (error) {
@@ -156,7 +156,7 @@ export const deletePromotion = createAsyncThunk(
   'promotion/delete',
   async (id, { rejectWithValue, dispatch }) => {
     try {
-      await api.delete(`/promotion/${id}/delete`)
+      await api.delete(`/promotions/${id}/delete`)
       await dispatch(getPromotions()).unwrap()
       toast.success('Xóa khuyến mãi thành công')
     } catch (error) {
@@ -171,7 +171,7 @@ export const restorePromotion = createAsyncThunk(
   'promotion/restore',
   async (id, { rejectWithValue, dispatch }) => {
     try {
-      await api.put(`/promotion/${id}/restore`)
+      await api.put(`/promotions/${id}/restore`)
       await dispatch(getPromotions()).unwrap()
       toast.success('Khôi phục trạng thái chờ duyệt thành công')
     } catch (error) {
@@ -186,7 +186,7 @@ export const deleteMultiplePromotions = createAsyncThunk(
   'promotion/deleteMultiple',
   async (ids, { rejectWithValue, dispatch }) => {
     try {
-      const response = await api.post(`/promotion/bulk-delete`, { ids })
+      const response = await api.post(`/promotions/bulk-delete`, { ids })
       await dispatch(getPromotions()).unwrap()
       toast.success(response.data.message || 'Xóa các khuyến mãi thành công')
       return response.data
@@ -202,7 +202,7 @@ export const cancelMultiplePromotions = createAsyncThunk(
   'promotion/cancelMultiple',
   async (cancelData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await api.post(`/promotion/bulk-cancel`, cancelData)
+      const response = await api.post(`/promotions/bulk-cancel`, cancelData)
       await dispatch(getPromotions()).unwrap()
       toast.success(response.data.message || 'Hủy các khuyến mãi thành công')
       return response.data
@@ -218,7 +218,7 @@ export const restoreMultiplePromotions = createAsyncThunk(
   'promotion/restoreMultiple',
   async (ids, { rejectWithValue, dispatch }) => {
     try {
-      const response = await api.post(`/promotion/bulk-restore`, { ids })
+      const response = await api.post(`/promotions/bulk-restore`, { ids })
       await dispatch(getPromotions()).unwrap()
       toast.success(response.data.message || 'Khôi phục các khuyến mãi thành công')
       return response.data
@@ -234,7 +234,7 @@ export const approveMultiplePromotions = createAsyncThunk(
   'promotion/approveMultiple',
   async (approveData, { rejectWithValue, dispatch }) => {
     try {
-      const response = await api.post(`/promotion/bulk-approve`, approveData)
+      const response = await api.post(`/promotions/bulk-approve`, approveData)
       await dispatch(getPromotions()).unwrap()
       toast.success(response.data.message || 'Duyệt các khuyến mãi thành công')
       return response.data

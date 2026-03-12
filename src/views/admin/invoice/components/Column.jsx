@@ -43,14 +43,13 @@ export const columns = [
     enableHiding: false,
   },
   {
-    id: 'code',
-    accessorFn: (row) => normalizeText(row.code || ''),
+    id: 'orderCode',
+    accessorFn: (row) => normalizeText(row.orderCode || ''),
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Mã HĐ" />
+      <DataTableColumnHeader column={column} title="Mã ĐB" />
     ),
     cell: function Cell({ row, table }) {
       const [showUpdateInvoiceDialog, setShowUpdateInvoiceDialog] = useState(false)
-      const credit = row.original?.creditNotes || []
 
       const handleView = () => {
         if (table?.options?.meta?.onView) {
@@ -72,16 +71,10 @@ export const columns = [
           </Can>
 
           <span
-            className="cursor-pointer font-medium text-blue-600 hover:underline"
+            className="cursor-pointer font-semibold text-blue-600 hover:underline"
             onClick={handleView}
           >
-            {row.original.code}
-            <br />
-            {credit.length > 0 && (
-              <span className="text-xs text-orange-500">
-                {credit.length} HĐ điều chỉnh
-              </span>
-            )}
+            {row.original.orderCode}
           </span>
         </>
       )
@@ -110,9 +103,9 @@ export const columns = [
             ? 'flex w-40 flex-col break-words bg-yellow-200 p-2'
             : 'flex w-40 flex-col break-words'
             }`}
-          title={customer.name}
+          title={customer.customerName}
         >
-          <span className="font-semibold">{customer.name}</span>
+          <span className="font-semibold">{customer.customerName}</span>
 
           {customer.taxCode && (
             <span className="text-xs text-muted-foreground">
@@ -125,10 +118,10 @@ export const columns = [
             <a href={`tel:${customer.phone}`}>{customer.phone}</a>
           </span>
 
-          {customer.identityCard && (
+          {customer.cccd && (
             <span className="flex items-center gap-1 text-muted-foreground text-xs">
               <CreditCard className="h-3 w-3" />
-              {customer.identityCard}
+              {customer.cccd}
             </span>
           )}
         </div>
@@ -146,22 +139,22 @@ export const columns = [
     },
   },
   {
-    accessorKey: 'amount',
+    accessorKey: 'totalAmount',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Tổng tiền" />
     ),
     cell: ({ row }) => {
-      const amount = row.original.amount
-      const discount = row.original.discount
+      const totalAmount = row.original.totalAmount
+      const discountAmount = row.original.discountAmount
       const paidAmount = row.original.paidAmount
 
       return (
         <div className="flex flex-col">
-          <span className="font-medium">{moneyFormat(amount)}</span>
+          <span className="font-medium">{moneyFormat(totalAmount)}</span>
 
-          {discount > 0 && (
+          {discountAmount > 0 && (
             <span className="text-xs text-red-500">
-              Giảm: {moneyFormat(discount)}
+              Giảm: {moneyFormat(discountAmount)}
             </span>
           )}
 
@@ -186,35 +179,6 @@ export const columns = [
     enableSorting: true,
     enableHiding: true,
   },
-  // {
-  //   accessorKey: 'sharingRatio',
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="Chia DS" />
-  //   ),
-  //   cell: ({ row }) => (
-  //     <div className="flex flex-col">
-  //       <span className="break-words font-semibold">
-  //         {row.original?.invoiceRevenueShare?.user?.fullName}
-  //       </span>
-
-  //       <span className="break-words font-semibold text-green-500">
-  //         {moneyFormat(row.original?.invoiceRevenueShare?.amount || 0)}
-  //       </span>
-  //     </div>
-  //   ),
-  //   accessorFn: (row) => row.invoiceRevenueShare?.user?.id || null,
-  //   filterFn: (row, id, value) => {
-  //     const userId = row?.original?.invoiceRevenueShare?.user?.id
-  //     return userId ? value.map(String).includes(String(userId)) : false
-  //   },
-  //   sortingFn: (rowA, rowB) => {
-  //     const idA = rowA.original?.invoiceRevenueShare?.user?.id || 0
-  //     const idB = rowB.original?.invoiceRevenueShare?.user?.id || 0
-  //     return idA - idB
-  //   },
-  //   enableSorting: true,
-  //   enableHiding: true,
-  // },
   {
     accessorKey: 'debt',
     header: ({ column }) => (
@@ -262,14 +226,14 @@ export const columns = [
   },
   {
     id: 'status',
-    accessorFn: (row) => row.status,
+    accessorFn: (row) => row.orderStatus,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Trạng thái" />
     ),
     cell: function Cell({ row }) {
       const dispatch = useDispatch()
       const [openUpdateStatus, setOpenUpdateStatus] = useState(false)
-      const currentStatus = row.original.status
+      const currentStatus = row.original.orderStatus
       const statusObj = statuses.find((s) => s.value === currentStatus)
       const paymentStatus = row.original.paymentStatus || 'unpaid'
       const paymentStatusObj = paymentStatuses.find(
@@ -330,12 +294,12 @@ export const columns = [
             <Badge
               className={cn(
                 "select-none",
-                ['delivered', 'cancelled'].includes(currentStatus)
-                  ? `cursor-default p-0 shadow-none border-0 bg-transparent ${currentStatus === 'delivered' ? 'text-green-500' : 'text-slate-500'} hover:bg-transparent`
+                ['completed', 'cancelled'].includes(currentStatus)
+                  ? `cursor-default p-0 shadow-none border-0 bg-transparent ${currentStatus === 'completed' ? 'text-green-500' : 'text-red-500'} hover:bg-transparent`
                   : `cursor-pointer ${statusObj?.color || ''}`
               )}
-              onClick={() => !['delivered', 'cancelled'].includes(currentStatus) && setOpenUpdateStatus(true)}
-              title={!['delivered', 'cancelled'].includes(currentStatus) ? "Bấm để cập nhật trạng thái" : ""}
+              onClick={() => !['completed', 'cancelled'].includes(currentStatus) && setOpenUpdateStatus(true)}
+              title={!['completed', 'cancelled'].includes(currentStatus) ? "Bấm để cập nhật trạng thái" : ""}
             >
               <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
                 {statusObj?.icon ? <statusObj.icon className="h-4 w-4" /> : null}
@@ -370,13 +334,13 @@ export const columns = [
       <DataTableColumnHeader column={column} title="Người tạo" />
     ),
     cell: ({ row }) => {
-      const user = row.original.user
+      const creator = row.original.creator
       const createdAt = row.original.createdAt
 
       return (
-        <div className="flex w-32 flex-col">
-          <span className="truncate font-medium" title={user?.fullName}>
-            {user?.fullName || '—'}
+        <div className="flex flex-col">
+          <span className="font-medium" title={creator?.fullName}>
+            {creator?.fullName || '—'}
           </span>
           <span className="text-xs text-muted-foreground">
             {dateFormat(createdAt, true)}
@@ -386,11 +350,11 @@ export const columns = [
     },
     // Server-side filtering, no filterFn needed
 
-    accessorFn: (row) => row.user?.id || null,
+    accessorFn: (row) => row.creator?.id || null,
 
     sortingFn: (rowA, rowB) => {
-      const idA = rowA.original?.user?.id || 0
-      const idB = rowB.original?.user?.id || 0
+      const idA = rowA.original?.creator?.id || 0
+      const idB = rowB.original?.creator?.id || 0
       return idA - idB
     },
     enableSorting: true,

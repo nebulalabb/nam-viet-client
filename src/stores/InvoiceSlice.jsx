@@ -11,7 +11,11 @@ export const getInvoices = createAsyncThunk(
   'invoice/get-invoices',
   async ({ fromDate = null, toDate = null, page = 1, limit = 15, search = '', status = null, creator = null }, { rejectWithValue }) => {
     try {
-      const response = await api.get('/invoice', {
+      const permissions = JSON.parse(localStorage.getItem('permissionCodes') || '[]')
+      const hasAdminPerm = permissions.includes('GET_INVOICE')
+      const endpoint = hasAdminPerm ? '/invoices' : '/invoices/by-user'
+
+      const response = await api.get(endpoint, {
         params: {
           fromDate: fromDate ?? undefined,
           toDate: toDate ?? undefined,
@@ -23,52 +27,28 @@ export const getInvoices = createAsyncThunk(
         },
       })
       const responseData = response.data
-      // Robust extraction of data and pagination
-      let data = responseData?.data?.data
-      let pagination = responseData?.data?.pagination
+      let data = responseData?.data
+      let meta = responseData?.meta
 
-      // Fallback: if data is directly in responseData.data (and it's an array)
-      if (!Array.isArray(data) && Array.isArray(responseData?.data)) {
-        data = responseData.data
-        // Pagination might be at root or missing
-        pagination = responseData.pagination || responseData
-      }
-
-      // Fallback: if responseData itself is the array
-      if (!data && Array.isArray(responseData)) {
-        data = responseData
-      }
-
-      data = data || []
-
-      // Map pagination to internal structure
-      const meta = pagination ? {
-        ...pagination,
-        last_page: pagination.totalPages,
-        current_page: pagination.page,
-        per_page: pagination.limit
-      } : undefined
+      data = Array.isArray(data) ? data : []
 
       return { data, meta }
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
     }
-  },
+  }
 )
 
 export const getInvoiceDetail = createAsyncThunk(
   'invoice/get-invoice-detail',
   async (id, { rejectWithValue }) => {
     try {
-      const getAdminInvoice = JSON.parse(
-        localStorage.getItem('permissionCodes') || '[]',
-      ).includes('GET_INVOICE')
+      const permissions = JSON.parse(localStorage.getItem('permissionCodes') || '[]')
+      const hasAdminPerm = permissions.includes('GET_INVOICE')
+      const endpoint = hasAdminPerm ? `/invoices/${id}` : `/invoices/${id}/by-user`
 
-      const response = getAdminInvoice
-        ? await api.get(`/invoice/${id}/admin`)
-        : await api.get(`/invoice/${id}/by-user`)
-
+      const response = await api.get(endpoint)
       const { data } = response.data
       return data
     } catch (error) {
@@ -82,7 +62,7 @@ export const getMyInvoices = createAsyncThunk(
   'invoice/get-my-invoices',
   async ({ fromDate = null, toDate = null, page = 1, limit = 15, search = '', status = null, creator = null }, { rejectWithValue }) => {
     try {
-      const response = await api.get('/invoice/by-user', {
+      const response = await api.get('/invoices/by-user', {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
@@ -143,8 +123,8 @@ export const deleteInvoice = createAsyncThunk(
       ).includes('DELETE_INVOICE')
 
       deleteAdminInvoices
-        ? await api.delete(`/invoice/${id}/delete`)
-        : await api.delete(`/invoice/${id}/delete-by-user`)
+        ? await api.delete(`/invoices/${id}/delete`)
+        : await api.delete(`/invoices/${id}/delete-by-user`)
 
       // Just notify success, let the component handle refresh with current pagination
       toast.success('Xóa thành công')
@@ -160,7 +140,7 @@ export const deleteMultipleInvoices = createAsyncThunk(
   'invoice/deleteMultiple',
   async (ids, { rejectWithValue, dispatch }) => {
     try {
-      await api.post('/invoice/bulk-delete', { ids })
+      await api.post('/invoices/bulk-delete', { ids })
       await dispatch(getInvoices({})).unwrap()
       toast.success('Xóa các đơn bán đã chọn thành công')
     } catch (error) {
@@ -189,7 +169,7 @@ export const updateInvoice = createAsyncThunk(
   async (dataToSend, { rejectWithValue }) => {
     try {
       const response = await api.put(
-        `/invoice/${dataToSend.invoiceId}/update-pending`,
+        `/invoices/${dataToSend.invoiceId}/update-pending`,
         dataToSend,
       )
       toast.success('Cập nhật thành công')
@@ -208,9 +188,9 @@ export const updateInvoiceStatus = createAsyncThunk(
     try {
       let response
       if (data.status === 'pending') {
-        response = await api.post(`/invoice/${data.id}/revert`)
+        response = await api.post(`/invoices/${data.id}/revert`)
       } else {
-        response = await api.put(`/invoice/${data.id}/update`, data)
+        response = await api.put(`/invoices/${data.id}/update`, data)
       }
       toast.success('Cập nhật trạng thái thành công')
 
@@ -229,7 +209,7 @@ export const importInvoice = createAsyncThunk(
   'invoice/import',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      const response = await api.post('/invoice/import', data)
+      const response = await api.post('/invoices/import', data)
       await dispatch(getInvoices({})).unwrap()
       return response.data
     } catch (error) {

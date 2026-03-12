@@ -84,7 +84,7 @@ const ProductGrid = ({
 
                       {/* Info Section (Name, Code + Desktop Price/Stock) */}
                       <div className="flex flex-col min-w-0 md:flex-1">
-                        <h4 className="font-medium text-sm">
+                        <h4 className="font-medium text-sm whitespace-normal break-words leading-tight">
                           {product.productName || product.name}
                         </h4>
 

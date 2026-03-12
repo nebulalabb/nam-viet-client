@@ -366,8 +366,8 @@ const InvoiceDialog = ({
       recipientName: '',
       recipientPhone: '',
       deliveryAddress: '',
-      shippingFee: 0,
       expectedDeliveryDate: null,
+      requireApproval: false,
     },
   })
 
@@ -808,7 +808,6 @@ const InvoiceDialog = ({
         })(),
         taxIds: selectedTaxes[product.id] || [],
         taxAmount: calculateTaxForProduct(product.id),
-        subTotal: calculateSubTotal(product.id),
         discountRate: parseFloat(discounts[product.id]) || 0,
         discountAmount: discountAmounts[product.id] ?? Math.round(priceUnit * qtyUnit * (parseFloat(discounts[product.id]) || 0) / 100),
         total:
@@ -830,11 +829,10 @@ const InvoiceDialog = ({
       userId: authUserWithRoleHasPermissions.id,
       customerId: data.customerId || null,
       orderDate: data.orderDate || new Date().toISOString(),
-      note: data.note,
+      notes: data.note,
       taxAmount: calculateTotalTax(),
-      amount: calculateTotalAmount(),
-      discount: calculateTotalDiscount(),
-      subTotal: handleCalculateSubTotalInvoice(),
+      amount: handleCalculateSubTotalInvoice(),
+      discountAmount: calculateTotalDiscount(),
       items,
       isPickupOrder: data.isPickupOrder,
       recipientName: data.recipientName || undefined,
@@ -853,19 +851,27 @@ const InvoiceDialog = ({
       // ========== KHÁCH HÀNG MỚI (khi không chọn customerId) ==========
       ...((!data.customerId && customerEditData) && {
         newCustomer: {
-          name: customerEditData.name || '',
+          customerName: customerEditData.customerName || '',
           phone: customerEditData.phone || '',
           email: customerEditData.email || '',
           address: customerEditData.address || '',
-          identityCard: customerEditData.identityCard || '',
-          identityDate: customerEditData.identityDate || null,
-          identityPlace: customerEditData.identityPlace || '',
+          cccd: customerEditData.cccd || '',
+          issuedAt: customerEditData.issuedAt || null,
+          issuedBy: customerEditData.issuedBy || '',
         }
       }),
 
       // ========== CẬP NHẬT KHÁCH HÀNG (khi đã chọn customerId) ==========
       ...((data.customerId && customerEditData) && {
-        newCustomer: customerEditData
+        newCustomer: {
+          customerName: customerEditData.customerName || '',
+          phone: customerEditData.phone || '',
+          email: customerEditData.email || '',
+          address: customerEditData.address || '',
+          cccd: customerEditData.cccd || '',
+          issuedAt: customerEditData.issuedAt || null,
+          issuedBy: customerEditData.issuedBy || '',
+        }
       }),
     }
 

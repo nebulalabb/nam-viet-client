@@ -32,6 +32,7 @@ const UpdateInvoiceStatusDialog = ({
   overlayClassName,
   selectContentClassName,
 }) => {
+
   const current = useMemo(
     () => statuses.find((s) => s.value === currentStatus),
     [statuses, currentStatus],
@@ -71,7 +72,7 @@ const UpdateInvoiceStatusDialog = ({
   }
 
   const isPaid = paymentStatus === 'paid'
-  const isLocked = ['delivered', 'rejected'].includes(currentStatus)
+  const isLocked = ['completed', 'cancelled'].includes(currentStatus)
   const isActionDisabled = isPaid || isLocked
 
   const filteredStatuses = useMemo(() => {
@@ -81,18 +82,21 @@ const UpdateInvoiceStatusDialog = ({
     const canApprove = permissions.includes('APPROVE_INVOICE')
 
     return statuses.filter((s) => {
+      // Luôn cho phép hiển thị trạng thái hiện tại để Select UI ăn đúng defaultValue 
+      if (s.value === currentStatus) return true
+
       // Hide 'completed' status as it is automated
-      if (s.value === 'delivered') return false
+      if (s.value === 'completed') return false
 
       // Permission check for 'accepted' (approve)
-      if (s.value === 'accepted') {
+      if (s.value === 'preparing') {
         if (!canApprove) return false
       }
 
-      // Permission check for 'rejected'
-      if (s.value === 'rejected') {
+      // Permission check for 'cancelled'
+      if (s.value === 'cancelled') {
         if (!canReject) return false
-        // Only allow switching to 'rejected' if current status is 'pending'
+        // Only allow switching to 'cancelled' if current status is 'pending'
         // if (currentStatus !== 'pending') return false
       }
 
@@ -129,8 +133,8 @@ const UpdateInvoiceStatusDialog = ({
               <AlertTitle>Không thể thay đổi trạng thái</AlertTitle>
               <AlertDescription>
                 {isPaid
-                  ? 'Hóa đơn này đã được thanh toán hoàn tất (Paid). Bạn không thể thay đổi trạng thái của hóa đơn này.'
-                  : `Hóa đơn đang ở trạng thái "${current?.label || currentStatus}". Bạn không thể thay đổi trạng thái này.`}
+                  ? 'Đơn bán này đã được thanh toán hoàn tất (Paid). Bạn không thể thay đổi trạng thái của đơn bán này.'
+                  : `Đơn bán đang ở trạng thái "${current?.label || currentStatus}". Bạn không thể thay đổi trạng thái này.`}
               </AlertDescription>
             </Alert>
           </div>

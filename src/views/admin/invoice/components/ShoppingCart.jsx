@@ -524,9 +524,9 @@ const ShoppingCart = ({
                       </div>
                       {/* Gift products */}
                       {promo.products?.some(pp => pp.giftProduct) && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <Gift className="h-3 w-3 text-amber-500 shrink-0" />
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400 truncate">
+                        <div className="flex items-start gap-1 mt-0.5">
+                          <Gift className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 whitespace-normal break-words leading-tight">
                             {promo.products.filter(pp => pp.giftProduct).map(pp =>
                               `${pp.giftProduct.productName} x${pp.giftQuantity}`
                             ).join(', ')}

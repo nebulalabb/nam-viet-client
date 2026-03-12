@@ -59,8 +59,8 @@ const DataTableRowActions = ({ row, table }) => {
 
   // ===== WAREHOUSE RECEIPT HANDLERS =====
   const handleCreateWarehouseReceipt = async () => {
-    const invoiceStatus = invoice?.status
-    if (invoiceStatus !== 'accepted') {
+    const invoiceStatus = invoice?.orderStatus
+    if (invoiceStatus !== 'preparing') {
       toast.warning('Chỉ có thể tạo phiếu xuất kho cho đơn hàng đã duyệt')
       return
     }
@@ -141,8 +141,8 @@ const DataTableRowActions = ({ row, table }) => {
   }
 
   const handleCreateReceipt = () => {
-    if (invoice?.paymentStatus === 'paid' || invoice?.status === 'rejected') {
-      toast.warning('Không thể tạo phiếu thu cho hóa đơn đã thanh toán hoặc bị từ chối')
+    if (invoice?.paymentStatus === 'paid' || invoice?.orderStatus === 'cancelled') {
+      toast.warning('Không thể tạo phiếu thu cho hóa đơn đã thanh toán hoặc bị hủy')
       return
     }
     setShowReceiptDialog(true)
@@ -230,7 +230,7 @@ const DataTableRowActions = ({ row, table }) => {
             </DropdownMenuShortcut>
           </DropdownMenuItem>
 
-          {row?.original?.status === 'pending' && (
+          {row?.original?.orderStatus === 'pending' && (
             <Can permission="CREATE_INVOICE">
               <DropdownMenuItem
                 onClick={() => setShowUpdatePendingInvoiceDialog(true)}
@@ -256,9 +256,9 @@ const DataTableRowActions = ({ row, table }) => {
 
           <DropdownMenuSeparator />
 
-          {/* Create Receipt */}
-          {(invoice?.status === 'accepted' || invoice?.status === 'delivered') && invoice?.paymentStatus !== 'paid' && (
-            <Can permission="RECEIPT_CREATE">
+          {/* Tạo Phiếu Thu - Hiển thị khi đã duyệt hoặc đang giao, chưa thanh toán đủ */}
+          {(invoice?.orderStatus === 'preparing' || invoice?.orderStatus === 'delivering') && invoice?.paymentStatus !== 'paid' && (
+            <Can permission="CREATE_RECEIPT">
               <DropdownMenuItem onClick={handleCreateReceipt} className="text-emerald-600">
                 Tạo Phiếu Thu
                 <DropdownMenuShortcut>
@@ -268,10 +268,9 @@ const DataTableRowActions = ({ row, table }) => {
             </Can>
           )}
 
-          {/* ===== WAREHOUSE RECEIPT ACTIONS ===== */}
-          {/* Tạo Phiếu Xuất Kho - Chỉ hiển thị khi status = accepted */}
-          {row?.original?.status === 'accepted' && (
-            <Can permission="WAREHOUSE_EXPORT_CREATE">
+          {/* Tạo Phiếu Xuất Kho - Chỉ hiển thị khi status = preparing (đã duyệt) */}
+          {row?.original?.orderStatus === 'preparing' && (
+            <Can permission="CREATE_WAREHOUSE_EXPORT">
               <DropdownMenuItem
                 onClick={handleCreateWarehouseReceipt}
                 disabled={warehouseLoading}
@@ -287,8 +286,8 @@ const DataTableRowActions = ({ row, table }) => {
 
           <DropdownMenuSeparator />
 
-          {(row?.original?.status === 'pending' || row?.original?.status === 'rejected' || row?.original?.status === 'cancelled') && (
-            <Can permission="DELETE_INVOICE" permission2="DELETE_INVOICE_USER" isOwner={true} ownerId={row?.original?.createdById || row?.original?.user?.id}>
+          {(row?.original?.orderStatus === 'pending' || row?.original?.orderStatus === 'cancelled') && (
+            <Can permission="DELETE_INVOICE" permission2="DELETE_INVOICE_USER" isOwner={true} ownerId={row?.original?.createdById || row?.original?.creator?.id}>
               <DropdownMenuItem
                 onSelect={() => setShowDeleteInvoiceDialog(true)}
                 className="text-red-600"
