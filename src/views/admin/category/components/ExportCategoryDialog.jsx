@@ -28,6 +28,7 @@ const ExportCategoryDialog = ({
   open,
   onOpenChange,
   showTrigger = true,
+  type,
   ...props
 }) => {
   const [showExportReview, setShowExportReview] = useState(false)
@@ -42,7 +43,8 @@ const ExportCategoryDialog = ({
       const { data } = await api.get(url, {
         params: {
           limit: Number(limit),
-          page: 1
+          page: 1,
+          type
         },
       })
 

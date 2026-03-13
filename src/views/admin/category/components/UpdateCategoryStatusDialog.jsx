@@ -36,6 +36,7 @@ import Can from '@/utils/can'
 const UpdateCategoryStatusDialog = ({
   category,
   showTrigger = true,
+  type,
   ...props
 }) => {
   const dispatch = useDispatch()
@@ -51,7 +52,7 @@ const UpdateCategoryStatusDialog = ({
   const onSubmit = async (data) => {
     try {
       await dispatch(
-        updateCategoryStatus({ id: category.id, status: data.status }),
+        updateCategoryStatus({ id: category.id, status: data.status, params: { type } }),
       ).unwrap()
       if (props.onOpenChange) {
         props.onOpenChange(false)

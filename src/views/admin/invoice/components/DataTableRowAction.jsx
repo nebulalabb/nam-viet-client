@@ -65,7 +65,7 @@ const DataTableRowActions = ({ row, table }) => {
     setShowConfirmWarehouseDialog(true)
   }
 
-  const handleConfirmCreateWarehouseReceipt = async (selectedItems, actualReceiptDate) => {
+  const handleConfirmCreateWarehouseReceipt = async (selectedItems, actualReceiptDate, warehouseId) => {
     const invoiceId = invoice?.id
     if (!invoiceId) return
 
@@ -96,7 +96,7 @@ const DataTableRowActions = ({ row, table }) => {
         actualReceiptDate: actualReceiptDate || null,
         reason: `Xuất kho cho đơn bán ${invoice.code}`,
         note: invoice.note || 'Xuất kho từ hóa đơn',
-        warehouseId: null,
+        warehouseId: parseInt(warehouseId),
         customerId: invoice.customerId,
         salesContractId: invoice.salesContractId,
         invoiceId: invoice.id,

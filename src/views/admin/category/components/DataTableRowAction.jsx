@@ -14,7 +14,7 @@ import { useState } from 'react'
 import { DeleteCategoryDialog } from './DeleteCategoryDialog'
 import UpdateCategoryDialog from './UpdateCategoryDialog'
 
-const DataTableRowActions = ({ row }) => {
+const DataTableRowActions = ({ row, type }) => {
   const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
     useState(false)
   const [showUpdateCategoryDialog, setShowUpdateCategoryDialog] =
@@ -28,6 +28,7 @@ const DataTableRowActions = ({ row }) => {
           onOpenChange={setShowDeleteCategoryDialog}
           category={row.original}
           showTrigger={false}
+          type={type}
         />
       )}
 
@@ -37,6 +38,7 @@ const DataTableRowActions = ({ row }) => {
           onOpenChange={setShowUpdateCategoryDialog}
           category={row.original}
           showTrigger={false}
+          type={type}
         />
       )}
 

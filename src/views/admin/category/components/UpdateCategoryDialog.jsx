@@ -44,6 +44,7 @@ const UpdateCategoryDialog = ({
   showTrigger = true,
   contentClassName,
   overlayClassName,
+  type,
   ...props
 }) => {
   const loading = useSelector((state) => state.category.loading)
@@ -80,7 +81,7 @@ const UpdateCategoryDialog = ({
         ...data,
         parentId: data.parentId ? Number(data.parentId) : null,
       }
-      await dispatch(updateCategory({ id: category.id, data: payload })).unwrap()
+      await dispatch(updateCategory({ id: category.id, data: payload, params: { type } })).unwrap()
       form.reset()
       onOpenChange?.(false)
     } catch (error) {

@@ -300,8 +300,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
           qtyActual: item.quantity,
           unitPrice: item.price || 0,
           content: `Xuất kho theo đơn bán ${invoice.code}`,
-          salesContractId: invoice.salesContractId,
-          salesContractItemId: item.salesContractItemId
         }))
 
       if (selectedDetails.length === 0) {
@@ -319,7 +317,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         note: invoice.note || 'Xuất kho từ hóa đơn',
         warehouseId: null,
         customerId: invoice.customerId,
-        salesContractId: invoice.salesContractId,
         invoiceId: invoice.id,
         details: selectedDetails
       }

@@ -14,6 +14,7 @@ import ActivePromotionPage from '../views/admin/promotion/ActivePromotionPage'
 import SupplierPage from '../views/admin/supplier/SupplierPage'
 import CustomerDebtPage from '@/views/admin/debt/CustomerDebtPage'
 import CategoryPage from '../views/admin/category/CategoryPage'
+import CategoryMaterialPage from '../views/admin/category-material/CategoryPage'
 import WarehousePage from '../views/admin/warehouse/WarehousePage'
 import UserPage from '../views/admin/user/UserPage' // Giữ nguyên UserPage cho trang User
 import RolePage from '../views/admin/role/RolePage'
@@ -235,6 +236,11 @@ const routes = [
   {
     path: '/category',
     element: CategoryPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/category-material',
+    element: CategoryMaterialPage,
     layout: AdminLayout,
   },
   {

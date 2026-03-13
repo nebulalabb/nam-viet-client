@@ -5,10 +5,10 @@ import { toast } from 'sonner'
 
 export const getCategories = createAsyncThunk(
   'category',
-  async (params, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
       const response = await api.get('/categories', {
-        params: { limit: 1000, ...params }
+        params: { limit: 1000 }
       })
 
       const { data } = response.data
@@ -24,8 +24,8 @@ export const deleteCategory = createAsyncThunk(
   'category/delete',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      await api.delete(`/categories/${data.id}`)
-      await dispatch(getCategories(data.params)).unwrap()
+      await api.delete(`/categories/${data}`)
+      await dispatch(getCategories()).unwrap()
       toast.success('Xóa thành công')
     } catch (error) {
       const message = handleError(error)
@@ -36,10 +36,10 @@ export const deleteCategory = createAsyncThunk(
 
 export const deleteMultipleCategories = createAsyncThunk(
   'category/deleteMultiple',
-  async (data, { rejectWithValue, dispatch }) => {
+  async (ids, { rejectWithValue, dispatch }) => {
     try {
-      await api.post('/categories/bulk-delete', { ids: data.ids })
-      await dispatch(getCategories(data.params)).unwrap()
+      await api.post('/categories/bulk-delete', { ids })
+      await dispatch(getCategories()).unwrap()
       toast.success('Xóa các danh mục đã chọn thành công')
     } catch (error) {
       return rejectWithValue(handleError(error))
@@ -51,9 +51,9 @@ export const createCategory = createAsyncThunk(
   'category/create',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      await api.post('/categories', data.data)
+      await api.post('/categories', data)
 
-      await dispatch(getCategories(data.params)).unwrap()
+      await dispatch(getCategories()).unwrap()
       toast.success('Thêm mới thành công')
     } catch (error) {
       const message = handleError(error)
@@ -66,9 +66,9 @@ export const updateCategory = createAsyncThunk(
   'category/update',
   async (updateData, { rejectWithValue, dispatch }) => {
     try {
-      const { id, data, params } = updateData
+      const { id, data } = updateData
       await api.put(`/categories/${id}`, data)
-      await dispatch(getCategories(params)).unwrap()
+      await dispatch(getCategories()).unwrap()
       toast.success('Cập nhật dữ liệu thành công')
     } catch (error) {
       const message = handleError(error)
@@ -81,9 +81,9 @@ export const updateCategoryStatus = createAsyncThunk(
   'category/updateStatus',
   async (updateData, { rejectWithValue, dispatch }) => {
     try {
-      const { id, status, params } = updateData
+      const { id, status } = updateData
       await api.patch(`/categories/${id}/status`, { status })
-      await dispatch(getCategories(params)).unwrap()
+      await dispatch(getCategories()).unwrap()
       toast.success('Cập nhật trạng thái thành công')
     } catch (error) {
       const message = handleError(error)
@@ -96,11 +96,8 @@ export const importCategories = createAsyncThunk(
   'category/import',
   async (data, { rejectWithValue, dispatch }) => {
     try {
-      const { data: importData, params } = data
-      const response = await api.post('/categories/import', importData, {
-        params: { type: params?.type }
-      })
-      await dispatch(getCategories(params)).unwrap()
+      const response = await api.post('/categories/import', data)
+      await dispatch(getCategories()).unwrap()
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data || error)

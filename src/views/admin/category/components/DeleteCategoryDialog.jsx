@@ -13,13 +13,13 @@ import { deleteCategory } from '@/stores/CategorySlice'
 import { TrashIcon } from '@radix-ui/react-icons'
 import { useDispatch, useSelector } from 'react-redux'
 
-const DeleteCategoryDialog = ({ category, showTrigger = true, contentClassName, overlayClassName, ...props }) => {
+const DeleteCategoryDialog = ({ category, showTrigger = true, contentClassName, overlayClassName, type, ...props }) => {
   const dispatch = useDispatch()
-  const loading = useSelector((state) => state.user.loading)
+  const loading = useSelector((state) => state.category.loading)
 
   const destroy = async (data) => {
     try {
-      await dispatch(deleteCategory(data)).unwrap()
+      await dispatch(deleteCategory({ id: data, params: { type } })).unwrap()
     } catch (error) {
       console.log('Submit error: ', error)
     }

@@ -22,6 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 const ImportCategoryDialog = ({
   open,
   onOpenChange,
+  type,
   ...props
 }) => {
   const dispatch = useDispatch()
@@ -143,7 +144,7 @@ const ImportCategoryDialog = ({
         return
       }
 
-      const payload = { items }
+      const payload = { data: { items }, params: { type } }
       await dispatch(importCategories(payload)).unwrap()
 
       toast.success(`Đã import thành công ${items.length} danh mục`)

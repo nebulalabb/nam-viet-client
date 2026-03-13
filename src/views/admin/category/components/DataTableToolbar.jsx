@@ -17,7 +17,7 @@ import { FileSpreadsheet } from 'lucide-react'
 import ExportCategoryDialog from './ExportCategoryDialog'
 import ImportCategoryDialog from './ImportCategoryDialog'
 
-const DataTableToolbar = ({ table }) => {
+const DataTableToolbar = ({ table, type }) => {
   const isFiltered = table.getState().columnFilters.length > 0
   const [showCreateCategoryDialog, setShowCreateCategoryDialog] =
     useState(false)
@@ -30,7 +30,7 @@ const DataTableToolbar = ({ table }) => {
   const handleDelete = async () => {
     const selectedIds = selectedRows.map((row) => row.original.id)
     try {
-      await dispatch(deleteMultipleCategories(selectedIds)).unwrap()
+      await dispatch(deleteMultipleCategories({ ids: selectedIds, params: { type } })).unwrap()
       table.resetRowSelection()
       setShowDeleteDialog(false)
     } catch (error) {
@@ -91,6 +91,7 @@ const DataTableToolbar = ({ table }) => {
             open={showCreateCategoryDialog}
             onOpenChange={setShowCreateCategoryDialog}
             showTrigger={false}
+            type={type}
           />
         )}
 
@@ -109,6 +110,7 @@ const DataTableToolbar = ({ table }) => {
             open={showImportDialog}
             onOpenChange={setShowImportDialog}
             showTrigger={false}
+            type={type}
           />
         )}
       </Can>
@@ -129,6 +131,7 @@ const DataTableToolbar = ({ table }) => {
             open={showExportDialog}
             onOpenChange={setShowExportDialog}
             showTrigger={false}
+            type={type}
           />
         )}
       </Can>

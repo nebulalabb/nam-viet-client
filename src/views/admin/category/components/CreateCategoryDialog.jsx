@@ -43,6 +43,7 @@ const CreateCategoryDialog = ({
   showTrigger = true,
   contentClassName,
   overlayClassName,
+  type,
   ...props
 }) => {
   const loading = useSelector((state) => state.category.loading)
@@ -52,7 +53,7 @@ const CreateCategoryDialog = ({
     defaultValues: {
       categoryName: '',
       categoryCode: '',
-      status: '',
+      status: 'active',
       parentId: null,
     },
   })
@@ -67,9 +68,10 @@ const CreateCategoryDialog = ({
     try {
       const payload = {
         ...data,
+        type: type || 'PRODUCT',
         parentId: data.parentId ? Number(data.parentId) : null,
       }
-      await dispatch(createCategory(payload)).unwrap()
+      await dispatch(createCategory({ data: payload, params: { type } })).unwrap()
       form.reset()
       onOpenChange?.(false)
     } catch (error) {

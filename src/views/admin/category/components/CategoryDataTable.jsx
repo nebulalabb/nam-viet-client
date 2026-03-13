@@ -22,7 +22,7 @@ import { DataTableToolbar } from './DataTableToolbar'
 import { DataTablePagination } from './DataTablePagination'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const CategoryDataTable = ({ columns, data, loading = false }) => {
+const CategoryDataTable = ({ columns, data, loading = false, type }) => {
   const [rowSelection, setRowSelection] = useState({})
   const [columnVisibility, setColumnVisibility] = useState({})
   const [columnFilters, setColumnFilters] = useState([])
@@ -57,7 +57,7 @@ const CategoryDataTable = ({ columns, data, loading = false }) => {
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} />
+      <DataTableToolbar table={table} type={type} />
 
       <div className="rounded-md border">
         <Table>

@@ -10,7 +10,7 @@ import { useState } from 'react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 
-export const columns = [
+export const getColumns = (type) => [
   {
     id: 'select',
     header: ({ table }) => (
@@ -96,12 +96,12 @@ export const columns = [
     enableHiding: true,
   },
   {
-    id: 'productCount',
+    id: 'itemCount',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Số sản phẩm" />
+      <DataTableColumnHeader column={column} title={type === 'MATERIAL' ? "Số nguyên liệu" : "Số sản phẩm"} />
     ),
     cell: ({ row }) => (
-      <div className="w-24 text-center">{row.original._count?.products || 0}</div>
+      <div className="w-24 text-center">{type === 'MATERIAL' ? (row.original._count?.materials || 0) : (row.original._count?.products || 0)}</div>
     ),
     enableSorting: false,
     enableHiding: true,
@@ -149,6 +149,7 @@ export const columns = [
               onOpenChange={setShowUpdateStatusDialog}
               category={row.original}
               showTrigger={false}
+              type={type}
             />
           )}
         </>
@@ -192,6 +193,6 @@ export const columns = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Thao tác" />
     ),
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <DataTableRowActions row={row} type={type} />,
   },
 ]
