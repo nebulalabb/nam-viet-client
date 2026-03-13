@@ -72,7 +72,7 @@ const PaymentDialog = ({
   const dispatch = useDispatch()
   const loading = useSelector((state) => state.payment.loading)
   const setting = useSelector((state) => state.setting.setting)
-  const banks = setting?.payload?.banks || []
+  const banks = setting?.banks || []
 
   const effectivePaymentId = paymentId || propPayment?.id
   const isEditMode = !!effectivePaymentId
@@ -171,12 +171,20 @@ const PaymentDialog = ({
         const dataToUse = payment
 
         let bankAccount = dataToUse.bankAccount
-        if (!bankAccount && dataToUse.bankAccountNumber) {
-          bankAccount = {
-            bankName: dataToUse.bankName,
-            accountNumber: dataToUse.bankAccountNumber,
-            accountName: dataToUse.bankAccountName,
-            bankBranch: dataToUse.bankBranch,
+        if (!bankAccount && dataToUse.bankName) {
+          try {
+            // Try parsing as JSON (new format)
+            bankAccount = JSON.parse(dataToUse.bankName)
+          } catch (e) {
+            // Fallback for old flattened fields
+            if (dataToUse.bankAccountNumber) {
+              bankAccount = {
+                bankName: dataToUse.bankName,
+                accountNumber: dataToUse.bankAccountNumber,
+                accountName: dataToUse.bankAccountName,
+                bankBranch: dataToUse.bankBranch,
+              }
+            }
           }
         }
 
@@ -219,13 +227,8 @@ const PaymentDialog = ({
     const commonData = {
       amount: parseInt(data.paymentAmount) || 0,
       paymentMethod: data.paymentMethod,
-      bankAccount: data.paymentMethod === 'transfer' && data.bankAccount
-        ? {
-          bankName: data.bankAccount.bankName,
-          accountNumber: data.bankAccount.accountNumber,
-          accountName: data.bankAccount.accountName,
-          bankBranch: data.bankAccount.bankBranch
-        }
+      bankName: data.paymentMethod === 'transfer' && data.bankAccount
+        ? JSON.stringify(data.bankAccount)
         : null,
       reason: data.note || (effectivePurchaseOrder ? `Chi trả đơn hàng ${effectivePurchaseOrder.code}` : ''),
       note: data.paymentNote,

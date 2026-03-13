@@ -67,7 +67,7 @@ export const settingSlice = createSlice({
     builder
 
       .addCase(getSetting.pending, (state) => {
-        state.loading = true
+        // Do not set global loading to true to prevent UI disruptions
         state.error = null
       })
       .addCase(getSetting.fulfilled, (state, action) => {

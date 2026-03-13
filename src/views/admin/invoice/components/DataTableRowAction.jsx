@@ -186,7 +186,7 @@ const DataTableRowActions = ({ row, table }) => {
 
       {showReceiptDialog && (
         <ReceiptDialog
-          invoices={[invoice.id]}
+          invoiceId={invoice.id}
           open={showReceiptDialog}
           onOpenChange={setShowReceiptDialog}
           showTrigger={false}

@@ -10,7 +10,6 @@ import ImportInvoiceDialog from './ImportInvoiceDialog'
 import { IconFileTypeXls } from '@tabler/icons-react'
 import { FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
-import ReceiptDialog from '../../receipt/components/ReceiptDialog'
 import PrintInvoiceView from './PrintInvoiceView'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -39,7 +38,6 @@ const DataTableToolbar = ({ table, isMyInvoice, onCreated }) => {
   const [showCreateInvoiceDialog, setShowCreateInvoiceDialog] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
 
-  const [showReceiptDialog, setShowReceiptDialog] = useState(false)
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState([])
   const [selectedInvoices, setSelectedInvoices] = useState([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -213,15 +211,6 @@ const DataTableToolbar = ({ table, isMyInvoice, onCreated }) => {
         )}
         {invoice && setting && (
           <PrintInvoiceView invoice={invoice} setting={setting} />
-        )}
-        {showReceiptDialog && (
-          <ReceiptDialog
-            invoices={selectedInvoices}
-            open={showReceiptDialog}
-            onOpenChange={setShowReceiptDialog}
-            showTrigger={false}
-            table={table}
-          />
         )}
 
         {showDeliveryReminderDialog && (
@@ -401,16 +390,6 @@ const DataTableToolbar = ({ table, isMyInvoice, onCreated }) => {
             />
           )}
 
-          {/* Dialog tạo phiếu thu */}
-          {showReceiptDialog && (
-            <ReceiptDialog
-              invoices={selectedInvoices}
-              open={showReceiptDialog}
-              onOpenChange={setShowReceiptDialog}
-              showTrigger={false}
-              table={table}
-            />
-          )}
 
 
           {/* Dialog gửi nhắc giao hàng */}

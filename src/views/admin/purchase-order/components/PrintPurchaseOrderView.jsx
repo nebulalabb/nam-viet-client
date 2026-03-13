@@ -20,7 +20,7 @@ const PrintPurchaseOrderView = ({ purchaseOrder, setting, onAfterPrint }) => {
     <div className="hidden">
       <PrintableContent
         ref={contentRef}
-        setting={setting?.payload}
+        setting={setting}
         purchaseOrder={purchaseOrder}
       />
     </div>

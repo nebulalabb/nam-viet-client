@@ -80,7 +80,9 @@ export default function CreateDeliveryDialog({ open, onOpenChange, invoice, onSu
       setLoading(true)
       await dispatch(createDelivery({
         ...values,
-        deliveryStaffId: Number(values.deliveryStaffId)
+        deliveryStaffId: Number(values.deliveryStaffId),
+        deliveryCost: Number(values.deliveryCost || 0),
+        codAmount: Number(values.codAmount || 0),
       })).unwrap()
       onOpenChange(false)
       if (onSuccess) onSuccess()

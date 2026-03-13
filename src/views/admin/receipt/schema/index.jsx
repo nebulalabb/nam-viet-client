@@ -30,6 +30,7 @@ const createReceiptSchema = z
 
 
 
+    receiptDate: z.string().nonempty('Vui lòng chọn ngày thu'),
     isDeposit: z.boolean().optional().default(false),
   })
   .superRefine((data, ctx) => {

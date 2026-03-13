@@ -29,9 +29,7 @@ const MobileReceiptActions = ({
 
   // Check if receipt can be deleted
   const canDelete =
-    receipt.status === 'draft' ||
-    receipt.status === 'cancelled' ||
-    receipt.status === 'canceled'
+    receipt.status === 'draft'
 
   return (
     <>

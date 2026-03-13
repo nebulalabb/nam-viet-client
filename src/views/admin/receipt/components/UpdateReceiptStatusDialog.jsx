@@ -30,9 +30,8 @@ const UpdateReceiptStatusDialog = ({
   targetStatus, // New prop to pre-select status
   selectContentClassName,
 }) => {
-  // Normalize status to handle both single and double 'l' from backend/frontend mismatch
+  // Normalize status
   const normalizedStatus = useMemo(() => {
-    if (currentStatus === 'canceled') return 'cancelled'
     return currentStatus
   }, [currentStatus])
 
@@ -48,9 +47,7 @@ const UpdateReceiptStatusDialog = ({
   const getColor = (statusValue) => {
     switch (statusValue) {
       case 'draft': return 'text-yellow-500'
-      case 'completed': return 'text-green-600'
-      case 'canceled':
-      case 'cancelled': return 'text-red-600'
+      case 'posted': return 'text-green-600'
       default: return ''
     }
   }
@@ -72,9 +69,6 @@ const UpdateReceiptStatusDialog = ({
     }
 
     if (status === currentStatus) {
-      // Allow re-saving if needed or strict check? Usually strict check.
-      // But maybe user wants to trigger update for some reason. 
-      // Let's keep consistent with invoice dialog
       toast.warning('Trạng thái mới trùng với trạng thái hiện tại')
       return
     }
@@ -84,23 +78,14 @@ const UpdateReceiptStatusDialog = ({
       await onSubmit?.(status, receiptId)
     } catch (error) {
       console.error(error)
-      // Toast should be handled by the caller or slice
     } finally {
       setLoading(false)
     }
   }
 
   const filteredStatuses = useMemo(() => {
-    if (normalizedStatus === 'canceled' || normalizedStatus === 'cancelled') {
-      return statuses.filter(
-        (s) => s.value === 'canceled' || s.value === 'cancelled',
-      )
-    }
-    if (normalizedStatus === 'completed') {
-      return statuses.filter((s) => s.value !== 'draft')
-    }
     return statuses
-  }, [statuses, normalizedStatus])
+  }, [statuses])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

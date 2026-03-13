@@ -21,7 +21,7 @@ const PrintReceiptView = ({ receipt, setting, onAfterPrint }) => {
     <div className="hidden">
       <PrintableContent
         ref={contentRef}
-        setting={setting?.payload || setting}
+        setting={setting}
         receipt={receipt}
       />
     </div>

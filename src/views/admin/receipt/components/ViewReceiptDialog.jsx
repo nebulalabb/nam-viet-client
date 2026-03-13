@@ -108,20 +108,6 @@ const ViewReceiptDialog = ({
 
   const dispatch = useDispatch()
 
-  const handleApprove = async () => {
-    try {
-      setActionLoading(true)
-      await dispatch(approveReceipt({ id: receiptId })).unwrap()
-      // Refetch receipt to update view
-      const result = await dispatch(getReceiptById(receiptId)).unwrap()
-      setReceipt(result)
-      toast.success('Phê duyệt phiếu thu thành công')
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setActionLoading(false)
-    }
-  }
 
   const handlePost = async () => {
     try {
@@ -145,10 +131,7 @@ const ViewReceiptDialog = ({
   const getReceiptStatusColor = (statusValue) => {
     switch (statusValue) {
       case 'draft': return 'bg-yellow-100 text-yellow-700'
-      case 'approved': return 'bg-blue-100 text-blue-700'
       case 'posted': return 'bg-green-100 text-green-700'
-      case 'cancelled':
-      case 'canceled': return 'bg-red-100 text-red-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
@@ -474,10 +457,10 @@ const ViewReceiptDialog = ({
                         <div className="flex items-center gap-2">
                           <Badge
                             className={cn(
-                              receipt?.isPosted ? 'bg-green-500' : receipt?.approvedAt ? 'bg-blue-500' : (receipt?.status === 'canceled' || receipt?.status === 'cancelled') ? 'bg-red-500' : 'bg-yellow-500'
+                              receipt?.isPosted ? 'bg-green-500' : 'bg-yellow-500'
                             )}
                           >
-                            {receipt?.isPosted ? 'Đã ghi sổ' : receipt?.approvedAt ? 'Đã duyệt' : (receipt?.status === 'cancelled' || receipt?.status === 'canceled') ? 'Đã hủy' : 'Chờ duyệt'}
+                            {receipt?.isPosted ? 'Đã ghi sổ' : 'Chờ duyệt'}
                           </Badge>
                         </div>
                       </div>
@@ -677,18 +660,8 @@ const ViewReceiptDialog = ({
 
         <DialogFooter className={cn("hidden md:flex sm:space-x-0")}>
           <div className={cn("w-full grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end")}>
-            {(!receipt?.approvedBy) && (
-              <Button
-                size="sm"
-                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-                onClick={handleApprove}
-                disabled={actionLoading}
-              >
-                Duyệt phiếu
-              </Button>
-            )}
 
-            {(receipt?.approvedBy && !receipt?.isPosted) && (
+            {(!receipt?.isPosted) && (
               <Button
                 size="sm"
                 className="gap-2 bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
@@ -720,7 +693,7 @@ const ViewReceiptDialog = ({
               In phiếu
             </Button>
 
-            {(receipt?.status === 'draft' || receipt?.status === 'cancelled' || receipt?.status === 'canceled') && (
+            {(receipt?.status === 'draft') && (
               <Button
                 size="sm"
                 variant="destructive"

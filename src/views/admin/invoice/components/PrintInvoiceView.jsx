@@ -26,7 +26,7 @@ const PrintInvoiceView = ({ invoice, setting, onAfterPrint }) => {
     <div className="hidden">
       <PrintableContent
         ref={contentRef}
-        setting={setting?.payload}
+        setting={setting}
         invoice={invoice}
         hasDiscount={hasDiscount()}
         hasGiveaway={hasGiveaway()}

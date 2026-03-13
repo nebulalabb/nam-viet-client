@@ -74,7 +74,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
   const [qrCodeData, setQrCodeData] = useState(null)
 
   const handleGenerateQR = async (receipt) => {
-    if (receipt.orderStatus !== 'draft') {
+    if (receipt.isPosted) {
       toast.warning('Chỉ có thể tạo mã QR cho phiếu thu nháp')
       return
     }
@@ -220,9 +220,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
   const getReceiptStatusColor = (statusValue) => {
     switch (statusValue) {
       case 'draft': return 'bg-yellow-100 text-yellow-700'
-      case 'completed': return 'bg-green-100 text-green-700'
-      case 'cancelled': return 'bg-red-100 text-red-700'
-      case 'canceled': return 'bg-red-100 text-red-700'
+      case 'posted': return 'bg-green-100 text-green-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
@@ -261,8 +259,8 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
 
   const handleCreateWarehouseReceipt = () => {
-    const invoiceStatus = invoice?.status
-    if (invoiceStatus !== 'accepted') {
+    const invoiceStatus = invoice?.orderStatus
+    if (invoiceStatus !== 'preparing') {
       toast.warning('Chỉ có thể tạo phiếu xuất kho cho đơn hàng đã duyệt')
       return
     }
@@ -343,14 +341,14 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
   const handleCreateReceipt = () => {
     // Only allow for accepted invoices
-    if (invoice?.status !== 'accepted') {
+    if (invoice?.orderStatus !== 'preparing') {
       toast.warning('Chỉ có thể tạo phiếu thu cho đơn hàng đã được duyệt')
       return
     }
 
     // Calculate total including drafts
-    const draftAmount = invoice?.paymentVouchers
-      ?.filter(v => v.status === 'draft' || v.status === 'pending')
+    const draftAmount = invoice?.paymentReceipts
+      ?.filter(v => !v.isPosted)
       ?.reduce((sum, v) => sum + parseFloat(v.amount || 0), 0) || 0
 
     // Check payment status or amount considering drafts
@@ -891,7 +889,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Phiếu thu</h3>
-                            {!['pending', 'completed', 'cancelled'].includes(invoice?.orderStatus) ? (
+                            {(!['pending', 'delivering', 'completed', 'cancelled'].includes(invoice?.orderStatus) && invoice?.paymentStatus !== 'paid') ? (
                               <Button
                                 size="sm"
                                 className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
@@ -909,7 +907,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                             )}
                           </div>
 
-                          {invoice?.paymentVouchers && invoice.paymentVouchers.length > 0 ? (
+                          {invoice?.paymentReceipts && invoice.paymentReceipts.length > 0 ? (
                             isDesktop ? (
                               <div className="overflow-x-auto rounded-lg border">
                                 <Table className="min-w-full">
@@ -917,6 +915,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                     <TableRow className="bg-secondary text-xs">
                                       <TableHead className="w-12">STT</TableHead>
                                       <TableHead className="min-w-32">Mã phiếu</TableHead>
+                                      <TableHead className="min-w-32">Ngày thu</TableHead>
                                       <TableHead className="min-w-28 text-right">Số tiền</TableHead>
                                       <TableHead className="min-w-24">PT thanh toán</TableHead>
                                       <TableHead className="min-w-20">Trạng thái</TableHead>
@@ -927,64 +926,134 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {invoice.paymentVouchers.map((voucher, index) => (
-                                      <TableRow key={voucher.id}>
-                                        <TableCell>{index + 1}</TableCell>
-                                        <TableCell>
+                                    {invoice.paymentReceipts.map((voucher, index) => {
+                                      const statusValue = voucher.isPosted ? 'posted' : 'draft';
+                                      return (
+                                        <TableRow key={voucher.id}>
+                                          <TableCell>{index + 1}</TableCell>
+                                          <TableCell>
+                                            <span
+                                              className="cursor-pointer font-medium text-primary hover:underline hover:text-blue-600"
+                                              onClick={() => handleOpenReceiptDetail(voucher)}
+                                            >
+                                              {voucher.receiptCode}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell>
+                                            {voucher.receiptDate ? dateFormat(voucher.receiptDate) : '—'}
+                                          </TableCell>
+                                          <TableCell className="text-right font-semibold">
+                                            {moneyFormat(voucher.amount)}
+                                          </TableCell>
+                                          <TableCell>
+                                            {voucher.paymentMethod === 'cash'
+                                              ? 'Tiền mặt'
+                                              : voucher.paymentMethod === 'transfer'
+                                                ? 'Chuyển khoản'
+                                                : voucher.paymentMethod}
+                                          </TableCell>
+                                          <TableCell>
+                                            <div
+                                              className="cursor-pointer"
+                                              onClick={() => {
+                                                setSelectedReceipt({ ...voucher, status: statusValue })
+                                                setShowUpdateReceiptStatus(true)
+                                              }}
+                                            >
+                                              <span
+                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getReceiptStatusColor(statusValue)}`}
+                                              >
+                                                {getReceiptStatusObj(statusValue)?.icon &&
+                                                  React.createElement(getReceiptStatusObj(statusValue).icon, { className: "h-3 w-3" })
+                                                }
+                                                {getReceiptStatusObj(statusValue)?.label || statusValue}
+                                              </span>
+                                            </div>
+                                          </TableCell>
+                                          <TableCell>
+                                            {voucher.receiptType === 'sales'
+                                              ? 'Thanh toán'
+                                              : voucher.receiptType === 'debt_collection'
+                                                ? 'Thu nợ'
+                                                : voucher.receiptType === 'refund'
+                                                  ? 'Hoàn tiền'
+                                                  : voucher.receiptType}
+                                          </TableCell>
+                                          <TableCell>
+                                            {voucher.creator?.fullName || '—'}
+                                          </TableCell>
+                                          <TableCell>{dateFormat(voucher.createdAt, true)}</TableCell>
+                                          <TableCell>
+                                            {!voucher.isPosted && (
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-100"
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  setReceiptToEdit(voucher)
+                                                  setShowReceiptDialog(true)
+                                                }}
+                                                title="Sửa phiếu thu"
+                                              >
+                                                <Pencil className="h-4 w-4" />
+                                              </Button>
+                                            )}
+                                            {!voucher.isPosted && (
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-primary hover:text-primary/90 hover:bg-primary/10"
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  handleGenerateQR(voucher)
+                                                }}
+                                                title="Tạo mã QR"
+                                              >
+                                                <QrCode className="h-4 w-4" />
+                                              </Button>
+                                            )}
+                                            {!voucher.isPosted && (
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  setReceiptToDelete(voucher)
+                                                  setShowDeleteReceiptDialog(true)
+                                                }}
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            )}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {invoice.paymentReceipts.map((voucher) => {
+                                  const statusValue = voucher.isPosted ? 'posted' : 'draft';
+                                  return (
+                                    <div key={voucher.id} className="space-y-2 rounded-lg border p-3 text-sm">
+                                      <div className="flex justify-between items-center">
+                                        <strong>Mã phiếu:</strong>
+                                        <div className="flex items-center gap-2">
                                           <span
-                                            className="cursor-pointer font-medium text-primary hover:underline hover:text-blue-600"
+                                            className="font-medium text-primary cursor-pointer hover:underline hover:text-blue-600"
                                             onClick={() => handleOpenReceiptDetail(voucher)}
                                           >
-                                            {voucher.code}
+                                            {voucher.receiptCode}
                                           </span>
-                                        </TableCell>
-                                        <TableCell className="text-right font-semibold">
-                                          {moneyFormat(voucher.amount)}
-                                        </TableCell>
-                                        <TableCell>
-                                          {voucher.paymentMethod === 'cash'
-                                            ? 'Tiền mặt'
-                                            : voucher.paymentMethod === 'transfer'
-                                              ? 'Chuyển khoản'
-                                              : voucher.paymentMethod}
-                                        </TableCell>
-                                        <TableCell>
-                                          <div
-                                            className="cursor-pointer"
-                                            onClick={() => {
-                                              setSelectedReceipt(voucher)
-                                              setShowUpdateReceiptStatus(true)
-                                            }}
-                                          >
-                                            <span
-                                              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getReceiptStatusColor(voucher.status)}`}
-                                            >
-                                              {getReceiptStatusObj(voucher.status)?.icon &&
-                                                React.createElement(getReceiptStatusObj(voucher.status).icon, { className: "h-3 w-3" })
-                                              }
-                                              {getReceiptStatusObj(voucher.status)?.label || voucher.status}
-                                            </span>
-                                          </div>
-                                        </TableCell>
-                                        <TableCell>
-                                          {voucher.transactionType === 'payment'
-                                            ? 'Thanh toán'
-                                            : voucher.transactionType === 'deposit'
-                                              ? 'Đặt cọc'
-                                              : voucher.transactionType === 'refund'
-                                                ? 'Hoàn tiền'
-                                                : voucher.transactionType}
-                                        </TableCell>
-                                        <TableCell>
-                                          {voucher.createdByUser?.fullName || '—'}
-                                        </TableCell>
-                                        <TableCell>{dateFormat(voucher.createdAt, true)}</TableCell>
-                                        <TableCell>
-                                          {voucher.status === 'draft' && (
+                                          {!voucher.isPosted && (
                                             <Button
                                               variant="ghost"
                                               size="icon"
-                                              className="h-8 w-8 text-orange-500 hover:text-orange-600 hover:bg-orange-100"
+                                              className="h-6 w-6 text-orange-500 hover:text-orange-600 hover:bg-orange-100 -mr-2"
                                               onClick={(e) => {
                                                 e.stopPropagation()
                                                 setReceiptToEdit(voucher)
@@ -995,11 +1064,11 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                               <Pencil className="h-4 w-4" />
                                             </Button>
                                           )}
-                                          {voucher.status === 'draft' && (
+                                          {!voucher.isPosted && (
                                             <Button
                                               variant="ghost"
                                               size="icon"
-                                              className="h-8 w-8 text-primary hover:text-primary/90 hover:bg-primary/10"
+                                              className="h-6 w-6 text-primary hover:text-primary/90 hover:bg-primary/10 -mr-2"
                                               onClick={(e) => {
                                                 e.stopPropagation()
                                                 handleGenerateQR(voucher)
@@ -1009,11 +1078,11 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                               <QrCode className="h-4 w-4" />
                                             </Button>
                                           )}
-                                          {(voucher.status === 'draft' || voucher.status === 'cancelled' || voucher.status === 'canceled') && (
+                                          {!voucher.isPosted && (
                                             <Button
                                               variant="ghost"
                                               size="icon"
-                                              className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                              className="h-6 w-6 text-destructive hover:text-destructive/90 hover:bg-destructive/10 -mr-2"
                                               onClick={(e) => {
                                                 e.stopPropagation()
                                                 setReceiptToDelete(voucher)
@@ -1023,165 +1092,94 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                               <Trash2 className="h-4 w-4" />
                                             </Button>
                                           )}
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              </div>
-                            ) : (
-                              <div className="space-y-3">
-                                {invoice.paymentVouchers.map((voucher) => (
-                                  <div key={voucher.id} className="space-y-2 rounded-lg border p-3 text-sm">
-                                    <div className="flex justify-between items-center">
-                                      <strong>Mã phiếu:</strong>
-                                      <div className="flex items-center gap-2">
-                                        <span
-                                          className="font-medium text-primary cursor-pointer hover:underline hover:text-blue-600"
-                                          onClick={() => handleOpenReceiptDetail(voucher)}
-                                        >
-                                          {voucher.code}
+                                        </div>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <strong>Ngày thu:</strong>
+                                        <span className="font-medium">
+                                          {voucher.receiptDate ? dateFormat(voucher.receiptDate) : '—'}
                                         </span>
-                                        {voucher.status === 'draft' && (
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6 text-orange-500 hover:text-orange-600 hover:bg-orange-100 -mr-2"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              setReceiptToEdit(voucher)
-                                              setShowReceiptDialog(true)
-                                            }}
-                                            title="Sửa phiếu thu"
-                                          >
-                                            <Pencil className="h-4 w-4" />
-                                          </Button>
-                                        )}
-                                        {voucher.status === 'draft' && (
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6 text-primary hover:text-primary/90 hover:bg-primary/10 -mr-2"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              handleGenerateQR(voucher)
-                                            }}
-                                            title="Tạo mã QR"
-                                          >
-                                            <QrCode className="h-4 w-4" />
-                                          </Button>
-                                        )}
-                                        {(voucher.status === 'draft' || voucher.status === 'cancelled' || voucher.status === 'canceled') && (
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6 text-destructive hover:text-destructive/90 hover:bg-destructive/10 -mr-2"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              setReceiptToDelete(voucher)
-                                              setShowDeleteReceiptDialog(true)
-                                            }}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        )}
                                       </div>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <strong>Số tiền:</strong>
-                                      <span className="font-semibold">{moneyFormat(voucher.amount)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <strong>PT thanh toán:</strong>
-                                      <span>
-                                        {voucher.paymentMethod === 'cash'
-                                          ? 'Tiền mặt'
-                                          : voucher.paymentMethod === 'transfer'
-                                            ? 'Chuyển khoản'
-                                            : voucher.paymentMethod}
-                                      </span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                      <strong>Trạng thái:</strong>
-                                      <div className='flex items-center justify-end'>
-                                        <Select
-                                          value={voucher.status}
-                                          onValueChange={(val) => handleUpdateReceiptStatus(val, voucher.id)}
-                                        >
-                                          <SelectTrigger className="h-auto border-none bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0">
-                                            <SelectValue>
-                                              <span
-                                                className={`inline-flex items-center gap-1 text-xs font-medium ${getReceiptStatusColor(voucher.status).replace(/bg-[^ ]+/, '').trim()}`}
-                                              >
-                                                {getReceiptStatusObj(voucher.status)?.icon &&
-                                                  React.createElement(getReceiptStatusObj(voucher.status).icon, { className: "h-3 w-3" })
-                                                }
-                                                {getReceiptStatusObj(voucher.status)?.label || voucher.status}
-                                              </span>
-                                            </SelectValue>
-                                          </SelectTrigger>
-                                          <SelectContent align="end" className="w-[140px]">
-                                            {receiptStatus
-                                              .filter((s) => {
-                                                const currentStatus = voucher.status
-                                                if (
-                                                  currentStatus === 'canceled' ||
-                                                  currentStatus === 'cancelled'
-                                                ) {
-                                                  return (
-                                                    s.value === 'canceled' ||
-                                                    s.value === 'cancelled'
-                                                  )
-                                                }
-                                                if (currentStatus === 'completed') {
-                                                  return s.value !== 'draft'
-                                                }
-                                                return true
-                                              })
-                                              .map((s) => (
-                                                <SelectItem
-                                                  key={s.value}
-                                                  value={s.value}
-                                                  className="text-xs"
+                                      <div className="flex justify-between">
+                                        <strong>Số tiền:</strong>
+                                        <span className="font-semibold">{moneyFormat(voucher.amount)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <strong>PT thanh toán:</strong>
+                                        <span>
+                                          {voucher.paymentMethod === 'cash'
+                                            ? 'Tiền mặt'
+                                            : voucher.paymentMethod === 'transfer'
+                                              ? 'Chuyển khoản'
+                                              : voucher.paymentMethod}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <strong>Trạng thái:</strong>
+                                        <div className='flex items-center justify-end'>
+                                          <Select
+                                            value={statusValue}
+                                            onValueChange={(val) => handleUpdateReceiptStatus(val, voucher.id)}
+                                          >
+                                            <SelectTrigger className="h-auto border-none bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0">
+                                              <SelectValue>
+                                                <span
+                                                  className={`inline-flex items-center gap-1 text-xs font-medium ${getReceiptStatusColor(statusValue).replace(/bg-[^ ]+/, '').trim()}`}
                                                 >
-                                                  <div
-                                                    className={`flex items-center gap-1 rounded-full px-2 py-1 ${getReceiptStatusColor(s.value)}`}
+                                                  {getReceiptStatusObj(statusValue)?.icon &&
+                                                    React.createElement(getReceiptStatusObj(statusValue).icon, { className: "h-3 w-3" })
+                                                  }
+                                                  {getReceiptStatusObj(statusValue)?.label || statusValue}
+                                                </span>
+                                              </SelectValue>
+                                            </SelectTrigger>
+                                            <SelectContent align="end" className="w-[140px]">
+                                              {receiptStatus
+                                                .map((s) => (
+                                                  <SelectItem
+                                                    key={s.value}
+                                                    value={s.value}
+                                                    className="text-xs"
                                                   >
-                                                    {s.icon &&
-                                                      React.createElement(
-                                                        s.icon,
-                                                        { className: 'h-3 w-3' },
-                                                      )}
-                                                    <span>{s.label}</span>
-                                                  </div>
-                                                </SelectItem>
-                                              ))}
-                                          </SelectContent>
-                                        </Select>
+                                                    <div
+                                                      className={`flex items-center gap-1 rounded-full px-2 py-1 ${getReceiptStatusColor(s.value)}`}
+                                                    >
+                                                      {s.icon &&
+                                                        React.createElement(
+                                                          s.icon,
+                                                          { className: 'h-3 w-3' },
+                                                        )}
+                                                      <span>{s.label}</span>
+                                                    </div>
+                                                  </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <strong>Loại GD:</strong>
+                                        <span>
+                                          {voucher.receiptType === 'sales'
+                                            ? 'Thanh toán'
+                                            : voucher.receiptType === 'debt_collection'
+                                              ? 'Thu nợ'
+                                              : voucher.receiptType === 'refund'
+                                                ? 'Hoàn tiền'
+                                                : voucher.receiptType}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between border-t pt-2">
+                                        <strong>Người tạo:</strong>
+                                        <span>{voucher.creator?.fullName || '—'}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <strong>Ngày tạo:</strong>
+                                        <span>{dateFormat(voucher.createdAt, true)}</span>
                                       </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <strong>Loại GD:</strong>
-                                      <span>
-                                        {voucher.transactionType === 'payment'
-                                          ? 'Thanh toán'
-                                          : voucher.transactionType === 'deposit'
-                                            ? 'Đặt cọc'
-                                            : voucher.transactionType === 'refund'
-                                              ? 'Hoàn tiền'
-                                              : voucher.transactionType}
-                                      </span>
-                                    </div>
-                                    <div className="flex justify-between border-t pt-2">
-                                      <strong>Người tạo:</strong>
-                                      <span>{voucher.createdByUser?.fullName || '—'}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <strong>Ngày tạo:</strong>
-                                      <span>{dateFormat(voucher.createdAt, true)}</span>
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )
                           ) : (
@@ -1845,7 +1843,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
             setTimeout(() => setReceiptToEdit(null), 300)
           }
         }}
-        invoices={[invoice?.id]}
+        invoiceId={invoice?.id}
         receipt={receiptToEdit}
         invoiceCode={invoice?.orderCode}
         amount={invoice?.remainingAmount}

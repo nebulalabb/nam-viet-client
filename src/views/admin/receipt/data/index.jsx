@@ -1,4 +1,4 @@
-import { IconBuildingBank, IconCash, IconCircleCheck, IconCircleX, IconFileText } from '@tabler/icons-react'
+import { IconBuildingBank, IconCash, IconCircleCheck, IconFileText } from '@tabler/icons-react'
 
 const receiptStatus = [
   {
@@ -8,22 +8,10 @@ const receiptStatus = [
     color: 'bg-yellow-100 text-yellow-700',
   },
   {
-    value: 'approved',
-    label: 'Đã duyệt',
-    icon: IconCircleCheck,
-    color: 'bg-blue-100 text-blue-700',
-  },
-  {
     value: 'posted',
     label: 'Đã ghi sổ',
     icon: IconCircleCheck,
     color: 'bg-green-100 text-green-700',
-  },
-  {
-    value: 'cancelled',
-    label: 'Đã hủy',
-    icon: IconCircleX,
-    color: 'bg-red-100 text-red-700',
   },
 ]
 

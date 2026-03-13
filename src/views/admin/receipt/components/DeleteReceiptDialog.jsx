@@ -41,7 +41,7 @@ const DeleteReceiptDialog = ({ receipt, showTrigger = true, onSuccess, contentCl
         <DialogHeader>
           <DialogTitle>Bạn chắc chắn thực hiện hành động này?</DialogTitle>
           <DialogDescription>
-            Hành động này không thể hoàn tác. Loại thuế: sẽ bị xóa
+            Hành động này không thể hoàn tác. Phiếu thu sẽ bị xóa
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">

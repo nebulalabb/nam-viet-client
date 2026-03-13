@@ -60,7 +60,7 @@ import { useMediaQuery } from '@/hooks/UseMediaQuery'
 import PaymentQRCodeDialog from '../../receipt/components/PaymentQRCodeDialog'
 
 const ReceiptDialog = ({
-  invoices,
+  invoiceId,
   receiptId,
   receipt: propReceipt,
   open,
@@ -77,7 +77,7 @@ const ReceiptDialog = ({
   const isMobile = useMediaQuery('(max-width: 768px)')
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
-  const [invoiceData, setInvoiceData] = useState([])
+  const [invoiceData, setInvoiceData] = useState(null)
   const [qrCodeData, setQrCodeData] = useState(null)
   const [showQrDialog, setShowQrDialog] = useState(false)
   const [createdReceiptId, setCreatedReceiptId] = useState(null)
@@ -89,37 +89,27 @@ const ReceiptDialog = ({
   const [fetchedReceipt, setFetchedReceipt] = useState(null)
   const receipt = fetchedReceipt || propReceipt
 
-  const invoiceItems = invoiceData?.flatMap((invoice) => invoice.invoiceItems)
-  const customer = invoiceData?.[0]?.customer
-  const banks = setting?.payload?.banks || []
+  const invoiceItems = invoiceData?.details || invoiceData?.invoiceItems || []
+  const customer = invoiceData?.customer
+  const banks = setting?.banks || []
 
-  const totalTaxAmount = invoiceItems
-    ?.map((product) => product.taxAmount)
-    .reduce((acc, taxAmount) => acc + taxAmount, 0)
-  const totalDiscount = invoiceItems
-    ?.map((product) => product.discount)
-    .reduce((acc, discount) => acc + discount, 0)
+  const totalAmountFromInvoice = parseFloat(invoiceData?.totalAmount || invoiceData?.amount || 0)
+  const totalTaxAmount = parseFloat(invoiceData?.taxAmount || 0)
+  const totalDiscount = parseFloat(invoiceData?.discountAmount || 0)
+  const paidAmount = parseFloat(invoiceData?.paidAmount || 0)
 
-  const totalAmountFromInvoice = invoiceData?.reduce((acc, invoice) => {
-    return acc + parseFloat(invoice.amount || invoice.totalAmount || 0)
-  }, 0) || 0
-
-  const paidAmount = invoiceData?.reduce((acc, invoice) => {
-    return acc + parseFloat(invoice.paidAmount || 0)
-  }, 0) || 0
-
-  const pendingAmount = invoiceData?.reduce((acc, invoice) => {
-    const vouchers = invoice.receiptVouchers || invoice.receipts || invoice.paymentVouchers || []
-    const pendingSum = vouchers
-      .filter(p => (p.status === 'pending' || p.status === 'draft') && p.id !== effectiveReceiptId)
+  const pendingAmount = (() => {
+    if (!invoiceData) return 0
+    const vouchers = invoiceData.paymentReceipts || invoiceData.receiptVouchers || invoiceData.receipts || invoiceData.paymentVouchers || []
+    return vouchers
+      .filter(p => (!p.isPosted || p.status === 'draft') && p.id !== effectiveReceiptId)
       .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
-    return acc + pendingSum
-  }, 0) || 0
+  })()
 
   const remainingAmount = Math.max(0, totalAmountFromInvoice - paidAmount - pendingAmount)
 
-  const isCompletedReceipt = receipt?.status === 'completed' || receipt?.status === 'success'
-  const maxAllowableAmount = remainingAmount + (isEditMode && isCompletedReceipt ? parseFloat(receipt?.amount || 0) : 0)
+  const isPostedReceipt = receipt?.status === 'posted'
+  const maxAllowableAmount = remainingAmount + (isEditMode && isPostedReceipt ? parseFloat(receipt?.amount || 0) : 0)
 
   const form = useForm({
     resolver: zodResolver(createReceiptSchema),
@@ -130,16 +120,15 @@ const ReceiptDialog = ({
       paymentNote: '',
       bankAccount: null,
 
+      receiptDate: new Date().toISOString().split('T')[0],
       isDeposit: false,
     }),
   })
 
-  // Create a stable key for invoices to prevent infinite loop
-  const invoicesKey = JSON.stringify(invoices)
 
   const fetchData = useCallback(async () => {
-    const validInvoices = invoices?.filter((id) => id) || (receipt?.invoiceId ? [receipt.invoiceId] : [])
-    if (!validInvoices || validInvoices.length === 0) return
+    const targetId = invoiceId || receipt?.invoiceId
+    if (!targetId) return
 
     setLoading(true)
     try {
@@ -147,13 +136,12 @@ const ReceiptDialog = ({
         localStorage.getItem('permissionCodes') || '[]',
       ).includes('GET_INVOICE')
 
-      const promises = validInvoices.map((id) =>
-        getAdminInvoice
-          ? dispatch(getInvoiceDetail(id)).unwrap()
-          : dispatch(getInvoiceDetailByUser(id)).unwrap() // Assuming getInvoiceDetailByUser is also a thunk
-      )
-      const data = await Promise.all(promises)
-      setInvoiceData(data || [])
+      const data = getAdminInvoice
+        ? await dispatch(getInvoiceDetail(targetId)).unwrap()
+        : await dispatch(getInvoiceDetailByUser(targetId)).unwrap()
+
+      console.log('Invoice data:', data)
+      setInvoiceData(data || null)
     } catch (error) {
       setLoading(false)
       console.log('Failed to fetch data: ', error)
@@ -161,7 +149,7 @@ const ReceiptDialog = ({
       setLoading(false)
     }
     // eslint-disable-next-line react-hook/exhaustive-deps
-  }, [invoicesKey])
+  }, [dispatch, invoiceId, receipt?.invoiceId])
 
   useEffect(() => {
     if (open) {
@@ -194,12 +182,20 @@ const ReceiptDialog = ({
     if (open) {
       if (isEditMode && receipt) {
         let bankAccount = receipt.bankAccount
-        if (!bankAccount && receipt.bankAccountNumber) {
-          bankAccount = {
-            bankName: receipt.bankName,
-            accountNumber: receipt.bankAccountNumber,
-            accountName: receipt.bankAccountName,
-            bankBranch: receipt.bankBranch,
+        if (!bankAccount && receipt.bankName) {
+          try {
+            // Try parsing as JSON (new format)
+            bankAccount = JSON.parse(receipt.bankName)
+          } catch (e) {
+            // Fallback for old flattened fields
+            if (receipt.bankAccountNumber) {
+              bankAccount = {
+                bankName: receipt.bankName,
+                accountNumber: receipt.bankAccountNumber,
+                accountName: receipt.bankAccountName,
+                bankBranch: receipt.bankBranch,
+              }
+            }
           }
         }
 
@@ -209,16 +205,15 @@ const ReceiptDialog = ({
           paymentMethod: receipt.paymentMethod || 'cash',
           paymentNote: receipt.note || '',
           bankAccount: bankAccount || null,
+          receiptDate: receipt.receiptDate ? new Date(receipt.receiptDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           isDeposit: receipt.transactionType === 'deposit',
         })
-      } else if (invoiceData.length > 0) {
+      } else if (invoiceData) {
         // Default to remaining amount for payment input
         form.setValue('totalAmount', remainingAmount > 0 ? remainingAmount : 0)
-        // form.setValue('totalTaxAmount', totalTaxAmount) // these don't exist in schema
-        // form.setValue('totalDiscount', totalDiscount) // these don't exist in schema
       }
     }
-  }, [open, isEditMode, receipt, invoiceData, form, remainingAmount, totalTaxAmount, totalDiscount])
+  }, [open, isEditMode, receipt, invoiceData, form, remainingAmount])
   const navigate = useNavigate()
 
   const onSubmit = async (data) => {
@@ -233,35 +228,17 @@ const ReceiptDialog = ({
 
     // Build payload matching backend requirements
     const dataToSend = {
-      // Voucher & Transaction Type
-      voucherType: 'receipt_in',  // receipt_in (Thu) | payment_out (Chi)
-      transactionType: data.isDeposit ? 'deposit' : 'payment',  // payment | deposit | refund
-      receiverType: 'customer',   // customer | supplier
-      receiverId: customer?.id,   // ID Khách hàng
-
-      // Invoice & Amount - invoiceId gửi giá trị đơn (không phải mảng)
-      invoiceId: Array.isArray(invoices) ? invoices[0] : invoices,
-      amount: parseInt(data.totalAmount) || 0,  // Số tiền thu
-
-      // Payment Details
-      paymentMethod: data.paymentMethod,  // cash | transfer
-      bankAccount: data.paymentMethod === 'transfer' && data.bankAccount
-        ? {
-          bankName: data.bankAccount.bankName,
-          accountNumber: data.bankAccount.accountNumber,
-          accountName: data.bankAccount.accountName,
-          bankBranch: data.bankAccount.bankBranch
-        }
+      receiptType: 'sales',
+      customerId: parseInt(invoiceData?.customerId || customer?.id || receipt?.customerId),
+      orderId: invoiceId || receipt?.orderId || receipt?.invoiceId || invoiceData?.id,
+      amount: parseInt(data.totalAmount) || 0,
+      paymentMethod: data.paymentMethod,
+      bankName: data.paymentMethod === 'transfer' && data.bankAccount
+        ? JSON.stringify(data.bankAccount)
         : null,
-
-      // Date & Status
-      paymentDate: new Date().toISOString(),  // Current timestamp
-      reason: data.note || 'Thu tiền bán hàng',  // Lý do
-      // status: 'completed',  // completed | draft
-
-      // Additional notes
-      paymentNote: data.paymentNote || null,
-
+      receiptDate: data.receiptDate || new Date().toISOString(),
+      notes: data.note || 'Thu tiền bán hàng',
+      transactionReference: data.paymentNote || null,
     }
 
     try {
@@ -270,17 +247,13 @@ const ReceiptDialog = ({
           id: effectiveReceiptId,
           amount: parseInt(data.totalAmount) || 0,
           paymentMethod: data.paymentMethod,
-          bankAccount: data.paymentMethod === 'transfer' && data.bankAccount
-            ? {
-              bankName: data.bankAccount.bankName,
-              accountNumber: data.bankAccount.accountNumber,
-              accountName: data.bankAccount.accountName,
-              bankBranch: data.bankAccount.bankBranch
-            }
+          bankName: data.paymentMethod === 'transfer' && data.bankAccount
+            ? JSON.stringify(data.bankAccount)
             : null,
-          reason: data.note || 'Thu tiền bán hàng',
-          note: data.paymentNote || null,
-          transactionType: data.isDeposit ? 'deposit' : 'payment',
+          notes: data.note || 'Thu tiền bán hàng',
+          transactionReference: data.paymentNote || null,
+          receiptDate: data.receiptDate || new Date().toISOString(),
+          receiptType: receipt?.receiptType || 'sales',
         }
         await dispatch(updateReceipt(dataToUpdate)).unwrap()
 
@@ -392,11 +365,11 @@ const ReceiptDialog = ({
                               <Table className="min-w-full">
                                 <TableHeader>
                                   <TableRow className="bg-secondary text-xs">
-                                    <TableHead className="w-8">TT</TableHead>
+                                    <TableHead className="w-8">STT</TableHead>
                                     <TableHead className="min-w-[250px]">
                                       Sản phẩm
                                     </TableHead>
-                                    <TableHead className="min-w-20">SL</TableHead>
+                                    <TableHead className="min-w-20">Số Lượng</TableHead>
                                     <TableHead className="min-w-16">ĐVT</TableHead>
                                     <TableHead className="min-w-20">Giá</TableHead>
                                     <TableHead className="min-w-16">Thuế</TableHead>
@@ -407,7 +380,7 @@ const ReceiptDialog = ({
                                       Tổng cộng
                                     </TableHead>
                                     <TableHead className="min-w-28 md:w-20">
-                                      BH
+                                      Bảo Hành
                                     </TableHead>
                                     <TableHead className="min-w-28">
                                       Ghi chú
@@ -422,12 +395,12 @@ const ReceiptDialog = ({
                                         <div className="flex items-center gap-3">
                                           <Avatar className="h-10 w-10 rounded-lg border bg-muted/50">
                                             <AvatarImage
-                                              src={getPublicUrl(product?.image)}
-                                              alt={product.productName}
+                                              src={getPublicUrl(product?.product?.image)}
+                                              alt={product?.product?.productName}
                                               className="object-cover"
                                             />
                                             <AvatarFallback className="rounded-lg text-xs">
-                                              {product.productName?.substring(0, 2).toUpperCase()}
+                                              {product?.product?.productName?.substring(0, 2).toUpperCase()}
                                             </AvatarFallback>
                                           </Avatar>
                                           <div className="flex flex-col gap-0.5">
@@ -435,7 +408,7 @@ const ReceiptDialog = ({
                                               {product.product?.code || product.productCode || '—'}
                                             </span>
                                             <span className="font-medium text-sm leading-tight line-clamp-2">
-                                              {product.productName}
+                                              {product?.product?.productName}
                                             </span>
                                             {product?.options && (
                                               <div className="break-words text-xs text-muted-foreground">
@@ -454,23 +427,23 @@ const ReceiptDialog = ({
                                       <TableCell>
                                         {product.unitName || 'Không có'}
                                       </TableCell>
-                                      <TableCell className="text-end">
+                                      <TableCell className="text-center">
                                         {moneyFormat(product.price)}
                                       </TableCell>
-                                      <TableCell className="text-end">
+                                      <TableCell className="text-center">
                                         {moneyFormat(product.taxAmount)}
                                       </TableCell>
-                                      <TableCell className="text-end">
-                                        {moneyFormat(product.discount)}
+                                      <TableCell className="text-center">
+                                        {moneyFormat(product.discountAmount)}
                                       </TableCell>
-                                      <TableCell className="text-end">
+                                      <TableCell className="text-center">
                                         {moneyFormat(product.total)}
                                       </TableCell>
                                       <TableCell>
-                                        {product.warranty || 'Không có'}
+                                        {product.periodMonths ? product.periodMonths + ' tháng' : 'Không có'}
                                       </TableCell>
                                       <TableCell>
-                                        {product.note || 'Không có'}
+                                        {product.product.note || 'Không có'}
                                       </TableCell>
                                     </TableRow>
                                   ))}
@@ -678,21 +651,22 @@ const ReceiptDialog = ({
                                   )}
                                 />
 
-                                {/* Deposit Checkbox */}
                                 <FormField
                                   control={form.control}
-                                  name="isDeposit"
+                                  name="receiptDate"
                                   render={({ field }) => (
-                                    <FormItem className="flex items-center gap-2 space-y-0">
+                                    <FormItem className="mb-2 space-y-1">
+                                      <FormLabel required={true}>
+                                        Ngày thu
+                                      </FormLabel>
                                       <FormControl>
-                                        <Checkbox
-                                          checked={field.value}
-                                          onCheckedChange={field.onChange}
+                                        <Input
+                                          type="date"
+                                          className="w-full"
+                                          {...field}
                                         />
                                       </FormControl>
-                                      <FormLabel className="cursor-pointer font-normal">
-                                        Đây là phiếu cọc
-                                      </FormLabel>
+                                      <FormMessage />
                                     </FormItem>
                                   )}
                                 />
@@ -830,13 +804,13 @@ const ReceiptDialog = ({
                           <div className="flex items-center gap-4">
                             <Avatar className="h-8 w-8">
                               <AvatarImage
-                                src={`https://ui-avatars.com/api/?bold=true&background=random&name=${customer?.name}`}
-                                alt={customer?.name}
+                                src={`https://ui-avatars.com/api/?bold=true&background=random&name=${customer?.customerName}`}
+                                alt={customer?.customerName}
                               />
                               <AvatarFallback>AD</AvatarFallback>
                             </Avatar>
                             <div>
-                              <div className="font-medium">{customer?.name}</div>
+                              <div className="font-medium">{customer?.customerName}</div>
                             </div>
                           </div>
 
@@ -861,7 +835,7 @@ const ReceiptDialog = ({
                                 <div className="mr-2 h-4 w-4 ">
                                   <IdCardIcon className="h-4 w-4" />
                                 </div>
-                                {customer?.identityCard || 'Chưa cập nhật'}
+                                {customer?.cccd || 'Chưa cập nhật'}
                               </div>
 
                               <div className="flex items-center text-muted-foreground">

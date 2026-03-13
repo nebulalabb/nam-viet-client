@@ -156,6 +156,8 @@ export const updateReceiptStatus = createAsyncThunk(
         response = await api.put(`/payment-receipts/${id}/approve`, { notes })
       } else if (status === 'posted' || status === 'completed') {
         response = await api.post(`/payment-receipts/${id}/post`, { notes })
+      } else if (status === 'draft') {
+        response = await api.post(`/payment-receipts/${id}/unpost`, { notes })
       } else if (status === 'cancelled' || status === 'canceled') {
         response = await api.delete(`/payment-receipts/${id}`)
         // Delete returns { message }
@@ -223,7 +225,7 @@ export const receiptSlice = createSlice({
         state.loading = false
         const mapReceipt = (r) => ({
           ...r,
-          status: r.isPosted ? 'posted' : r.approvedAt ? 'approved' : 'draft'
+          status: r.isPosted ? 'posted' : 'draft'
         })
 
         if (action.payload?.data && Array.isArray(action.payload.data)) {
@@ -247,7 +249,7 @@ export const receiptSlice = createSlice({
         state.loading = false
         const mapReceipt = (r) => ({
           ...r,
-          status: r.isPosted ? 'posted' : r.approvedAt ? 'approved' : 'draft'
+          status: r.isPosted ? 'posted' : 'draft'
         })
 
         if (action.payload?.data && Array.isArray(action.payload.data)) {
@@ -305,20 +307,10 @@ export const receiptSlice = createSlice({
         state.error = action.payload.message || 'Không lấy được mã QR'
         state.qrCodeData = null
       })
-      .addCase(approveReceipt.fulfilled, (state, action) => {
-        const updatedReceipt = {
-          ...action.payload,
-          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : 'draft'
-        }
-        const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
-        if (index !== -1) {
-          state.receipts[index] = { ...state.receipts[index], ...updatedReceipt }
-        }
-      })
       .addCase(postReceipt.fulfilled, (state, action) => {
         const updatedReceipt = {
           ...action.payload,
-          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : 'draft'
+          status: action.payload.isPosted ? 'posted' : 'draft'
         }
         const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
         if (index !== -1) {
@@ -332,7 +324,7 @@ export const receiptSlice = createSlice({
         state.loading = false
         const updatedReceipt = {
           ...action.payload,
-          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : 'draft'
+          status: action.payload.isPosted ? 'posted' : 'draft'
         }
         const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
         if (index !== -1) {
@@ -351,7 +343,7 @@ export const receiptSlice = createSlice({
         state.loading = false
         const updatedReceipt = {
           ...action.payload,
-          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : action.payload.deletedAt ? 'cancelled' : 'draft'
+          status: action.payload.isPosted ? 'posted' : 'draft'
         }
         const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
         if (index !== -1) {
