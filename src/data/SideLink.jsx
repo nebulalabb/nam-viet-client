@@ -76,7 +76,7 @@ export const sideLinks = [
         title: 'Giao hàng',
         href: '/delivery',
         icon: <Truck size={18} strokeWidth={1.5} />,
-        permission: 'GET_INVOICE',
+        permission: 'VIEW_DELIVERIES',
       },
     ],
   },

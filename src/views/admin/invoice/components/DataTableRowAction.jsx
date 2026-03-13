@@ -8,15 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import {
-  IconFileTypePdf,
-  IconFileTypeDocx,
-  IconPencil,
-  IconPlus,
-  IconTrash,
-  IconEye,
-  IconPackageExport,
-} from '@tabler/icons-react'
+import { IconPencil, IconPlus, IconTrash, IconEye, IconPackageExport, IconTruck } from '@tabler/icons-react'
 import { Printer } from 'lucide-react'
 import Can from '@/utils/can'
 import { useState } from 'react'
@@ -26,6 +18,7 @@ import InvoiceDialog from './InvoiceDialog'
 import CreateCreditNoteDialog from './CreateCreditNoteDialog'
 import ConfirmWarehouseReceiptDialog from '../../warehouse-receipt/components/ConfirmWarehouseReceiptDialog'
 import ReceiptDialog from '../../receipt/components/ReceiptDialog'
+import CreateDeliveryDialog from '../../delivery/components/CreateDeliveryDialog'
 
 import {
   createWarehouseReceipt,
@@ -52,6 +45,7 @@ const DataTableRowActions = ({ row, table }) => {
   const [warehouseLoading, setWarehouseLoading] = useState(false)
   const [showConfirmWarehouseDialog, setShowConfirmWarehouseDialog] = useState(false)
   const [showReceiptDialog, setShowReceiptDialog] = useState(false)
+  const [showCreateDeliveryDialog, setShowCreateDeliveryDialog] = useState(false)
 
   // Print state
   const [printInvoice, setPrintInvoice] = useState(null)
@@ -284,6 +278,21 @@ const DataTableRowActions = ({ row, table }) => {
             </Can>
           )}
 
+          {/* Giao hàng - Chỉ hiện cho đơn cần giao (isPickupOrder=false) và status = preparing */}
+          {row?.original?.orderStatus === 'preparing' && !row?.original?.isPickupOrder && (
+            <Can permission="CREATE_DELIVERY">
+              <DropdownMenuItem
+                onClick={() => setShowCreateDeliveryDialog(true)}
+                className="text-blue-600"
+              >
+                Giao hàng
+                <DropdownMenuShortcut>
+                  <IconTruck className="h-4 w-4" />
+                </DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </Can>
+          )}
+
           <DropdownMenuSeparator />
 
           {(row?.original?.orderStatus === 'pending' || row?.original?.orderStatus === 'cancelled') && (
@@ -323,6 +332,19 @@ const DataTableRowActions = ({ row, table }) => {
       {/* Print Invoice Dialog */}
       {printInvoice && setting && (
         <PrintInvoiceView invoice={printInvoice} setting={setting} />
+      )}
+      {showCreateDeliveryDialog && (
+        <CreateDeliveryDialog
+          open={showCreateDeliveryDialog}
+          onOpenChange={setShowCreateDeliveryDialog}
+          invoice={row.original}
+          onSuccess={() => {
+            dispatch(getInvoices({
+              fromDate: getStartOfCurrentMonth(),
+              toDate: getEndOfCurrentMonth(),
+            }))
+          }}
+        />
       )}
     </>
   )

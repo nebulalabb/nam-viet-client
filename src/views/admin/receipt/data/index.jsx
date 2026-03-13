@@ -3,13 +3,19 @@ import { IconBuildingBank, IconCash, IconCircleCheck, IconCircleX, IconFileText 
 const receiptStatus = [
   {
     value: 'draft',
-    label: 'Nháp',
+    label: 'Chờ duyệt',
     icon: IconFileText,
     color: 'bg-yellow-100 text-yellow-700',
   },
   {
-    value: 'completed',
-    label: 'Đã thu',
+    value: 'approved',
+    label: 'Đã duyệt',
+    icon: IconCircleCheck,
+    color: 'bg-blue-100 text-blue-700',
+  },
+  {
+    value: 'posted',
+    label: 'Đã ghi sổ',
     icon: IconCircleCheck,
     color: 'bg-green-100 text-green-700',
   },
@@ -19,7 +25,6 @@ const receiptStatus = [
     icon: IconCircleX,
     color: 'bg-red-100 text-red-700',
   },
-
 ]
 
 const paymentMethods = [

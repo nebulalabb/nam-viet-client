@@ -4,13 +4,12 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import { toast } from 'sonner'
 
 export const createReceipt = createAsyncThunk(
-  'receipt/create=-receipt',
+  'receipt/create-receipt',
   async (data, { rejectWithValue }) => {
     try {
-      const response = await api.post('/payment-vouchers', data)
-      toast.success('Thêm mới thành công')
-      // Return the created receipt data (including id)
-      return response.data.data || response.data
+      const response = await api.post('/payment-receipts', data)
+      toast.success('Thêm mới phiếu thu thành công')
+      return response.data.data
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -20,20 +19,18 @@ export const createReceipt = createAsyncThunk(
 
 export const getReceipts = createAsyncThunk(
   'receipt/get-receipts',
-  async ({ fromDate = null, toDate = null, page = 1, limit = 20 } = {}, { rejectWithValue }) => {
+  async ({ fromDate = null, toDate = null, page = 1, limit = 20, ...rest } = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get('/payment-vouchers', {
+      const response = await api.get('/payment-receipts', {
         params: {
-          voucherType: 'receipt_in',
           fromDate: fromDate ?? undefined,
           toDate: toDate ?? undefined,
           page,
           limit,
+          ...rest
         },
       })
-      // API returns: { data: { data: [...], pagination: {...} } }
-      // We need to extract the data array
-      return response.data.data || response.data
+      return response.data
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -45,9 +42,8 @@ export const getMyReceipts = createAsyncThunk(
   'receipt/get-my-receipts',
   async ({ fromDate = null, toDate = null, page = 1, limit = 20 } = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get('/payment-vouchers/my-payment-vouchers', {
+      const response = await api.get('/payment-receipts/my-receipts', {
         params: {
-          voucherType: 'receipt_in',
           fromDate: fromDate ?? undefined,
           toDate: toDate ?? undefined,
           page,
@@ -68,9 +64,8 @@ export const getReceiptById = createAsyncThunk(
   'receipt/get-receipt-by-id',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/payment-vouchers/${id}`)
-      // API returns: { data: {...} }
-      return response.data.data || response.data
+      const response = await api.get(`/payment-receipts/${id}`)
+      return response.data.data
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -82,8 +77,8 @@ export const deleteReceipt = createAsyncThunk(
   'receipt/delete-receipt',
   async (id, { rejectWithValue }) => {
     try {
-      await api.delete(`/payment-vouchers/${id}`)
-      toast.success('Xóa thành công')
+      await api.delete(`/payment-receipts/${id}`)
+      toast.success('Xóa phiếu thu thành công')
       return id
     } catch (error) {
       const message = handleError(error)
@@ -114,8 +109,36 @@ export const getReceiptQRCode = createAsyncThunk(
   'receipt/get-qr-code',
   async (receiptId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/payment-vouchers/${receiptId}/qr-code`)
+      const response = await api.get(`/payment-receipts/${receiptId}/qr-code`)
       // API returns: { status: 200, data: { qrLink, amount, voucherCode, description } }
+      return response.data.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+export const approveReceipt = createAsyncThunk(
+  'receipt/approve-receipt',
+  async ({ id, notes }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/payment-receipts/${id}/approve`, { notes })
+      toast.success('Duyệt phiếu thu thành công')
+      return response.data.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+export const postReceipt = createAsyncThunk(
+  'receipt/post-receipt',
+  async ({ id, notes }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/payment-receipts/${id}/post`, { notes })
+      toast.success('Ghi sổ phiếu thu thành công')
       return response.data.data
     } catch (error) {
       const message = handleError(error)
@@ -126,18 +149,21 @@ export const getReceiptQRCode = createAsyncThunk(
 
 export const updateReceiptStatus = createAsyncThunk(
   'receipt/update-status',
-  async ({ id, status }, { rejectWithValue }) => {
+  async ({ id, status, notes }, { dispatch, rejectWithValue }) => {
     try {
       let response
-      if (status === 'completed') {
-        response = await api.post(`/payment-vouchers/${id}/complete`)
-      } else if (status === 'canceled' || status === 'cancelled') {
-        response = await api.post(`/payment-vouchers/${id}/cancel`)
+      if (status === 'approved') {
+        response = await api.put(`/payment-receipts/${id}/approve`, { notes })
+      } else if (status === 'posted' || status === 'completed') {
+        response = await api.post(`/payment-receipts/${id}/post`, { notes })
+      } else if (status === 'cancelled' || status === 'canceled') {
+        response = await api.delete(`/payment-receipts/${id}`)
+        // Delete returns { message }
+        return { id, status: 'canceled', deletedAt: new Date().toISOString() }
       } else {
-        response = await api.put(`/payment-vouchers/${id}`, { status })
+        response = await api.put(`/payment-receipts/${id}`, { status, notes })
       }
-      toast.success('Cập nhật trạng thái phiếu thu thành công')
-      return response.data.data || response.data
+      return response.data.data
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -149,9 +175,9 @@ export const updateReceipt = createAsyncThunk(
   'receipt/update-receipt',
   async ({ id, ...data }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/payment-vouchers/${id}`, data)
+      const response = await api.put(`/payment-receipts/${id}`, data)
       toast.success('Cập nhật phiếu thu thành công')
-      return response.data.data || response.data
+      return response.data.data
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -195,11 +221,16 @@ export const receiptSlice = createSlice({
       })
       .addCase(getReceipts.fulfilled, (state, action) => {
         state.loading = false
+        const mapReceipt = (r) => ({
+          ...r,
+          status: r.isPosted ? 'posted' : r.approvedAt ? 'approved' : 'draft'
+        })
+
         if (action.payload?.data && Array.isArray(action.payload.data)) {
-          state.receipts = action.payload.data
-          state.pagination = action.payload.pagination || state.pagination
+          state.receipts = action.payload.data.map(mapReceipt)
+          state.pagination = action.payload.meta || action.payload.pagination || state.pagination
         } else if (Array.isArray(action.payload)) {
-          state.receipts = action.payload
+          state.receipts = action.payload.map(mapReceipt)
         } else {
           state.receipts = []
         }
@@ -214,11 +245,16 @@ export const receiptSlice = createSlice({
       })
       .addCase(getMyReceipts.fulfilled, (state, action) => {
         state.loading = false
+        const mapReceipt = (r) => ({
+          ...r,
+          status: r.isPosted ? 'posted' : r.approvedAt ? 'approved' : 'draft'
+        })
+
         if (action.payload?.data && Array.isArray(action.payload.data)) {
-          state.receipts = action.payload.data
-          state.pagination = action.payload.pagination || state.pagination
+          state.receipts = action.payload.data.map(mapReceipt)
+          state.pagination = action.payload.meta || action.payload.pagination || state.pagination
         } else if (Array.isArray(action.payload)) {
-          state.receipts = action.payload
+          state.receipts = action.payload.map(mapReceipt)
         } else {
           state.receipts = []
         }
@@ -269,8 +305,21 @@ export const receiptSlice = createSlice({
         state.error = action.payload.message || 'Không lấy được mã QR'
         state.qrCodeData = null
       })
-      .addCase(updateReceiptStatus.fulfilled, (state, action) => {
-        const updatedReceipt = action.payload
+      .addCase(approveReceipt.fulfilled, (state, action) => {
+        const updatedReceipt = {
+          ...action.payload,
+          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : 'draft'
+        }
+        const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
+        if (index !== -1) {
+          state.receipts[index] = { ...state.receipts[index], ...updatedReceipt }
+        }
+      })
+      .addCase(postReceipt.fulfilled, (state, action) => {
+        const updatedReceipt = {
+          ...action.payload,
+          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : 'draft'
+        }
         const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
         if (index !== -1) {
           state.receipts[index] = { ...state.receipts[index], ...updatedReceipt }
@@ -281,7 +330,10 @@ export const receiptSlice = createSlice({
       })
       .addCase(updateReceipt.fulfilled, (state, action) => {
         state.loading = false
-        const updatedReceipt = action.payload
+        const updatedReceipt = {
+          ...action.payload,
+          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : 'draft'
+        }
         const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
         if (index !== -1) {
           state.receipts[index] = { ...state.receipts[index], ...updatedReceipt }
@@ -290,6 +342,26 @@ export const receiptSlice = createSlice({
       .addCase(updateReceipt.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload?.message || 'Lỗi không xác định'
+        toast.error(state.error)
+      })
+      .addCase(updateReceiptStatus.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(updateReceiptStatus.fulfilled, (state, action) => {
+        state.loading = false
+        const updatedReceipt = {
+          ...action.payload,
+          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : action.payload.deletedAt ? 'cancelled' : 'draft'
+        }
+        const index = state.receipts.findIndex((r) => r.id === updatedReceipt.id)
+        if (index !== -1) {
+          state.receipts[index] = { ...state.receipts[index], ...updatedReceipt }
+        }
+        toast.success('Cập nhật trạng thái thành công')
+      })
+      .addCase(updateReceiptStatus.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Lỗi không xác định'
         toast.error(state.error)
       })
   },

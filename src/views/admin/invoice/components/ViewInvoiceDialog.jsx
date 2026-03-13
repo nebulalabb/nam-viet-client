@@ -26,27 +26,16 @@ import {
 } from '@/components/ui/select'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import { MobileIcon, PlusIcon } from '@radix-ui/react-icons'
-import React, { useCallback, useEffect, useState, useMemo } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { statuses, paymentStatuses } from '../data'
 import { receiptStatus } from '../../receipt/data'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { CreditCard, Mail, MapPin, Pencil, Trash2, QrCode, Printer, X } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
-import { IconInfoCircle, IconEye, IconCheck, IconPencil, IconPlus, IconX, IconFileTypePdf, IconFileText, IconCircleCheck, IconCircleX } from '@tabler/icons-react'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { IconPlus, IconFileText, IconCircleCheck, IconCircleX } from '@tabler/icons-react'
 import { dateFormat } from '@/utils/date-format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-  deleteCreditNoteById,
-  getCreditNotesByInvoiceId,
-  updateCreditNoteStatus,
-} from '@/stores/CreditNoteSlice'
 import {
   updateWarehouseReceipt,
   postWarehouseReceipt,
@@ -55,9 +44,7 @@ import {
 } from '@/stores/WarehouseReceiptSlice'
 import { toast } from 'sonner'
 import ConfirmActionButton from '@/components/custom/ConfirmActionButton'
-import UpdateCreditNoteDialog from './UpdateCreditNoteDialog'
 import UpdateInvoiceStatusDialog from './UpdateInvoiceStatusDialog'
-import InvoiceDialog from './InvoiceDialog'
 import { DeleteWarehouseReceiptDialog } from '../../warehouse-receipt/components/DeleteWarehouseReceiptDialog'
 import { UpdateWarehouseReceiptStatusDialog } from '../../warehouse-receipt/components/UpdateWarehouseReceiptStatusDialog'
 import ConfirmWarehouseReceiptDialog from '../../warehouse-receipt/components/ConfirmWarehouseReceiptDialog'
@@ -85,34 +72,25 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
   // QR Display State
   const [openQrDisplayDialog, setOpenQrDisplayDialog] = useState(false)
   const [qrCodeData, setQrCodeData] = useState(null)
-  const [qrLoading, setQrLoading] = useState(false)
 
   const handleGenerateQR = async (receipt) => {
-    if (receipt.status !== 'draft') {
+    if (receipt.orderStatus !== 'draft') {
       toast.warning('Chỉ có thể tạo mã QR cho phiếu thu nháp')
       return
     }
 
     try {
-      setQrLoading(true)
       const qrData = await dispatch(getReceiptQRCode(receipt.id)).unwrap()
       setQrCodeData(qrData)
       setOpenQrDisplayDialog(true)
     } catch (error) {
       console.error('Failed to fetch QR code:', error)
       toast.error('Không lấy được mã QR thanh toán')
-    } finally {
-      setQrLoading(false)
     }
   }
   const [loading, setLoading] = useState(false)
-  const creditNotes = useSelector(
-    (state) => state.creditNote.creditNotesByInvoiceId,
-  )
   const setting = useSelector((state) => state.setting.setting)
   const dispatch = useDispatch()
-  const [openUpdateCN, setOpenUpdateCN] = useState(false)
-  const [editingCN, setEditingCN] = useState(null)
   const isViewInvoiceDialog = true
 
   // State for updating invoice status
@@ -145,25 +123,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
   const canDelete = canDeleteAll || (canDeleteMine && isOwner)
 
-  const filteredStatuses = useMemo(() => {
-    if (!invoice) return []
-    const permissions = JSON.parse(localStorage.getItem('permissionCodes') || '[]')
-    const canReject = permissions.includes('REJECT_INVOICE')
-    const canRevert = permissions.includes('REVERT_INVOICE')
-
-    return statuses.filter((s) => {
-      // Hide 'completed' and 'cancelled' as they are final states
-      if (s.value === 'completed' || s.value === 'cancelled') return false
-      return true
-    })
-  }, [invoice?.orderStatus])
-
-  const handleSelectStatusChange = (val) => {
-    if (invoice?.id) {
-      handleUpdateStatus(val, invoice.id)
-    }
-  }
-
   const handleDeleteInvoice = async () => {
     try {
       await dispatch(deleteInvoice(invoiceId)).unwrap()
@@ -191,43 +150,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
   useEffect(() => {
     fetchData()
   }, [invoiceId, fetchData, dispatch])
-
-  const handleApproveCreditNote = async (creditNote) => {
-    if (creditNote.status === 'accepted') {
-      toast.warning('Đơn bán đã được duyệt')
-      return
-    }
-
-    const dataToSend = {
-      id: creditNote.id,
-      status: 'accepted',
-    }
-
-    try {
-      await dispatch(updateCreditNoteStatus(dataToSend)).unwrap()
-      toast.success(`Đã duyệt đơn bán âm ${creditNote.code}`)
-      await dispatch(getCreditNotesByInvoiceId(invoiceId)).unwrap()
-      onSuccess?.()
-    } catch (err) {
-      toast.error('Không thể duyệt đơn bán. Vui lòng thử lại.')
-    }
-  }
-
-  const handleEditCreditNote = (creditNote) => {
-    setEditingCN(creditNote)
-    setOpenUpdateCN(true)
-  }
-
-  const handleDeleteCreditNote = async (creditNote) => {
-    try {
-      await dispatch(deleteCreditNoteById(creditNote.id)).unwrap()
-      toast.success(`Đã xóa đơn bán điều chỉnh ${creditNote.code}`)
-      await dispatch(getCreditNotesByInvoiceId(invoiceId)).unwrap()
-      onSuccess?.()
-    } catch (err) {
-      toast.error('Xóa thất bại. Vui lòng thử lại.')
-    }
-  }
 
   // Handle update warehouse receipt status (Mobile)
   const handleUpdateWarehouseReceiptStatus = async (newStatus, id) => {
@@ -810,60 +732,47 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                           <div className="flex justify-start border-t py-2 items-center">
                             <strong>Trạng thái đơn bán: </strong>
                             {invoice?.orderStatus && (
-                              <>
-                                {showUpdateStatusDialog && (
-                                  <UpdateInvoiceStatusDialog
-                                    open={showUpdateStatusDialog}
-                                    onOpenChange={setShowUpdateStatusDialog}
-                                    invoiceId={invoice.id}
-                                    currentStatus={invoice.orderStatus}
-                                    paymentStatus={invoice.paymentStatus}
-                                    statuses={statuses}
-                                    onSubmit={handleUpdateStatus}
-                                  />
-                                )}
-                                <div className="ml-2 flex flex-col gap-2">
-                                  {(() => {
-                                    const statusObj = statuses.find(s => s.value === invoice.orderStatus)
-                                    const paymentStatusObj = paymentStatuses.find(s => s.value === invoice.paymentStatus)
-                                    return (
-                                      <>
-                                        <Badge
-                                          variant={['completed', 'cancelled'].includes(invoice.orderStatus) ? 'outline' : 'default'}
-                                          className={cn(
-                                            ['completed', 'cancelled'].includes(invoice.orderStatus)
-                                              ? `cursor-default select-none border-0 bg-transparent ${invoice.orderStatus === 'completed' ? (statusObj?.textColor || 'text-green-500') : 'text-slate-500'} hover:bg-transparent`
-                                              : `cursor-pointer select-none ${statusObj?.color || ''}`,
-                                            isActionDisabled && !['completed', 'cancelled'].includes(invoice.orderStatus) ? "opacity-70 cursor-not-allowed" : ""
-                                          )}
-                                          onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            if (!isActionDisabled && !['completed', 'cancelled'].includes(invoice.orderStatus)) {
-                                              setShowUpdateStatusDialog(true)
-                                            }
-                                          }}
-                                          title={['completed', 'cancelled'].includes(invoice.orderStatus) ? '' : "Bấm để cập nhật trạng thái"}
-                                        >
-                                          <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
-                                            {statusObj?.icon ? <statusObj.icon className="h-4 w-4" /> : null}
-                                          </span>
-                                          {statusObj?.label || 'Không xác định'}
-                                        </Badge>
-                                        <Badge
-                                          variant="outline"
-                                          className={`cursor-default select-none border-0 ${paymentStatusObj?.color || 'text-gray-500'}`}
-                                        >
-                                          <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
-                                            {paymentStatusObj?.icon ? <paymentStatusObj.icon className="h-4 w-4" /> : null}
-                                          </span>
-                                          {paymentStatusObj?.label || 'Không xác định'}
-                                        </Badge>
-                                      </>
-                                    )
-                                  })()}
-                                </div>
-                              </>
+                              <div className="ml-2 flex flex-col gap-2">
+                                {(() => {
+                                  const statusObj = statuses.find(s => s.value === invoice.orderStatus)
+                                  const paymentStatusObj = paymentStatuses.find(s => s.value === invoice.paymentStatus)
+                                  return (
+                                    <>
+                                      <Badge
+                                        variant={['completed', 'cancelled'].includes(invoice.orderStatus) ? 'outline' : 'default'}
+                                        className={cn(
+                                          ['completed', 'cancelled'].includes(invoice.orderStatus)
+                                            ? `cursor-default select-none border-0 bg-transparent ${invoice.orderStatus === 'completed' ? (statusObj?.textColor || 'text-green-500') : 'text-slate-500'} hover:bg-transparent`
+                                            : `cursor-pointer select-none ${statusObj?.color || ''}`,
+                                          isActionDisabled && !['completed', 'cancelled'].includes(invoice.orderStatus) ? "opacity-70 cursor-not-allowed" : ""
+                                        )}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          if (!isActionDisabled && !['completed', 'cancelled'].includes(invoice.orderStatus)) {
+                                            setShowUpdateStatusDialog(true)
+                                          }
+                                        }}
+                                        title={['completed', 'cancelled'].includes(invoice.orderStatus) ? '' : "Bấm để cập nhật trạng thái"}
+                                      >
+                                        <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
+                                          {statusObj?.icon ? <statusObj.icon className="h-4 w-4" /> : null}
+                                        </span>
+                                        {statusObj?.label || 'Không xác định'}
+                                      </Badge>
+                                      <Badge
+                                        variant="outline"
+                                        className={`cursor-default select-none border-0 ${paymentStatusObj?.color || 'text-gray-500'}`}
+                                      >
+                                        <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
+                                          {paymentStatusObj?.icon ? <paymentStatusObj.icon className="h-4 w-4" /> : null}
+                                        </span>
+                                        {paymentStatusObj?.label || 'Không xác định'}
+                                      </Badge>
+                                    </>
+                                  )
+                                })()}
+                              </div>
                             )}
                           </div>
 
@@ -1549,191 +1458,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                             )}
                           </ol>
                         </div>
-
-                        {/* Cột phải: Đơn bán âm (Credit notes) */}
-                        <div>
-                          <div className="mb-2 flex items-center justify-between">
-                            <h3 className={cn(
-                              "font-semibold",
-                              isDesktop ? "text-base" : "text-sm"
-                            )}>Đơn bán điều chỉnh</h3>
-                          </div>
-
-                          <div className="overflow-x-auto rounded-lg border">
-                            <Table className="min-w-full">
-                              <TableHeader>
-                                <TableRow className="bg-secondary text-xs">
-                                  <TableHead className="min-w-40">Mã</TableHead>
-                                  <TableHead className="min-w-[220px]">
-                                    Sản phẩm
-                                  </TableHead>
-                                  <TableHead className="min-w-28">
-                                    Trạng thái
-                                  </TableHead>
-                                  <TableHead className="min-w-28 text-right">
-                                    Giá
-                                  </TableHead>
-                                  <TableHead className="w-24 text-center">
-                                    Hành động
-                                  </TableHead>
-                                </TableRow>
-                              </TableHeader>
-
-                              <TableBody>
-                                {creditNotes?.length ? (
-                                  creditNotes.map((cn) => {
-                                    const statusMeta =
-                                      statuses?.find(
-                                        (s) => s.value === cn.status,
-                                      ) || null
-
-                                    return (
-                                      <TableRow key={cn.id}>
-                                        <TableCell className="whitespace-nowrap">
-                                          {cn.code}
-                                        </TableCell>
-
-                                        {/* Sản phẩm xSL, tô màu cam cho số lượng */}
-                                        <TableCell className="break-words">
-                                          {cn?.invoiceItems?.length
-                                            ? cn.invoiceItems.map((ii, idx) => (
-                                              <span
-                                                key={ii.id ?? idx}
-                                                className="inline"
-                                              >
-                                                {ii.productName}{' '}
-                                                {ii.quantity ? (
-                                                  <span className="font-semibold text-orange-500">
-                                                    x{ii.quantity}
-                                                  </span>
-                                                ) : null}
-                                                {idx <
-                                                  cn.invoiceItems.length - 1
-                                                  ? ', '
-                                                  : ''}
-                                              </span>
-                                            ))
-                                            : '—'}
-                                        </TableCell>
-
-                                        {/* Trạng thái */}
-                                        <TableCell>
-                                          {statusMeta ? (
-                                            <ConfirmActionButton
-                                              title="Xác nhận duyệt đơn điều chỉnh"
-                                              description={`Bạn có chắc muốn duyệt đơn điều chỉnh ${cn.code}?`}
-                                              confirmText="Duyệt"
-                                              onConfirm={() =>
-                                                handleApproveCreditNote(cn)
-                                              }
-                                            >
-                                              <button
-                                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition hover:opacity-80 ${statusMeta.color}`}
-                                              >
-                                                {statusMeta.icon &&
-                                                  React.createElement(
-                                                    statusMeta.icon,
-                                                    {
-                                                      className: 'h-3 w-3',
-                                                    },
-                                                  )}
-                                                {statusMeta.label}
-                                              </button>
-                                            </ConfirmActionButton>
-                                          ) : (
-                                            <span className="text-muted-foreground">
-                                              —
-                                            </span>
-                                          )}
-                                        </TableCell>
-
-                                        <TableCell className="text-right">
-                                          {moneyFormat(cn.amount)}
-                                        </TableCell>
-
-                                        <TableCell className="text-center">
-                                          <div className="flex items-center justify-center gap-2">
-                                            {/* Edit */}
-                                            <TooltipProvider>
-                                              <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                      handleEditCreditNote(cn)
-                                                    }
-                                                    className="inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs hover:bg-accent"
-                                                    aria-label={`Sửa ${cn.code}`}
-                                                  >
-                                                    <Pencil className="h-4 w-4" />
-                                                  </button>
-                                                </TooltipTrigger>{' '}
-                                                <TooltipContent>
-                                                  Sửa
-                                                </TooltipContent>
-                                              </Tooltip>
-                                            </TooltipProvider>
-
-                                            {editingCN && (
-                                              <UpdateCreditNoteDialog
-                                                key={editingCN.id}
-                                                open={openUpdateCN}
-                                                onOpenChange={async (v) => {
-                                                  setOpenUpdateCN(v)
-                                                  if (!v) {
-                                                    try {
-                                                      await dispatch(
-                                                        getCreditNotesByInvoiceId(
-                                                          invoiceId,
-                                                        ),
-                                                      ).unwrap()
-                                                    } catch { }
-                                                  }
-                                                }}
-                                                creditNote={editingCN}
-                                                showTrigger={false}
-                                              />
-                                            )}
-
-                                            {/* Delete (confirm) */}
-                                            <ConfirmActionButton
-                                              title="Xác nhận xóa"
-                                              description={`Bạn có chắc muốn xóa đơn điều chỉnh ${cn.code}? Hành động này không thể hoàn tác.`}
-                                              confirmText="Xóa"
-                                              onConfirm={() =>
-                                                handleDeleteCreditNote(cn)
-                                              }
-                                              contentClassName="z-[100020]"
-                                              overlayClassName="z-[100019]"
-                                              confirmBtnVariant="destructive"
-                                            >
-                                              <button
-                                                type="button"
-                                                className="inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs text-destructive hover:bg-accent"
-                                                aria-label={`Xóa ${cn.code}`}
-                                              >
-                                                <Trash2 className="h-4 w-4" />
-                                              </button>
-                                            </ConfirmActionButton>
-                                          </div>
-                                        </TableCell>
-                                      </TableRow>
-                                    )
-                                  })
-                                ) : (
-                                  <TableRow>
-                                    <TableCell
-                                      colSpan={4}
-                                      className="text-center text-muted-foreground"
-                                    >
-                                      Không có đơn điều chỉnh
-                                    </TableCell>
-                                  </TableRow>
-                                )}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -1915,7 +1639,8 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                   <Printer className="h-4 w-4" />
                   In Hóa Đơn
                 </Button>
-                {invoice.status === 'pending' && (
+
+                {invoice.orderStatus === 'pending' && (
                   <Button
                     size="sm"
                     className={cn("gap-2 bg-amber-500 text-white hover:bg-amber-600", !isDesktop && "w-full")}
@@ -2100,7 +1825,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         )
       }
 
-      {/* Create Warehouse Receipt Confirm Dialog */}
       {/* Create Warehouse Receipt Confirm Dialog */}
       <ConfirmWarehouseReceiptDialog
         open={showConfirmWarehouseDialog}

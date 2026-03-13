@@ -187,14 +187,19 @@ export const updateInvoiceStatus = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       let response
-      if (data.status === 'pending') {
+      if (data.status === 'preparing') {
+        response = await api.put(`/invoices/${data.id}/approve`, data)
+      } else if (data.status === 'completed') {
+        response = await api.put(`/invoices/${data.id}/complete`, data)
+      } else if (data.status === 'cancelled') {
+        response = await api.put(`/invoices/${data.id}/cancel`, data)
+      } else if (data.status === 'pending') {
+        // Revert to pending - check if endpoint exists or just handle it
         response = await api.post(`/invoices/${data.id}/revert`)
       } else {
-        response = await api.put(`/invoices/${data.id}/update`, data)
+        response = await api.put(`/invoices/${data.id}`, data)
       }
       toast.success('Cập nhật trạng thái thành công')
-
-      // Return response data including warehouseInfo
       return response.data
     } catch (error) {
       const message = handleError(error)

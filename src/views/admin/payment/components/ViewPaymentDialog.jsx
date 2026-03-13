@@ -39,7 +39,7 @@ import MobilePaymentActions from './MobilePaymentActions'
 import { dateFormat } from '@/utils/date-format'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import { getPublicUrl } from '@/utils/file'
-import { getPaymentById, updatePaymentStatus } from '@/stores/PaymentSlice'
+import { getPaymentById, approvePayment, postPayment, updatePaymentStatus } from '@/stores/PaymentSlice'
 import UpdatePaymentStatusDialog from './UpdatePaymentStatusDialog'
 import PaymentFormDialog from './PaymentDialog'
 import { DeletePaymentDialog } from './DeletePaymentDialog'
@@ -63,6 +63,7 @@ const ViewPaymentDialog = ({
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)')
   const [fetchedPayment, setFetchedPayment] = useState(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [showUpdateStatusDialog, setShowUpdateStatusDialog] = useState(false)
@@ -112,6 +113,36 @@ const ViewPaymentDialog = ({
   }
 
   const dispatch = useDispatch()
+
+  const handleApprove = async () => {
+    try {
+      setActionLoading(true)
+      await dispatch(approvePayment({ id: paymentId })).unwrap()
+      const result = await dispatch(getPaymentById(paymentId)).unwrap()
+      setFetchedPayment(result)
+      onSuccess?.()
+      toast.success('Duyệt phiếu chi thành công')
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handlePost = async () => {
+    try {
+      setActionLoading(true)
+      await dispatch(postPayment({ id: paymentId })).unwrap()
+      const result = await dispatch(getPaymentById(paymentId)).unwrap()
+      setFetchedPayment(result)
+      onSuccess?.()
+      toast.success('Ghi sổ phiếu chi thành công')
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   const handleUpdateStatus = async (newStatus, id) => {
     try {
@@ -403,62 +434,15 @@ const ViewPaymentDialog = ({
                       <Separator className="my-4" />
                       <div className="flex justify-between items-center">
                         <strong>Trạng thái:</strong>
-                        {isMobile ? (
-                          <div className='flex items-center justify-end'>
-                            <Select
-                              value={payment?.status}
-                              onValueChange={(val) => handleUpdateStatus(val, payment.id)}
-                            >
-                              <SelectTrigger className="h-auto border-none bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0">
-                                <SelectValue placeholder="Chọn trạng thái">
-                                  <span
-                                    className={cn(
-                                      "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
-                                      payment?.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                        payment?.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                          'bg-yellow-100 text-yellow-700'
-                                    )}
-                                  >
-                                    {selectedStatusObj?.label || payment?.status}
-                                  </span>
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent position="popper" align="end" className="w-[140px] z-[100070]">
-                                {filteredStatuses(payment?.status).map((s) => (
-                                  <SelectItem
-                                    key={s.value}
-                                    value={s.value}
-                                    className="cursor-pointer text-xs"
-                                  >
-                                    <span
-                                      className={cn(
-                                        "inline-flex items-center gap-1 font-medium",
-                                        s.value === 'completed' ? 'text-green-600' :
-                                          s.value === 'cancelled' ? 'text-red-600' :
-                                            'text-yellow-600'
-                                      )}
-                                    >
-                                      {s.label}
-                                    </span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ) : (
-                          <div
-                            className="flex items-center gap-2 cursor-pointer hover:opacity-80"
-                            onClick={() => setShowUpdateStatusDialog(true)}
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={cn(
+                              payment?.isPosted ? 'bg-green-500' : payment?.approvedAt ? 'bg-blue-500' : (payment?.status === 'canceled' || payment?.status === 'cancelled') ? 'bg-red-500' : 'bg-yellow-500'
+                            )}
                           >
-                            <Badge
-                              className={cn(
-                                payment?.status === 'completed' ? 'bg-green-500' : (payment?.status === 'canceled' || payment?.status === 'cancelled') ? 'bg-red-500' : 'bg-yellow-500'
-                              )}
-                            >
-                              {payment?.status === 'completed' ? 'Đã chi' : payment?.status === 'draft' ? 'Nháp' : payment?.status === 'cancelled' ? 'Đã hủy' : payment?.status || 'Không xác định'}
-                            </Badge>
-                          </div>
-                        )}
+                            {payment?.isPosted ? 'Đã ghi sổ' : payment?.approvedAt ? 'Đã duyệt' : (payment?.status === 'cancelled' || payment?.status === 'canceled') ? 'Đã hủy' : 'Chờ duyệt'}
+                          </Badge>
+                        </div>
                       </div>
 
                       {showUpdateStatusDialog && (
@@ -662,6 +646,28 @@ const ViewPaymentDialog = ({
 
         <DialogFooter className={cn("hidden md:flex sm:space-x-0")}>
           <div className={cn("w-full grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end")}>
+            {(!payment?.approvedBy) && (
+              <Button
+                size="sm"
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                onClick={handleApprove}
+                disabled={actionLoading}
+              >
+                Duyệt phiếu
+              </Button>
+            )}
+
+            {(payment?.approvedBy && !payment?.isPosted) && (
+              <Button
+                size="sm"
+                className="gap-2 bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+                onClick={handlePost}
+                disabled={actionLoading}
+              >
+                Ghi sổ
+              </Button>
+            )}
+
             <Button
               size="sm"
               className="gap-2 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"

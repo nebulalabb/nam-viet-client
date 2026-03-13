@@ -35,6 +35,7 @@ import paymentReducer from './PaymentSlice'
 import warehouseReceiptReducer from './WarehouseReceiptSlice'
 import dashboardReducer from './DashboardSlice'
 import warrantyReducer from './WarrantySlice'
+import deliveryReducer from './DeliverySlice'
 
 const persistConfig = { key: 'nam-viet', storage }
 
@@ -76,6 +77,7 @@ export const store = configureStore({
     warehouseReceipt: warehouseReceiptReducer,
     dashboard: dashboardReducer,
     warranty: warrantyReducer,
+    delivery: deliveryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

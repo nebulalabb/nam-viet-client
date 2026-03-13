@@ -57,6 +57,7 @@ import ProductionReportPage from '@/views/admin/reports/production/ProductionRep
 import SalaryPage from '@/views/admin/salary/SalaryPage'
 import SalaryCalculatePage from '@/views/admin/salary/SalaryCalculatePage'
 import WarrantyPage from '@/views/admin/warranty/WarrantyPage'
+import DeliveryPage from '@/views/admin/delivery/DeliveryPage'
 
 const routes = [
   {
@@ -184,6 +185,11 @@ const routes = [
   {
     path: '/invoice-user',
     element: MyInvoicePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/delivery',
+    element: DeliveryPage,
     layout: AdminLayout,
   },
 

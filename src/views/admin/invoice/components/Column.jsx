@@ -2,7 +2,7 @@ import { DataTableRowActions } from './DataTableRowAction'
 import { DataTableColumnHeader } from './DataTableColumnHeader'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Phone, CreditCard, Pencil } from 'lucide-react'
+import { Phone, CreditCard, Truck, Store } from 'lucide-react'
 import { normalizeText } from '@/utils/normalize-text'
 import { dateFormat } from '@/utils/date-format'
 import { moneyFormat } from '@/utils/money-format'
@@ -136,6 +136,42 @@ export const columns = [
       )
       const searchValue = normalizeText(value)
       return searchableText.includes(searchValue)
+    },
+  },
+  {
+    id: 'orderType',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Hình thức" />
+    ),
+    cell: ({ row }) => {
+      const { isPickupOrder, deliveryAddress, shippingFee } = row.original
+      return (
+        <div className="flex flex-col gap-1 min-w-[120px]">
+          {isPickupOrder ? (
+            <Badge variant="outline" className="w-fit bg-green-50 text-green-700 border-green-200 font-medium">
+              <Store className="mr-1 h-3.5 w-3.5" />
+              Tại cửa hàng
+            </Badge>
+          ) : (
+            <>
+              <Badge variant="outline" className="w-fit bg-blue-50 text-blue-700 border-blue-200 font-medium">
+                <Truck className="mr-1 h-3.5 w-3.5" />
+                Giao hàng
+              </Badge>
+              {deliveryAddress && (
+                <span className="text-xs text-muted-foreground line-clamp-2 leading-relaxed" title={deliveryAddress}>
+                  Đ/c: {deliveryAddress}
+                </span>
+              )}
+              {shippingFee > 0 && (
+                <span className="text-[11px] font-semibold text-orange-600 bg-orange-50 w-fit px-1.5 py-0.5 rounded border border-orange-100 mt-0.5">
+                  Phí ship: {moneyFormat(shippingFee)}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      )
     },
   },
   {

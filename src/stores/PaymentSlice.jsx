@@ -58,20 +58,13 @@ export const getPaymentById = createAsyncThunk(
   },
 )
 
-export const updatePaymentStatus = createAsyncThunk(
-  'payment/update-payment-status',
-  async ({ id, status }, { rejectWithValue }) => {
+export const approvePayment = createAsyncThunk(
+  'payment/approve-payment',
+  async ({ id, notes }, { rejectWithValue }) => {
     try {
-      let response
-      if (status === 'completed') {
-        response = await api.post(`/payment-vouchers/${id}/complete`)
-      } else if (status === 'cancelled') {
-        response = await api.post(`/payment-vouchers/${id}/cancel`)
-      } else {
-        response = await api.put(`/payment-vouchers/${id}`, { status })
-      }
-      toast.success('Cập nhật trạng thái phiếu chi thành công')
-      return response.data.data || response.data
+      const response = await api.put(`/payment-vouchers/${id}/approve`, { notes })
+      toast.success('Duyệt phiếu chi thành công')
+      return response.data.data
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)
@@ -79,6 +72,43 @@ export const updatePaymentStatus = createAsyncThunk(
   },
 )
 
+export const postPayment = createAsyncThunk(
+  'payment/post-payment',
+  async ({ id, notes }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/payment-vouchers/${id}/post`, { notes })
+      toast.success('Ghi sổ phiếu chi thành công')
+      return response.data.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
+
+
+export const updatePaymentStatus = createAsyncThunk(
+  'payment/update-status',
+  async ({ id, status, notes }, { dispatch, rejectWithValue }) => {
+    try {
+      let response
+      if (status === 'approved') {
+        response = await api.put(`/payment-vouchers/${id}/approve`, { notes })
+      } else if (status === 'posted' || status === 'completed') {
+        response = await api.post(`/payment-vouchers/${id}/post`, { notes })
+      } else if (status === 'cancelled' || status === 'canceled') {
+        response = await api.delete(`/payment-vouchers/${id}`)
+        return { id, status: 'canceled', deletedAt: new Date().toISOString() }
+      } else {
+        response = await api.put(`/payment-vouchers/${id}`, { status, notes })
+      }
+      return response.data.data
+    } catch (error) {
+      const message = handleError(error)
+      return rejectWithValue(message)
+    }
+  },
+)
 
 export const updatePayment = createAsyncThunk(
   'payment/update-payment',
@@ -192,6 +222,27 @@ export const paymentSlice = createSlice({
         state.error = action.payload
       })
 
+      .addCase(updatePaymentStatus.pending, (state) => {
+        state.loading = true
+      })
+      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
+        state.loading = false
+        const updatedPayment = {
+          ...action.payload,
+          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : action.payload.deletedAt ? 'cancelled' : 'draft'
+        }
+        const index = state.payments.findIndex((p) => p.id === updatedPayment.id)
+        if (index !== -1) {
+          state.payments[index] = { ...state.payments[index], ...updatedPayment }
+        }
+        toast.success('Cập nhật trạng thái thành công')
+      })
+      .addCase(updatePaymentStatus.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Lỗi không xác định'
+        toast.error(state.error)
+      })
+
       .addCase(getMyPayments.pending, (state) => {
         state.loading = true
       })
@@ -214,7 +265,7 @@ export const paymentSlice = createSlice({
       // .addCase(updatePaymentStatus.pending, (state) => {
       //   state.loading = true
       // })
-      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
+      .addCase(approvePayment.fulfilled, (state, action) => {
         state.loading = false
         const updatedPayment = action.payload
         const index = state.payments.findIndex((p) => p.id === updatedPayment.id)
@@ -222,10 +273,13 @@ export const paymentSlice = createSlice({
           state.payments[index] = { ...state.payments[index], ...updatedPayment }
         }
       })
-      .addCase(updatePaymentStatus.rejected, (state, action) => {
+      .addCase(postPayment.fulfilled, (state, action) => {
         state.loading = false
-        state.error = action.payload.message || 'Lỗi không xác định'
-        toast.error(state.error)
+        const updatedPayment = action.payload
+        const index = state.payments.findIndex((p) => p.id === updatedPayment.id)
+        if (index !== -1) {
+          state.payments[index] = { ...state.payments[index], ...updatedPayment }
+        }
       })
 
       .addCase(createPayment.pending, (state) => {

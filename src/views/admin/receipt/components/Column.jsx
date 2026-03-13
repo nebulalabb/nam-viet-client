@@ -7,8 +7,7 @@ import ViewReceiptDialog from './ViewReceiptDialog'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useDispatch } from 'react-redux'
-import { getReceiptById, updateReceiptStatus } from '@/stores/ReceiptSlice'
-import UpdateReceiptStatusDialog from './UpdateReceiptStatusDialog'
+import { getReceiptById } from '@/stores/ReceiptSlice'
 import { receiptStatus, paymentMethods } from '../data'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -200,14 +199,25 @@ export const columns = [
       const [showUpdateStatusDialog, setShowUpdateStatusDialog] = useState(false)
       const dispatch = useDispatch()
 
-      const handleUpdateStatus = async (newStatus, id) => {
-        try {
-          await dispatch(updateReceiptStatus({ id, status: newStatus })).unwrap()
-          toast.success('Cập nhật trạng thái thành công')
-          setShowUpdateStatusDialog(false)
-          // ReceiptSlice.updateReceiptStatus.fulfilled updates local state directly — no need to refetch
-        } catch (error) {
-          console.error(error)
+      const getStatusColor = (s) => {
+        switch (s) {
+          case 'draft': return 'bg-yellow-500 hover:bg-yellow-600'
+          case 'approved': return 'bg-blue-500 hover:bg-blue-600'
+          case 'posted': return 'bg-green-500 hover:bg-green-600'
+          case 'cancelled':
+          case 'canceled': return 'bg-red-500 hover:bg-red-600'
+          default: return 'bg-gray-500'
+        }
+      }
+
+      const getStatusLabel = (s) => {
+        switch (s) {
+          case 'draft': return 'Chờ duyệt'
+          case 'approved': return 'Đã duyệt'
+          case 'posted': return 'Đã ghi sổ'
+          case 'cancelled':
+          case 'canceled': return 'Đã hủy'
+          default: return s
         }
       }
 
@@ -215,22 +225,18 @@ export const columns = [
         <>
           <div className="w-28 flex items-center justify-center gap-2">
             <Badge
-              className={`cursor-pointer hover:underline ${status === 'completed' ? 'bg-green-500' : status === 'cancelled' ? 'bg-red-500' : 'bg-yellow-500'}`}
-              onClick={() => setShowUpdateStatusDialog(true)}
+              className={cn("cursor-pointer", getStatusColor(status))}
+              onClick={() => setShowViewReceiptDialog(true)}
             >
-              {status === 'completed' ? 'Đã thu' : status === 'draft' ? 'Nháp' : status === 'cancelled' ? 'Đã hủy' : status}
+              {getStatusLabel(status)}
             </Badge>
           </div>
-          {showUpdateStatusDialog && (
-            <UpdateReceiptStatusDialog
-              open={showUpdateStatusDialog}
-              onOpenChange={setShowUpdateStatusDialog}
+          {showViewReceiptDialog && (
+            <ViewReceiptDialog
+              open={showViewReceiptDialog}
+              onOpenChange={setShowViewReceiptDialog}
               receiptId={row.original.id}
-              currentStatus={status}
-              statuses={receiptStatus}
-              onSubmit={handleUpdateStatus}
-              contentClassName="z-[10002]"
-              overlayClassName="z-[10001]"
+              showTrigger={false}
             />
           )}
         </>

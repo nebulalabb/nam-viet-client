@@ -40,8 +40,7 @@ import { Printer } from 'lucide-react'
 import { dateFormat } from '@/utils/date-format'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import { getPublicUrl } from '@/utils/file'
-import { getReceiptById, updateReceiptStatus, getReceiptQRCode } from '@/stores/ReceiptSlice'
-import UpdateReceiptStatusDialog from './UpdateReceiptStatusDialog'
+import { getReceiptById, approveReceipt, postReceipt, getReceiptQRCode } from '@/stores/ReceiptSlice'
 import { DeleteReceiptDialog } from './DeleteReceiptDialog'
 import { receiptStatus, paymentMethods } from '../data'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -62,7 +61,7 @@ const ViewReceiptDialog = ({
   const isMobile = useMediaQuery('(max-width: 768px)')
   const [receipt, setReceipt] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [showUpdateStatusDialog, setShowUpdateStatusDialog] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
   const [printData, setPrintData] = useState(null)
 
   const [qrCodeData, setQrCodeData] = useState(null)
@@ -109,17 +108,33 @@ const ViewReceiptDialog = ({
 
   const dispatch = useDispatch()
 
-  const handleUpdateStatus = async (newStatus, id) => {
+  const handleApprove = async () => {
     try {
-      await dispatch(updateReceiptStatus({ id, status: newStatus })).unwrap()
-      setShowUpdateStatusDialog(false)
+      setActionLoading(true)
+      await dispatch(approveReceipt({ id: receiptId })).unwrap()
       // Refetch receipt to update view
       const result = await dispatch(getReceiptById(receiptId)).unwrap()
       setReceipt(result)
-      toast.success('Cập nhật trạng thái thành công')
+      toast.success('Phê duyệt phiếu thu thành công')
     } catch (error) {
       console.error(error)
-      // Toast is handled in slice usually, but adding success here
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handlePost = async () => {
+    try {
+      setActionLoading(true)
+      await dispatch(postReceipt({ id: receiptId })).unwrap()
+      // Refetch receipt to update view
+      const result = await dispatch(getReceiptById(receiptId)).unwrap()
+      setReceipt(result)
+      toast.success('Ghi sổ phiếu thu thành công')
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -130,9 +145,10 @@ const ViewReceiptDialog = ({
   const getReceiptStatusColor = (statusValue) => {
     switch (statusValue) {
       case 'draft': return 'bg-yellow-100 text-yellow-700'
-      case 'completed': return 'bg-green-100 text-green-700'
-      case 'canceled':
-      case 'cancelled': return 'bg-red-100 text-red-700'
+      case 'approved': return 'bg-blue-100 text-blue-700'
+      case 'posted': return 'bg-green-100 text-green-700'
+      case 'cancelled':
+      case 'canceled': return 'bg-red-100 text-red-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
@@ -455,95 +471,17 @@ const ViewReceiptDialog = ({
                       <Separator className="my-4" />
                       <div className="flex justify-between">
                         <strong>Trạng thái:</strong>
-                        {isMobile ? (
-                          <div className='flex items-center justify-end'>
-                            <Select
-                              value={receipt?.status === 'cancelled' ? 'canceled' : receipt?.status}
-                              onValueChange={(val) => handleUpdateStatus(val, receipt.id)}
-                            >
-                              <SelectTrigger className="h-auto border-none bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0">
-                                <SelectValue>
-                                  <span
-                                    className={cn(
-                                      "inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium",
-                                      getReceiptStatusColor(receipt?.status)
-                                    )}
-                                  >
-                                    {getReceiptStatusObj(receipt?.status === 'cancelled' ? 'canceled' : receipt?.status)?.icon &&
-                                      // Using standard icon rendering if available in data, or fallback
-                                      // actually data.js has icons as components
-                                      ((Icon) => Icon && <Icon className="h-3 w-3" />)(getReceiptStatusObj(receipt?.status === 'cancelled' ? 'canceled' : receipt?.status)?.icon)
-                                    }
-                                    {getReceiptStatusObj(receipt?.status)?.label || receipt?.status}
-                                  </span>
-                                </SelectValue>
-                              </SelectTrigger>
-                              <SelectContent align="end" className="w-[140px] z-[100060]">
-                                {receiptStatus
-                                  .filter((s) => {
-                                    const currentStatus = receipt?.status === 'cancelled' ? 'canceled' : receipt?.status
-                                    if (
-                                      currentStatus === 'canceled' ||
-                                      currentStatus === 'cancelled'
-                                    ) {
-                                      return (
-                                        s.value === 'canceled' ||
-                                        s.value === 'cancelled'
-                                      )
-                                    }
-                                    if (currentStatus === 'completed') {
-                                      return s.value !== 'draft'
-                                    }
-                                    return true
-                                  })
-                                  .map((s) => (
-                                    <SelectItem
-                                      key={s.value}
-                                      value={s.value}
-                                      className="text-xs"
-                                    >
-                                      <div
-                                        className={cn(
-                                          "flex items-center gap-1 rounded-full px-2 py-1",
-                                          getReceiptStatusColor(s.value)
-                                        )}
-                                      >
-                                        {s.icon && <s.icon className="h-3 w-3" />}
-                                        <span>{s.label}</span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ) : (
-                          <div
-                            className="flex items-center gap-2 cursor-pointer hover:opacity-80"
-                            onClick={() => setShowUpdateStatusDialog(true)}
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={cn(
+                              receipt?.isPosted ? 'bg-green-500' : receipt?.approvedAt ? 'bg-blue-500' : (receipt?.status === 'canceled' || receipt?.status === 'cancelled') ? 'bg-red-500' : 'bg-yellow-500'
+                            )}
                           >
-                            <Badge
-                              className={cn(
-                                receipt?.status === 'completed' ? 'bg-green-500' : (receipt?.status === 'canceled' || receipt?.status === 'cancelled') ? 'bg-red-500' : 'bg-yellow-500'
-                              )}
-                            >
-                              {receipt?.status === 'completed' ? 'Đã thu' : receipt?.status === 'draft' ? 'Nháp' : (receipt?.status === 'cancelled' || receipt?.status === 'canceled') ? 'Đã hủy' : receipt?.status || 'Không xác định'}
-                            </Badge>
-                          </div>
-                        )}
+                            {receipt?.isPosted ? 'Đã ghi sổ' : receipt?.approvedAt ? 'Đã duyệt' : (receipt?.status === 'cancelled' || receipt?.status === 'canceled') ? 'Đã hủy' : 'Chờ duyệt'}
+                          </Badge>
+                        </div>
                       </div>
 
-                      {showUpdateStatusDialog && (
-                        <UpdateReceiptStatusDialog
-                          open={showUpdateStatusDialog}
-                          onOpenChange={setShowUpdateStatusDialog}
-                          receiptId={receipt.id}
-                          currentStatus={receipt.status}
-                          statuses={receiptStatus}
-                          onSubmit={handleUpdateStatus}
-                          contentClassName="z-[10006]"
-                          overlayClassName="z-[10005]"
-                        />
-                      )}
                       <div className="flex justify-between">
                         <strong>Đã thanh toán:</strong>
                         <div>{moneyFormat(receipt?.invoice?.paidAmount ?? receipt?.invoice?.paid_amount ?? 0)}</div>
@@ -563,7 +501,7 @@ const ViewReceiptDialog = ({
                                     : 'border-transparent shadow-none text-green-600 bg-transparent px-0 text-sm hover:bg-transparent'
                                 }
                               >
-                                {remaining > 0 ? moneyFormat(remaining) : 'Đã thanh toán hết'}
+                                {remaining > 0 ? moneyFormat(remaining) : 'Đã thu đủ'}
                               </Badge>
                             )
                           })()}
@@ -739,6 +677,28 @@ const ViewReceiptDialog = ({
 
         <DialogFooter className={cn("hidden md:flex sm:space-x-0")}>
           <div className={cn("w-full grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end")}>
+            {(!receipt?.approvedBy) && (
+              <Button
+                size="sm"
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                onClick={handleApprove}
+                disabled={actionLoading}
+              >
+                Duyệt phiếu
+              </Button>
+            )}
+
+            {(receipt?.approvedBy && !receipt?.isPosted) && (
+              <Button
+                size="sm"
+                className="gap-2 bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+                onClick={handlePost}
+                disabled={actionLoading}
+              >
+                Ghi sổ
+              </Button>
+            )}
+
             {(receipt?.status === 'draft') && (
               <Button
                 size="sm"
