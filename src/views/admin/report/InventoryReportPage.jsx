@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import api from '@/utils/axios'
 import InventoryFilters from './components/InventoryFilters'
 import InventoryKPICards from './components/InventoryKPICards'
@@ -70,6 +71,34 @@ const InventoryReportPage = () => {
         }
     }
 
+    // Export to Excel
+    const handleExport = async () => {
+        try {
+            const params = {}
+            if (filters.warehouseId) params.warehouseId = filters.warehouseId
+            if (filters.categoryId) params.categoryId = filters.categoryId
+            if (filters.searchTerm) params.searchTerm = filters.searchTerm
+            if (filters.showExpiring) params.showExpiring = true
+
+            const response = await api.get('/reports/inventory/export', {
+                params,
+                responseType: 'blob'
+            })
+
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `BaoCaoTonKho_${new Date().toISOString().split('T')[0]}.xlsx`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error('Export error:', err)
+            alert('Không thể xuất file Excel. Vui lòng thử lại.')
+        }
+    }
+
     // Fetch data when filters change
     useEffect(() => {
         fetchInventoryReport()
@@ -85,6 +114,14 @@ const InventoryReportPage = () => {
                             Theo dõi tình trạng tồn kho và cảnh báo
                         </p>
                     </div>
+                    <Button 
+                        onClick={handleExport}
+                        className="flex items-center gap-2"
+                        variant="default"
+                    >
+                        <Download className="h-4 w-4" />
+                        Xuất Excel
+                    </Button>
                 </div>
 
                 {/* Permission Debug - chỉ hiện khi thiếu quyền */}

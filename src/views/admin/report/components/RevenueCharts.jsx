@@ -28,18 +28,25 @@ const CHANNEL_LABELS = {
   wholesale: 'Bán sỉ',
   online: 'Trực tuyến',
   distributor: 'Đại lý',
+  pickup: 'Mua tại chỗ',
+  delivery: 'Giao hàng',
 }
 
 const RevenueCharts = ({ data, isLoading = false }) => {
   if (isLoading || !data) return null
 
   // Prepare trend data for line chart
-  const trendData = data.trendData || []
+  const trendData = (data.trendData || data.trends || []).map(item => ({
+    date: item.date,
+    revenue: item.revenue || item.totalRevenue || 0,
+    orders: item.orderCount || 0,
+  }))
 
   // Prepare channel data for pie chart
+  // API returns byChannel with netRevenue field, need to map to revenue for chart
   const channelData = (data.byChannel || []).map((item) => ({
     name: CHANNEL_LABELS[item.channel] || item.channel,
-    value: item.revenue,
+    value: item.netRevenue || item.revenue || 0,
     orderCount: item.orderCount,
   }))
 

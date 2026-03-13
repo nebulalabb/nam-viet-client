@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import api from '@/utils/axios'
+import { exportSalesReportToExcel } from '@/utils/sales-report-export'
 
 // Import components
 import RevenueKPICards from './components/RevenueKPICards'
 import RevenueFilters from './components/RevenueFilters'
 import RevenueCharts from './components/RevenueCharts'
 import RevenueDataTables from './components/RevenueDataTables'
+import SalesAdvancedFilters from './components/SalesAdvancedFilters'
 
 const SalesReportPage = () => {
     // Calculate default date range (last 30 days)
@@ -84,7 +87,10 @@ const SalesReportPage = () => {
                     byChannel: reportData.byChannel || [],
                     topProducts: reportData.topProducts || [],
                     staffPerformance: reportData.staffPerformance || [],
-                    topCustomers: reportData.topCustomers || []
+                    topCustomers: reportData.topCustomers || [],
+                    orders: reportData.orders || [],
+                    productPerformance: reportData.productPerformance || [],
+                    customerAnalysis: reportData.customerAnalysis || []
                 }
 
                 setData(validatedData)
@@ -114,6 +120,18 @@ const SalesReportPage = () => {
         setFilters(prev => ({ ...prev, ...newFilters }))
     }
 
+    // Handle export to Excel
+    const handleExportExcel = async () => {
+        try {
+            toast.info('Đang xuất file Excel...')
+            await exportSalesReportToExcel(data, filters)
+            toast.success('Xuất Excel thành công!')
+        } catch (error) {
+            console.error('Error exporting Excel:', error)
+            toast.error('Có lỗi khi xuất Excel')
+        }
+    }
+
     // Fetch data when filters change
     useEffect(() => {
         fetchSalesReport()
@@ -121,7 +139,7 @@ const SalesReportPage = () => {
 
     return (
         <Layout>
-            <LayoutBody className="flex flex-col" fixedHeight>
+            <LayoutBody className="flex flex-col space-y-4 pb-8 overflow-y-auto">
                 {/* Header */}
                 <div className="mb-4 flex items-center justify-between">
                     <div>
@@ -130,11 +148,34 @@ const SalesReportPage = () => {
                             Phân tích hiệu quả bán hàng và khách hàng
                         </p>
                     </div>
+                    
+                    {/* Export Buttons */}
+                    {data && (
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleExportExcel}
+                                disabled={loading}
+                                className="flex items-center gap-2"
+                            >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Xuất Excel
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filters */}
-                <div className="mb-6">
+                <div className="mb-4">
                     <RevenueFilters onFilterChange={handleFilterChange} />
+                </div>
+
+                {/* Advanced Filters */}
+                <div className="mb-6">
+                    <SalesAdvancedFilters filters={filters} onFilterChange={handleFilterChange} />
                 </div>
 
                 {/* Error State */}
@@ -162,8 +203,8 @@ const SalesReportPage = () => {
                     <RevenueDataTables data={data} isLoading={loading} />
                 </div>
 
-                {/* Debug Info (remove in production) */}
-                {process.env.NODE_ENV === 'development' && (
+                {/* Debug Info - Only in development */}
+                {process.env.NODE_ENV === 'development' && false && (
                     <Card className="mt-4 border-blue-200 bg-blue-50">
                         <CardContent className="py-4">
                             <div className="space-y-2">
