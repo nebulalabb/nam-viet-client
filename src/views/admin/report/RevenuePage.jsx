@@ -1,27 +1,30 @@
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 import api from '@/utils/axios'
 import RevenueKPICards from './components/RevenueKPICards'
 import RevenueFilters from './components/RevenueFilters'
 import RevenueCharts from './components/RevenueCharts'
 import RevenueDataTables from './components/RevenueDataTables'
+import { Download } from 'lucide-react'
 
 const RevenuePage = () => {
     const [loading, setLoading] = useState(false)
     const [data, setData] = useState(null)
     const [error, setError] = useState(null)
     const [hasAppliedFilter, setHasAppliedFilter] = useState(false)
+    const [filters, setFilters] = useState(null)
 
-    const fetchData = async (filters) => {
+    const fetchData = async (filterParams) => {
         setLoading(true)
         setError(null)
         try {
             const response = await api.get('/reports/revenue', {
                 params: {
-                    fromDate: filters.fromDate,
-                    toDate: filters.toDate,
-                    groupBy: filters.groupBy || 'day'
+                    fromDate: filterParams.fromDate,
+                    toDate: filterParams.toDate,
+                    groupBy: filterParams.groupBy || 'day'
                 }
             })
             console.log('✅ API Response:', response.data)
@@ -35,29 +38,70 @@ const RevenuePage = () => {
         }
     }
 
-    const handleFilterChange = (filters) => {
-        fetchData(filters)
+    const handleFilterChange = (filterParams) => {
+        setFilters(filterParams)
+        fetchData(filterParams)
+    }
+
+    const handleExport = async () => {
+        try {
+            const params = {}
+            if (filters) {
+                params.fromDate = filters.fromDate
+                params.toDate = filters.toDate
+                if (filters.groupBy) params.groupBy = filters.groupBy
+            }
+
+            const response = await api.get('/reports/revenue/export', {
+                params,
+                responseType: 'blob'
+            })
+
+            const url = window.URL.createObjectURL(new Blob([response.data]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `BaoCaoDoanhThu_${new Date().toISOString().split('T')[0]}.xlsx`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error('Export error:', err)
+            alert('Không thể xuất file Excel. Vui lòng thử lại.')
+        }
     }
 
     // Auto load data on mount with default 30 days
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0]
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        
-        fetchData({
+
+        const defaultFilters = {
             fromDate: thirtyDaysAgo,
             toDate: today,
             groupBy: 'day'
-        })
+        }
+        setFilters(defaultFilters)
+        fetchData(defaultFilters)
     }, []) // Run once on mount
 
     return (
         <Layout>
             <div className="p-6 space-y-6 overflow-auto h-full bg-gray-50 dark:bg-gray-900">
                 {/* Page Header */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border-l-4 border-green-600">
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Báo cáo Doanh thu</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Phân tích chi tiết doanh thu và hiệu suất kinh doanh</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border-l-4 border-green-600 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Báo cáo Doanh thu</h2>
+                        <p className="text-gray-600 dark:text-gray-400 mt-1">Phân tích chi tiết doanh thu và hiệu suất kinh doanh</p>
+                    </div>
+                    <Button
+                        onClick={handleExport}
+                        className="flex items-center gap-2"
+                        variant="default"
+                    >
+                        <Download className="h-4 w-4" />
+                        Xuất Excel
+                    </Button>
                 </div>
 
                 {/* Filters */}

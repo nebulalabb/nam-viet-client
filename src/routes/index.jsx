@@ -30,7 +30,6 @@ import ProductPage from '../views/admin/product/ProductPage'
 import InventoryWarningPage from '../views/admin/inventory-warning/InventoryWarningPage'
 import AttributePage from '../views/admin/attribute/AttributePage'
 import TaxPage from '../views/admin/tax/TaxPage'
-import RevenuePage from '../views/admin/report/RevenuePage'
 
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
@@ -49,11 +48,11 @@ import MyPaymentPage from '@/views/admin/payment/MyPaymentPage'
 import WarehouseInPage from '@/views/admin/warehouse-receipt/WarehouseInPage'
 import WarehouseOutPage from '@/views/admin/warehouse-receipt/WarehouseOutPage'
 
-import RevenueReportPage from '@/views/admin/reports/revenue/RevenueReportPage'
-import InventoryReportPage from '@/views/admin/reports/inventory/InventoryReportPage'
-import SalesReportPage from '@/views/admin/reports/sales/SalesReportPage'
-import FinancialReportPage from '@/views/admin/reports/financial/FinancialReportPage'
-import ProductionReportPage from '@/views/admin/reports/production/ProductionReportPage'
+import RevenueReportPage from '@/views/admin/report/RevenuePage'
+import InventoryReportPage from '@/views/admin/report/InventoryReportPage'
+import SalesReportPage from '@/views/admin/report/SalesReportPage'
+import FinancialReportPage from '@/views/admin/report/FinancialReportPage'
+// ProductionReportPage không tồn tại trong thư mục report mới
 import SalaryPage from '@/views/admin/salary/SalaryPage'
 import SalaryCalculatePage from '@/views/admin/salary/SalaryCalculatePage'
 import WarrantyPage from '@/views/admin/warranty/WarrantyPage'
@@ -272,11 +271,11 @@ const routes = [
     element: FinancialReportPage,
     layout: AdminLayout,
   },
-  {
-    path: '/production-report',
-    element: ProductionReportPage,
-    layout: AdminLayout,
-  },
+  // {
+  //   path: '/production-report',
+  //   element: ProductionReportPage,
+  //   layout: AdminLayout,
+  // },
   {
     path: '/user',
     element: UserPage, // Trang người dùng hệ thống
@@ -285,27 +284,6 @@ const routes = [
   {
     path: '/supplier',
     element: SupplierPage,
-    layout: AdminLayout,
-  },
-  // Báo cáo
-  {
-    path: '/revenue',
-    element: RevenuePage,
-    layout: AdminLayout,
-  },
-  {
-    path: '/inventory-report',
-    element: InventoryReportPage,
-    layout: AdminLayout,
-  },
-  {
-    path: '/sales-report',
-    element: SalesReportPage,
-    layout: AdminLayout,
-  },
-  {
-    path: '/financial-report',
-    element: FinancialReportPage,
     layout: AdminLayout,
   },
   {

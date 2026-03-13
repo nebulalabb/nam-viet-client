@@ -118,11 +118,46 @@ Trang đã sẵn sàng để test với API thật!
 
 **Xem chi tiết:** `SALES_REPORT_TESTING_GUIDE.md`
 
-### ⏳ Phase 3: Advanced Features (CHỜ)
-- [ ] Add advanced filters (warehouse, channel, customer, staff)
-- [ ] Add export to Excel
-- [ ] Add export to PDF
-- [ ] Add print functionality
+### ✅ Phase 3: Advanced Features (HOÀN THÀNH)
+
+#### Phase 3.1: Advanced Filters ✅
+- [x] Create SalesAdvancedFilters component
+- [x] Warehouse dropdown (fetch from API)
+- [x] Sales channel dropdown
+- [x] Order status dropdown
+- [x] Staff dropdown (fetch from API)
+- [x] Customer autocomplete search
+- [x] Collapsible UI (expand/collapse)
+- [x] Reset advanced filters button
+- [x] Integrate into SalesReportPage
+
+#### Phase 3.2: Export Features ✅
+- [x] Create sales-report-export.js utility
+- [x] Export to Excel (ExcelJS)
+  - [x] Summary sheet
+  - [x] Orders sheet
+  - [x] Products sheet
+  - [x] Customers sheet
+- [x] Print functionality
+- [x] Add export buttons to header
+- [x] Handle loading states
+- [x] Toast notifications
+
+**Files Created:**
+- ✅ `SalesAdvancedFilters.jsx` - Advanced filters component
+- ✅ `sales-report-export.js` - Export utilities
+
+---
+
+## 🎉 PHASE 3 HOÀN THÀNH!
+
+**Tính năng mới:**
+- ✅ Bộ lọc nâng cao (warehouse, channel, customer, staff, status)
+- ✅ Xuất Excel (4 sheets: Summary, Orders, Products, Customers)
+- ✅ In báo cáo
+- ✅ UI collapsible cho advanced filters
+- ✅ Customer search với debounce
+- ✅ Loading states cho tất cả actions
 
 ### ⏳ Phase 4: Testing & Polish (CHỜ)
 - [ ] Test with empty data

@@ -34,13 +34,14 @@ const RevenueKPICards = ({ data, isLoading = false }) => {
 
   const { summary } = data
 
-  const grossRevenue = Number(summary.grossRevenue || 0)
+  // API getSalesReport trả về: netRevenue, totalOrders, newDebt, totalDebt (không có grossRevenue, paidAmount, totalDiscount)
+  const grossRevenue = Number(summary.grossRevenue ?? summary.netRevenue ?? 0)
   const totalDiscount = Number(summary.totalDiscount || 0)
   const netRevenue = Number(summary.netRevenue || 0)
-  const paidAmount = Number(summary.paidAmount || 0)
+  const paidAmount = Number(summary.paidAmount ?? (netRevenue - Number(summary.newDebt ?? summary.totalDebt ?? 0)))
   const totalOrders = Number(summary.totalOrders || 0)
-  const debtAmount = Number(summary.debtAmount || 0)
-  const averageOrderValue = Number(summary.averageOrderValue || 0)
+  const debtAmount = Number(summary.debtAmount ?? summary.newDebt ?? summary.totalDebt ?? 0)
+  const averageOrderValue = Number(summary.averageOrderValue ?? (totalOrders > 0 ? netRevenue / totalOrders : 0))
 
   const paidPct = netRevenue > 0 ? (paidAmount / netRevenue) * 100 : 0
   const discountPct = grossRevenue > 0 ? (totalDiscount / grossRevenue) * 100 : 0

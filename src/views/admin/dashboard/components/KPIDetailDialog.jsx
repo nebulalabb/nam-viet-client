@@ -14,8 +14,8 @@ import { PagePreviewDialog } from './PagePreviewDialog'
 // Lazy imports for page embeds
 import InvoicePage from '../../../../views/admin/invoice/InvoicePage'
 import CustomerDebtPage from '../../../../views/admin/debt/CustomerDebtPage'
-import RevenueReportPage from '../../../../views/admin/reports/revenue/RevenueReportPage'
-import ProductionReportPage from '../../../../views/admin/reports/production/ProductionReportPage'
+import RevenueReportPage from '../../../../views/admin/report/RevenuePage'
+// ProductionReportPage không tồn tại trong thư mục report mới - cần tạo hoặc xóa reference
 import WarehousePage from '../../../../views/admin/warehouse/WarehousePage'
 
 // Safe Vietnamese money formatter (handles Prisma Decimal / BigInt)
