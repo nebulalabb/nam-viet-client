@@ -36,6 +36,8 @@ import InvoiceDialog from '../../invoice/components/InvoiceDialog'
 import ViewProductDialog from '../../product/components/ViewProductDialog'
 import CustomerDetailDialog from '../../customer/components/CustomerDetailDialog'
 import ViewSupplierDialog from '../../supplier/components/ViewSupplierDialog'
+import { getProducts } from '@/stores/ProductSlice'
+import { getWarehouses } from '@/stores/WarehouseSlice'
 import {
   Select,
   SelectContent,
@@ -86,6 +88,8 @@ const ViewWarehouseReceiptDialog = ({
         await dispatch(cancelWarehouseReceipt(id)).unwrap()
       } else if (newStatus === 'posted') {
         await dispatch(postWarehouseReceipt(id)).unwrap()
+        dispatch(getProducts())
+        dispatch(getWarehouses())
       } else {
         await dispatch(updateWarehouseReceipt({ id, data: { status: newStatus } })).unwrap()
       }
@@ -93,6 +97,7 @@ const ViewWarehouseReceiptDialog = ({
       toast.success(newStatus === 'cancelled' ? 'Hủy phiếu thành công' : newStatus === 'posted' ? 'Duyệt phiếu thành công' : 'Cập nhật trạng thái thành công')
       setShowUpdateStatusDialog(false)
       fetchData()
+      onSuccess?.()
     } catch (error) {
       console.error(error)
     }

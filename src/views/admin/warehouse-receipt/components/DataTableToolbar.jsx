@@ -43,7 +43,7 @@ export function DataTableToolbar({ table, onRefresh }) {
     const invalidReceipts = selectedReceipts.filter(inv => !['draft', 'cancelled'].includes(inv.status))
 
     if (invalidReceipts.length > 0) {
-      toast.error('Chỉ có thể xóa các phiếu kho ở trạng thái Nháp hoặc Đã hủy')
+      toast.error('Chỉ có thể xóa các phiếu kho ở trạng thái Chờ duyệt hoặc Hủy')
       return
     }
 

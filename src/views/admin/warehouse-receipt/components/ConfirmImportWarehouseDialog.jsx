@@ -443,7 +443,7 @@ const ConfirmImportWarehouseDialog = ({
             <p className="font-medium">⚠️ Lưu ý:</p>
             <ul className="ml-4 mt-1 list-disc space-y-1">
               <li>
-                Phiếu nhập kho sẽ được tạo ở trạng thái <strong>Nháp</strong> với toàn bộ sản phẩm.
+                Phiếu nhập kho sẽ được tạo ở trạng thái <strong>Chờ duyệt</strong> với toàn bộ sản phẩm.
               </li>
               <li>
                 Tồn kho chưa được cộng cho đến khi <strong>Ghi sổ kho</strong>.
