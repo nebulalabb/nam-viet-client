@@ -61,6 +61,40 @@ export const createOvertimeSession = createAsyncThunk(
     }
 )
 
+export const updateOvertimeSession = createAsyncThunk(
+    'overtime/updateOvertimeSession',
+    async ({ id, data }, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.put(`/overtime/${id}`, data)
+            toast.success('Cập nhật phiên tăng ca thành công!')
+            dispatch(getOvertimeSessionDetail(id))
+            dispatch(getOvertimeSessions())
+            return response.data
+        } catch (error) {
+            const message = handleError(error)
+            toast.error(message || 'Cập nhật phiên tăng ca thất bại!')
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const deleteOvertimeSession = createAsyncThunk(
+    'overtime/deleteOvertimeSession',
+    async (id, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.delete(`/overtime/${id}`)
+            toast.success('Xóa phiên tăng ca thành công!')
+            dispatch(getOvertimeSessions())
+            dispatch(getOvertimeStats())
+            return id // Return ID to remove from state if needed
+        } catch (error) {
+            const message = handleError(error)
+            toast.error(message || 'Xóa phiên tăng ca thất bại!')
+            return rejectWithValue(message)
+        }
+    }
+)
+
 export const addEmployeesToOvertime = createAsyncThunk(
     'overtime/addEmployeesToOvertime',
     async ({ sessionId, userIds }, { rejectWithValue, dispatch }) => {
@@ -170,6 +204,20 @@ const overtimeSlice = createSlice({
                 state.loading = false
             })
             .addCase(createOvertimeSession.rejected, handleRejected)
+
+            // updateOvertimeSession
+            .addCase(updateOvertimeSession.pending, handlePending)
+            .addCase(updateOvertimeSession.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(updateOvertimeSession.rejected, handleRejected)
+
+            // deleteOvertimeSession
+            .addCase(deleteOvertimeSession.pending, handlePending)
+            .addCase(deleteOvertimeSession.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(deleteOvertimeSession.rejected, handleRejected)
 
             // addEmployeesToOvertime
             .addCase(addEmployeesToOvertime.pending, handlePending)

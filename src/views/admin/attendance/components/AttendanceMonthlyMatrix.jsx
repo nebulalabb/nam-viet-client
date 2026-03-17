@@ -17,7 +17,9 @@ export default function AttendanceMonthlyMatrix({
     const attendanceMap = useMemo(() => {
         const map = new Map()
         attendances.forEach((att) => {
-            map.set(`${att.userId}-${att.date}`, att)
+            if (!att.date) return
+            const dateStr = new Date(att.date).toISOString().split('T')[0]
+            map.set(`${att.userId}-${dateStr}`, att)
         })
         return map
     }, [attendances])

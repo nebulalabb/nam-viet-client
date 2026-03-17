@@ -162,7 +162,6 @@ const UpdateWarehouseReceiptDialog = ({
                 unitId: d.unitId,
                 unitName: d.unitName,
                 quantity: parseFloat(d.qtyActual) || parseFloat(d.qtyDocument) || 1,
-                price: parseFloat(d.unitPrice) || 0,
                 movement: data.receiptType === 1 ? 'in' : 'out',
                 note: d.note || '',
                 product: d.product || products.find(p => p.id === d.productId) // Try to get from state if not in detail
@@ -199,15 +198,7 @@ const UpdateWarehouseReceiptDialog = ({
     if (receiptType === 2) defaultMovement = 'out' // Export
     // Adjustment defaults to 'in' (surplus) initially, user can change
 
-    // Determine default price
-    // Import (1) -> Prefer basePrice (Cost)
-    // Export (2) -> Prefer price (Selling)
-    let defaultPrice = 0
-    if (receiptType === 2) {
-      defaultPrice = product.price || 0
-    } else {
-      defaultPrice = product.basePrice || product.price || 0
-    }
+
 
     setSelectedProducts(prev => [
       ...prev,
@@ -219,7 +210,6 @@ const UpdateWarehouseReceiptDialog = ({
         unitId: baseUnitId,
         unitName: product.baseUnit?.name || product.prices?.[0]?.unitName || '—',
         quantity: 1,
-        price: defaultPrice,
         movement: defaultMovement,
         note: '',
         product: product // Keep full product ref for unit conversion lookup
@@ -267,7 +257,6 @@ const UpdateWarehouseReceiptDialog = ({
         unitId: item.unitId,
         movement: receiptType === 1 ? 'in' : 'out',
         qtyActual: item.quantity,
-        unitPrice: item.price,
         note: item.note
       }))
 
@@ -643,16 +632,7 @@ const UpdateWarehouseReceiptDialog = ({
                                     onFocus={(e) => e.target.select()}
                                   />
                                 </div>
-                                <div className="space-y-1">
-                                  <label className="text-[10px] text-muted-foreground uppercase">
-                                    {receiptType === 2 ? 'Đơn giá bán' : 'Đơn giá vốn'}
-                                  </label>
-                                  <MoneyInputQuick
-                                    className="h-8 text-sm text-right"
-                                    value={item.price}
-                                    onChange={(val) => handleProductChange(index, 'price', val)}
-                                  />
-                                </div>
+
                               </div>
 
                               {/* Row 4: Note */}
@@ -680,9 +660,7 @@ const UpdateWarehouseReceiptDialog = ({
                               <TableHead className="w-[100px]">ĐVT</TableHead>
 
                               <TableHead className="w-[100px]">Số lượng</TableHead>
-                              <TableHead className="w-[150px]">
-                                {receiptType === 2 ? 'Đơn giá bán' : 'Đơn giá vốn'}
-                              </TableHead>
+
                               <TableHead>Ghi chú</TableHead>
                               <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
@@ -745,13 +723,7 @@ const UpdateWarehouseReceiptDialog = ({
                                       onFocus={(e) => e.target.select()}
                                     />
                                   </TableCell>
-                                  <TableCell>
-                                    <MoneyInputQuick
-                                      className="h-8 text-right"
-                                      value={item.price}
-                                      onChange={(val) => handleProductChange(index, 'price', val)}
-                                    />
-                                  </TableCell>
+
                                   <TableCell>
                                     <Input
                                       className="h-8"

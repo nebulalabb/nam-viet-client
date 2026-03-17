@@ -91,12 +91,12 @@ const InventoryFilters = ({ filters, onFilterChange, loading = false }) => {
                     onFilterChange(filters)
                   }
                 }}
-                className="h-11 px-4 text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all duration-200"
+                className="h-11 px-4 text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-200"
               />
               <Button 
                 onClick={() => onFilterChange(filters)}
                 disabled={loading}
-                className="h-11 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                className="h-11 px-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
               >
                 <Search className="h-4 w-4" />
               </Button>
@@ -115,7 +115,7 @@ const InventoryFilters = ({ filters, onFilterChange, loading = false }) => {
                 value={filters.warehouseId || ''}
                 onChange={(e) => handleInputChange('warehouseId', e.target.value ? parseInt(e.target.value) : null)}
                 disabled={loadingOptions}
-                className="mt-1 w-full h-11 px-4 text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 cursor-pointer"
+                className="mt-1 w-full h-11 px-4 text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 focus:outline-none transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 cursor-pointer"
               >
                 <option value="">Tất cả kho</option>
                 {warehouses.map((warehouse) => (
@@ -136,7 +136,7 @@ const InventoryFilters = ({ filters, onFilterChange, loading = false }) => {
                 value={filters.categoryId || ''}
                 onChange={(e) => handleInputChange('categoryId', e.target.value ? parseInt(e.target.value) : null)}
                 disabled={loadingOptions}
-                className="mt-1 w-full h-11 px-4 text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 focus:outline-none transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 cursor-pointer"
+                className="mt-1 w-full h-11 px-4 text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 focus:outline-none transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 cursor-pointer"
               >
                 <option value="">Tất cả danh mục</option>
                 {categories.map((category) => (
@@ -154,7 +154,7 @@ const InventoryFilters = ({ filters, onFilterChange, loading = false }) => {
                   type="checkbox"
                   checked={filters.showExpiring || false}
                   onChange={(e) => handleInputChange('showExpiring', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Sắp hết hạn</span>
               </label>

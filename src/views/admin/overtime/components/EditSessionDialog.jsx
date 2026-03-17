@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Loader2, Plus, X } from 'lucide-react'
-import { createOvertimeSession } from '@/stores/OvertimeSlice'
+import { Loader2, X } from 'lucide-react'
+import { updateOvertimeSession } from '@/stores/OvertimeSlice'
 import { getUsers } from '@/stores/UserSlice'
 import MultipleSelector from '@/components/custom/MultiSelector'
 
@@ -12,15 +12,16 @@ const formSchema = z.object({
     sessionName: z.string().min(1, 'Tên phiên bắt buộc'),
     startTime: z.string().min(1, 'Thời gian bắt đầu bắt buộc'),
     endTime: z.string().optional(),
+    status: z.enum(['open', 'closed', 'cancelled']),
     notes: z.string().optional(),
 })
 
-export default function CreateSessionDialog({ isOpen, onClose }) {
+export default function EditSessionDialog({ isOpen, onClose, selectedSession }) {
     const dispatch = useDispatch()
     const { loading } = useSelector((state) => state.overtime)
     const { users } = useSelector((state) => state.user)
-    
-    const [selectedUsers, setSelectedUsers] = useState([])
+
+    const [selectedUsers, setSelectedUsers] = React.useState([])
 
     useEffect(() => {
         if (isOpen) {
@@ -41,9 +42,39 @@ export default function CreateSessionDialog({ isOpen, onClose }) {
             sessionName: '',
             startTime: '',
             endTime: '',
+            status: 'open',
             notes: '',
         },
     })
+
+    useEffect(() => {
+        if (isOpen && selectedSession) {
+            // Convert ISO dates to expected datetime-local format YYYY-MM-DDTHH:mm
+            const formatForInput = (dateStr) => {
+                if (!dateStr) return '';
+                const date = new Date(dateStr)
+                return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            }
+
+            reset({
+                sessionName: selectedSession.sessionName || '',
+                startTime: formatForInput(selectedSession.startTime),
+                endTime: formatForInput(selectedSession.endTime),
+                status: selectedSession.status || 'open',
+                notes: selectedSession.notes || '',
+            })
+
+            if (selectedSession.entries) {
+                const initialUsers = selectedSession.entries.map(entry => ({
+                    label: entry.user ? `${entry.user.fullName} - ${entry.user.employeeCode || ''}` : `Nhân viên #${entry.userId}`,
+                    value: entry.userId
+                }))
+                setSelectedUsers(initialUsers)
+            } else {
+                setSelectedUsers([])
+            }
+        }
+    }, [isOpen, selectedSession, reset])
 
     const handleClose = () => {
         reset()
@@ -53,32 +84,32 @@ export default function CreateSessionDialog({ isOpen, onClose }) {
 
     const onSubmit = async (values) => {
         try {
-            await dispatch(createOvertimeSession({
-                ...values,
-                startTime: new Date(values.startTime).toISOString(),
-                endTime: values.endTime ? new Date(values.endTime).toISOString() : undefined,
-                userIds: selectedUsers.map(u => u.value)
+            await dispatch(updateOvertimeSession({
+                id: selectedSession.id,
+                data: {
+                    ...values,
+                    startTime: new Date(values.startTime).toISOString(),
+                    endTime: values.endTime ? new Date(values.endTime).toISOString() : undefined,
+                    userIds: selectedUsers.map(u => u.value)
+                }
             })).unwrap()
 
             handleClose()
         } catch (error) {
-            console.error('Lỗi khi tạo phiên:', error)
+            console.error('Lỗi khi sửa phiên:', error)
         }
     }
 
-    if (!isOpen) return null
+    if (!isOpen || !selectedSession) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
                 <div className="mb-4 flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            Mở phiên tăng ca mới
+                            Sửa phiên tăng ca
                         </h2>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Tạo phiên tăng ca để bắt đầu tính giờ làm thêm cho nhân viên.
-                        </p>
                     </div>
                     <button
                         onClick={handleClose}
@@ -171,6 +202,26 @@ export default function CreateSessionDialog({ isOpen, onClose }) {
                     </div>
 
                     <div>
+                        <label htmlFor="status" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Trạng thái
+                        </label>
+                        <select
+                            id="status"
+                            {...register('status')}
+                            className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+                        >
+                            <option value="open">Đang mở (Open)</option>
+                            <option value="closed">Đã đóng (Closed)</option>
+                            <option value="cancelled">Đã hủy (Cancelled)</option>
+                        </select>
+                        {errors.status && (
+                            <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+                                {errors.status.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
                         <label htmlFor="notes" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Ghi chú
                         </label>
@@ -207,7 +258,7 @@ export default function CreateSessionDialog({ isOpen, onClose }) {
                             className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
                         >
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Tạo phiên
+                            Lưu thay đổi
                         </button>
                     </div>
                 </form>

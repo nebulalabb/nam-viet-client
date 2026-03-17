@@ -116,8 +116,7 @@ const InventoryReportPage = () => {
                     </div>
                     <Button 
                         onClick={handleExport}
-                        className="flex items-center gap-2"
-                        variant="default"
+                        className="flex items-center gap-2 bg-white text-green-700 border-2 border-green-600 hover:bg-green-600 hover:text-white font-medium"
                     >
                         <Download className="h-4 w-4" />
                         Xuất Excel

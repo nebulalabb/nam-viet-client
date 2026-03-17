@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/table'
 import { IconPackageImport } from '@tabler/icons-react'
 import { InfoCircledIcon } from '@radix-ui/react-icons'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Package } from 'lucide-react'
 import { getPublicUrl } from '@/utils/file'
 import { cn } from '@/lib/utils'
@@ -42,6 +44,9 @@ const ConfirmImportWarehouseDialog = ({
   const [selectedItems, setSelectedItems] = useState({})
   const [receiptDetailsMap, setReceiptDetailsMap] = useState({})
   const [actualReceiptDate, setActualReceiptDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [reason, setReason] = useState('')
+  const [notes, setNotes] = useState('')
+  const [detailNotes, setDetailNotes] = useState({}) // { itemDetailId: note }
   const dispatch = useDispatch()
   const isMobile = useMediaQuery('(max-width: 768px)')
 
@@ -61,6 +66,18 @@ const ConfirmImportWarehouseDialog = ({
 
           if (data) {
             setPurchaseOrder(data)
+            
+            // Set default reason and notes
+            setReason(`Nhập kho từ đơn mua hàng ${data.code}`)
+            setNotes(data.note || 'Nhập kho từ đơn mua')
+            
+            const initialDetailNotes = {}
+            if (data.items) {
+              data.items.forEach(item => {
+                initialDetailNotes[item.id] = `Nhập kho theo đơn mua ${data.code}`
+              })
+            }
+            setDetailNotes(initialDetailNotes)
 
             // Fetch details for all related warehouse receipts to calculate accurate imported quantities
             if (data.warehouseReceipts && data.warehouseReceipts.length > 0) {
@@ -189,11 +206,12 @@ const ConfirmImportWarehouseDialog = ({
           const remaining = Math.max(0, Number(item.quantity || 0) - imported)
           return {
             ...item,
-            quantity: remaining
+            quantity: remaining,
+            notes: detailNotes[item.id] || reason || `Nhập kho theo đơn mua ${purchaseOrder.code}`
           }
         })
 
-      await onConfirm?.(selectedItemObjects, actualReceiptDate || null)
+      await onConfirm?.(selectedItemObjects, actualReceiptDate || null, reason, notes)
       onOpenChange(false)
     } catch (error) {
       console.error(error)
@@ -262,7 +280,7 @@ const ConfirmImportWarehouseDialog = ({
                       <TableHead className="text-right">Số lượng</TableHead>
                       <TableHead className="text-right">Đã nhập</TableHead>
                       <TableHead>Đơn vị</TableHead>
-                      <TableHead className="text-right">Đơn giá</TableHead>
+                      <TableHead>Ghi chú</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -311,8 +329,13 @@ const ConfirmImportWarehouseDialog = ({
                             {Number(imported)}
                           </TableCell>
                           <TableCell>{item.unitName || item.unit?.name || '—'}</TableCell>
-                          <TableCell className="text-right">
-                            {Number(item.unitPrice).toLocaleString('vi-VN')}
+                          <TableCell>
+                            <Input
+                              className="h-8 min-w-[150px]"
+                              value={detailNotes[item.id] || ''}
+                              onChange={(e) => setDetailNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
+                              disabled={isFullyImported || !selectedItems[item.id]}
+                            />
                           </TableCell>
                         </TableRow>
                       )
@@ -397,6 +420,16 @@ const ConfirmImportWarehouseDialog = ({
                               </span>
                             </div>
                           </div>
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-muted-foreground">Ghi chú sản phẩm</span>
+                            <Input
+                              className="h-8 text-sm"
+                              value={detailNotes[item.id] || ''}
+                              onChange={(e) => setDetailNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
+                              disabled={isFullyImported || !selectedItems[item.id]}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
                         </div>
                       </div>
                     )
@@ -420,6 +453,25 @@ const ConfirmImportWarehouseDialog = ({
               className="flex h-9 max-w-[180px] rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={actualReceiptDate}
               onChange={(e) => setActualReceiptDate(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Lý do nhập kho</label>
+            <Input 
+              placeholder="Nhập lý do..." 
+              value={reason} 
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ghi chú</label>
+            <Textarea 
+              placeholder="Nhập ghi chú thêm..." 
+              value={notes} 
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
             />
           </div>
 

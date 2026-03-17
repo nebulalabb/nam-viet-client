@@ -79,7 +79,7 @@ export default function SalaryCalculatePage() {
         // or it returns preview and we need a separate create API.
         // Based on useSalary in Nextjs, calculateMutation is expected to do the actual saving or at least calculate
         // The previous component just called onSuccess.
-        navigate("/admin/salary");
+        navigate("/salary");
     };
 
     const handleBack = () => {
@@ -88,7 +88,7 @@ export default function SalaryCalculatePage() {
         } else if (step === 2) {
             setStep(1);
         } else {
-            navigate("/admin/salary");
+            navigate("/salary");
         }
     };
 
@@ -107,7 +107,7 @@ export default function SalaryCalculatePage() {
     };
 
     return (
-        <div className="w-full max-w-4xl mx-auto space-y-6">
+        <div className="w-full max-w-4xl mx-auto space-y-6 h-full overflow-y-auto pb-10 pr-2">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
                 <button

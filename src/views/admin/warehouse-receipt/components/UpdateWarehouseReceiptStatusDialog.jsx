@@ -43,9 +43,7 @@ const UpdateWarehouseReceiptStatusDialog = ({
   const getColor = (statusValue) => {
     switch (statusValue) {
       case 'draft': return 'text-yellow-500'
-      case 'confirmed': return 'text-blue-600'
       case 'posted': return 'text-green-600'
-      case 'cancelled': return 'text-red-600'
       default: return 'text-gray-600'
     }
   }
@@ -93,7 +91,10 @@ const UpdateWarehouseReceiptStatusDialog = ({
               <>
                 {' '}
                 • Hiện tại:{' '}
-                <span className={`font-semibold ${getColor(currentStatus)}`}>{current.label}</span>
+                <span className={`inline-flex items-center gap-1 font-semibold ${getColor(currentStatus)}`}>
+                  {current.icon && <current.icon className="h-4 w-4" />}
+                  {current.label}
+                </span>
               </>
             ) : null}
           </DialogDescription>
@@ -119,17 +120,7 @@ const UpdateWarehouseReceiptStatusDialog = ({
             </SelectTrigger>
 
             <SelectContent position="popper" className={cn("z-[10010]", selectContentClassName)}>
-              {statuses.filter(s => {
-                if (currentStatus === 'posted') {
-                  // Nếu ở trạng thái post thì chì có thể hủy
-                  return s.value === 'cancelled'
-                }
-                if (currentStatus === 'cancelled') {
-                  // khi hủy rồi thì không hiện gì
-                  return false
-                }
-                return true
-              }).map((s) => (
+              {statuses.map((s) => (
                 <SelectItem
                   key={s.value}
                   value={s.value}

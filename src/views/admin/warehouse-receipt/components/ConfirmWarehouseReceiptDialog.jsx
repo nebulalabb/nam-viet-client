@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Check, AlertTriangle } from 'lucide-react'
 
@@ -66,6 +67,9 @@ const ConfirmWarehouseReceiptDialog = ({
   const [exportQuantities, setExportQuantities] = useState({}) // { itemDetailId: quantity }
   const [inventoryData, setInventoryData] = useState([])
   const [isFetchingInventory, setIsFetchingInventory] = useState(false)
+  const [reason, setReason] = useState('')
+  const [notes, setNotes] = useState('')
+  const [detailNotes, setDetailNotes] = useState({}) // { itemDetailId: note }
 
   const warehouses = useSelector((state) => state.warehouse.warehouses) || []
 
@@ -183,6 +187,18 @@ const ConfirmWarehouseReceiptDialog = ({
       })
       setSelectedItems(initialSelection)
       setExportQuantities(initialQuantities)
+      
+      const initialDetailNotes = {}
+      activeInvoice.details.forEach(item => {
+        initialDetailNotes[item.id] = `Xuất kho theo đơn bán ${activeInvoice.orderCode || activeInvoice.code}`
+      })
+      setDetailNotes(initialDetailNotes)
+      
+      // Default reason and notes
+      if (invoice) {
+        setReason(`Xuất kho cho đơn bán ${invoice.orderCode || invoice.code}`)
+        setNotes(invoice.notes || 'Xuất kho từ hóa đơn')
+      }
     }
   }, [activeInvoice])
 
@@ -203,7 +219,8 @@ const ConfirmWarehouseReceiptDialog = ({
       .map(item => {
         return {
           ...item,
-          quantity: Number(exportQuantities[item.id] || 0)
+          quantity: Number(exportQuantities[item.id] || 0),
+          notes: detailNotes[item.id] || reason || `Xuất kho theo đơn bán ${activeInvoice.orderCode || activeInvoice.code}`
         }
       })
 
@@ -212,7 +229,7 @@ const ConfirmWarehouseReceiptDialog = ({
       return
     }
 
-    await onConfirm?.(selectedItemObjects, actualReceiptDate || null, selectedWarehouseId)
+    await onConfirm?.(selectedItemObjects, actualReceiptDate || null, selectedWarehouseId, reason, notes)
     onOpenChange(false)
   }
 
@@ -404,6 +421,7 @@ const ConfirmWarehouseReceiptDialog = ({
                       <TableHead>Sản phẩm</TableHead>
                       <TableHead className="text-right">Số lượng xuất</TableHead>
                       <TableHead>Đơn vị</TableHead>
+                      <TableHead>Ghi chú</TableHead>
                       <TableHead>Trạng thái</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -468,6 +486,14 @@ const ConfirmWarehouseReceiptDialog = ({
                               </div>
                             </TableCell>
                             <TableCell>{item.unitName || 'N/A'}</TableCell>
+                            <TableCell>
+                              <Input
+                                className="h-8 min-w-[150px]"
+                                value={detailNotes[item.id] || ''}
+                                onChange={(e) => setDetailNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                disabled={!selectable || !selectedItems[item.id]}
+                              />
+                            </TableCell>
                             <TableCell>
                               {!selectable ? (
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -565,6 +591,16 @@ const ConfirmWarehouseReceiptDialog = ({
                                 )}
                               </div>
                             </div>
+                            <div className="space-y-1">
+                              <span className="text-[10px] text-muted-foreground">Ghi chú sản phẩm</span>
+                              <Input
+                                className="h-8 text-sm"
+                                value={detailNotes[item.id] || ''}
+                                onChange={(e) => setDetailNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                disabled={!selectable || !selectedItems[item.id]}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
                           </div>
                         </div>
                       )
@@ -581,7 +617,25 @@ const ConfirmWarehouseReceiptDialog = ({
               type="date"
               className="flex h-9 max-w-[180px] rounded-md border border-input bg-background px-3 py-1.5 text-sm"
               value={actualReceiptDate}
-              onChange={(e) => setActualReceiptDate(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Lý do xuất kho</label>
+            <Input 
+              placeholder="Nhập lý do..." 
+              value={reason} 
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ghi chú</label>
+            <Textarea 
+              placeholder="Nhập ghi chú thêm..." 
+              value={notes} 
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
             />
           </div>
 

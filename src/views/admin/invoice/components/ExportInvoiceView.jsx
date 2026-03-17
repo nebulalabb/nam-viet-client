@@ -317,7 +317,7 @@ const ExportInvoiceView = ({
                   invoice.invoiceItems.map((invoiceItem) => (
                     <TableRow key={`${invoice.id}-${invoiceItem.id}`}>
                       <TableCell>{indexTable++}</TableCell>
-                      <TableCell>{invoice.code}</TableCell>
+                      <TableCell>{invoice.orderCode || invoice.code}</TableCell>
                       <TableCell>{invoice.salesContract?.code ?? '—'}</TableCell>
                       <TableCell>{
                         invoice.salesContract?.status === 'draft' ? 'Nháp' :

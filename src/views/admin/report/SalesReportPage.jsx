@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,7 @@ const SalesReportPage = () => {
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    const isInitialLoad = useRef(true)
 
     // Fetch sales report data
     const fetchSalesReport = async () => {
@@ -95,11 +96,16 @@ const SalesReportPage = () => {
 
                 setData(validatedData)
                 
-                // Show appropriate message
-                if (validatedData.summary.totalOrders === 0) {
-                    toast.info('Không có dữ liệu trong khoảng thời gian này')
+                // Chỉ hiện toast khi người dùng đổi bộ lọc, tránh x2 do React Strict Mode mount 2 lần
+                if (isInitialLoad.current) {
+                    isInitialLoad.current = false
+                    // Lần tải đầu (hoặc sau remount) không hiện toast
                 } else {
-                    toast.success(`Tải thành công ${validatedData.summary.totalOrders} đơn hàng`)
+                    if (validatedData.summary.totalOrders === 0) {
+                        toast.info('Không có dữ liệu trong khoảng thời gian này')
+                    } else {
+                        toast.success(`Tải thành công ${validatedData.summary.totalOrders} đơn hàng`)
+                    }
                 }
             } else {
                 throw new Error(response.data.message || 'Không thể tải dữ liệu')
@@ -157,7 +163,7 @@ const SalesReportPage = () => {
                                 size="sm"
                                 onClick={handleExportExcel}
                                 disabled={loading}
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 bg-white text-green-700 border-2 border-green-600 hover:bg-green-600 hover:text-white font-medium"
                             >
                                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

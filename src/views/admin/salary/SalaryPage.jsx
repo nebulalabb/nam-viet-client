@@ -176,9 +176,9 @@ export default function SalaryPage() {
     };
 
     return (
-        <div className="w-full space-y-6">
+        <div className="w-full space-y-6 overflow-x-auto">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         Quản lý Lương
@@ -189,7 +189,7 @@ export default function SalaryPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => navigate("/admin/salary/calculate")}
+                        onClick={() => navigate("/salary/calculate")}
                         className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
                         <Calculator className="w-4 h-4" />
@@ -207,7 +207,7 @@ export default function SalaryPage() {
                                 Chờ Duyệt
                             </p>
                             <p className="mt-3 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                                {salarySummary?.totalPending || 0}
+                                {salarySummary?.byStatus?.pending || 0}
                             </p>
                         </div>
                         <div className="border-2 border-yellow-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50">
@@ -223,7 +223,7 @@ export default function SalaryPage() {
                                 Đã Duyệt
                             </p>
                             <p className="mt-3 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                {salarySummary?.totalApproved || 0}
+                                {salarySummary?.byStatus?.approved || 0}
                             </p>
                         </div>
                         <div className="border-2 border-blue-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50">
@@ -239,7 +239,7 @@ export default function SalaryPage() {
                                 Đã Thanh Toán
                             </p>
                             <p className="mt-3 text-3xl font-bold text-green-600 dark:text-green-400">
-                                {salarySummary?.totalPaid || 0}
+                                {salarySummary?.byStatus?.paid || 0}
                             </p>
                         </div>
                         <div className="border-2 border-green-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50">
@@ -448,10 +448,10 @@ export default function SalaryPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400">
                                             {formatCurrency(
-                                                (salary.allowance || 0) +
-                                                (salary.overtimePay || 0) +
-                                                (salary.bonus || 0) +
-                                                (salary.commission || 0)
+                                                Number(salary.allowance || 0) +
+                                                Number(salary.overtimePay || 0) +
+                                                Number(salary.bonus || 0) +
+                                                Number(salary.commission || 0)
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600 dark:text-red-400">

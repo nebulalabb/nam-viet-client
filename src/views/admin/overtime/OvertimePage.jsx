@@ -8,6 +8,7 @@ import { getOvertimeSessions, getOvertimeStats } from '@/stores/OvertimeSlice'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Badge } from '@/components/ui/badge'
 import CreateSessionDialog from './components/CreateSessionDialog'
+import SessionDetailsDialog from './components/SessionDetailsDialog'
 import Pagination from '@/components/Pagination'
 
 // Simplified Card Components based on Attendance usage
@@ -63,6 +64,8 @@ export default function OvertimePage() {
     const debouncedSearch = useDebounce(searchTerm, 400)
     const [statusFilter, setStatusFilter] = useState('all')
     const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [selectedSessionId, setSelectedSessionId] = useState(null)
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
     // Ensure we handle array or paginated response
     const sessionList = Array.isArray(sessions) ? sessions : (sessions?.data || [])
@@ -326,13 +329,16 @@ export default function OvertimePage() {
                                                 {session._count?.entries || 0} nhân viên
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <Link
-                                                    to={`/overtime/${session.id}`}
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedSessionId(session.id)
+                                                        setIsDetailsOpen(true)
+                                                    }}
                                                     className="inline-flex rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                                                     title="Chi tiết"
                                                 >
                                                     <Eye className="h-4 w-4" />
-                                                </Link>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -365,6 +371,12 @@ export default function OvertimePage() {
                     </div>
                 )}
             </div>
+
+            <SessionDetailsDialog 
+                isOpen={isDetailsOpen} 
+                onClose={() => setIsDetailsOpen(false)} 
+                sessionId={selectedSessionId} 
+            />
         </div>
     )
 }

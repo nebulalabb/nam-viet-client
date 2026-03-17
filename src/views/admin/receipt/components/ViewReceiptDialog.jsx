@@ -216,7 +216,7 @@ const ViewReceiptDialog = ({
                           setSelectedInvoiceId(receipt.invoice.id)
                           setShowViewInvoiceDialog(true)
                         }}
-                      >{receipt.invoice.code}</div>)
+                      >{receipt.invoice.orderCode || receipt.invoice.code}</div>)
                     </span>
                   )}
                   {/* {receipt?.salesContract && (

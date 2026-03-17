@@ -53,7 +53,7 @@ const InventoryDataTable = ({ data, isLoading = false }) => {
     const inventoryData = data.data || []
 
     return (
-        <Card className="shadow-md dark:bg-gray-800 dark:border-gray-700">
+        <Card className="mt-8 shadow-md dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-0">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-6 py-4">

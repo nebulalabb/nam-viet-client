@@ -18,31 +18,37 @@ export const getSalaries = createAsyncThunk(
 )
 
 export const getSalarySummary = createAsyncThunk(
-    'salary/getSalarySummary',
+    'salary/getSummary',
     async (params, { rejectWithValue }) => {
         try {
-            const response = await api.get('/salary/summary', { params })
-            return response.data
+            const queryParams = params ? new URLSearchParams(params).toString() : '';
+            const response = await api.get(`/salary/summary?${queryParams}`);
+            // The Next.js API returned a `data` wrapping object but since it handles `data.data` inside the component
+            // in some cases we might just map it as we did for getSalaries.
+            // In Next.js client `data` wraps `{ data: ... }`
+            return response.data?.data || response.data;
         } catch (error) {
-            const message = handleError(error)
-            return rejectWithValue(message)
+            return rejectWithValue(
+                error.response?.data?.message || 'Không thể lấy thông tin tổng quan lương'
+            );
         }
     }
-)
+);
 
-export const getSalaryDetail = createAsyncThunk(
-    'salary/getSalaryDetail',
+// Get salary by ID
+export const getSalaryById = createAsyncThunk(
+    'salary/getById',
     async (id, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/salary/${id}`)
-            return response.data
+            const response = await api.get(`/salary/${id}`);
+            return response.data?.data || response.data;
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Không thể lấy chi tiết bảng lương')
-            return rejectWithValue(message)
+            return rejectWithValue(
+                error.response?.data?.message || 'Không thể lấy chi tiết lương'
+            );
         }
     }
-)
+);
 
 export const getSalaryByUserMonth = createAsyncThunk(
     'salary/getSalaryByUserMonth',
@@ -78,7 +84,7 @@ export const recalculateSalary = createAsyncThunk(
         try {
             const response = await api.post(`/salary/${id}/recalculate`, data)
             toast.success('Tính lại lương thành công!')
-            dispatch(getSalaryDetail(id))
+            dispatch(getSalaryById(id))
             dispatch(getSalaries())
             return response.data
         } catch (error) {
@@ -95,7 +101,7 @@ export const updateSalary = createAsyncThunk(
         try {
             const response = await api.put(`/salary/${id}`, data)
             toast.success('Cập nhật bảng lương thành công!')
-            dispatch(getSalaryDetail(id))
+            dispatch(getSalaryById(id))
             dispatch(getSalaries())
             return response.data
         } catch (error) {
@@ -112,7 +118,7 @@ export const approveSalary = createAsyncThunk(
         try {
             const response = await api.put(`/salary/${id}/approve`, data)
             toast.success('Phê duyệt bảng lương thành công!')
-            dispatch(getSalaryDetail(id))
+            dispatch(getSalaryById(id))
             dispatch(getSalaries())
             return response.data
         } catch (error) {
@@ -129,7 +135,7 @@ export const paySalary = createAsyncThunk(
         try {
             const response = await api.post(`/salary/${id}/pay`, data)
             toast.success('Thanh toán lương thành công!')
-            dispatch(getSalaryDetail(id))
+            dispatch(getSalaryById(id))
             dispatch(getSalaries())
             return response.data
         } catch (error) {
@@ -158,7 +164,7 @@ export const deleteSalary = createAsyncThunk(
 
 const initialState = {
     salaries: [],
-    salaryDetail: null,
+    currentSalary: null,
     salarySummary: null,
     calculationPreview: null,
     meta: {
@@ -186,7 +192,7 @@ const salarySlice = createSlice({
     initialState,
     reducers: {
         clearSalaryDetail: (state) => {
-            state.salaryDetail = null
+            state.currentSalary = null
         },
         clearCalculationPreview: (state) => {
             state.calculationPreview = null
@@ -213,13 +219,13 @@ const salarySlice = createSlice({
             })
             .addCase(getSalarySummary.rejected, handleRejected)
 
-            // getSalaryDetail
-            .addCase(getSalaryDetail.pending, handlePending)
-            .addCase(getSalaryDetail.fulfilled, (state, action) => {
+            // getSalaryById
+            .addCase(getSalaryById.pending, handlePending)
+            .addCase(getSalaryById.fulfilled, (state, action) => {
                 state.loading = false
-                state.salaryDetail = action.payload.data || action.payload
+                state.currentSalary = action.payload.data || action.payload
             })
-            .addCase(getSalaryDetail.rejected, handleRejected)
+            .addCase(getSalaryById.rejected, handleRejected)
 
             // getSalaryByUserMonth
             .addCase(getSalaryByUserMonth.pending, handlePending)

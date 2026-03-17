@@ -197,15 +197,7 @@ const CreateManualWarehouseReceiptDialog = ({
     let defaultMovement = 'in'
     if (receiptType === 2) defaultMovement = 'out' // Export
 
-    // Determine default price
-    // Import (1) -> Prefer basePrice (Cost)
-    // Export (2) -> Prefer price (Selling)
-    let defaultPrice = 0
-    if (receiptType === 2) {
-      defaultPrice = product.price || 0
-    } else {
-      defaultPrice = product.basePrice || product.price || 0
-    }
+
 
     setSelectedProducts(prev => [
       ...prev,
@@ -217,7 +209,6 @@ const CreateManualWarehouseReceiptDialog = ({
         unitId: unitId,
         unitName: unitName,
         quantity: 1,
-        price: defaultPrice,
         movement: defaultMovement,
         note: '',
         product: product // Keep full product ref for unit conversion lookup
@@ -269,8 +260,8 @@ const CreateManualWarehouseReceiptDialog = ({
 
       const details = selectedProducts.map(item => ({
         productId: item.productId,
+        unitId: item.unitId,
         quantity: Number(item.quantity) || 0,
-        unitPrice: Number(item.price) || 0,
         notes: item.note || undefined,
       }))
 
@@ -279,6 +270,9 @@ const CreateManualWarehouseReceiptDialog = ({
         reason: data.reason || undefined,
         notes: data.note || undefined,
         referenceType: data.businessType || undefined,
+        actualReceiptDate: data.actualReceiptDate,
+        customerId: data.receiptType === 2 && data.partnerId ? Number(data.partnerId) : undefined,
+        supplierId: data.receiptType === 1 && data.partnerId ? Number(data.partnerId) : undefined,
         details,
         // partnerId đi kèm referenceType để backend biết partner (nếu có)
         ...(data.receiptType === 1 && data.partnerId && { referenceId: Number(data.partnerId) }),

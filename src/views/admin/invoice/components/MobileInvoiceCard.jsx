@@ -191,7 +191,7 @@ const MobileInvoiceCard = ({
     setShowConfirmWarehouseDialog(true)
   }
 
-  const handleConfirmCreateWarehouseReceipt = async (selectedItems, actualReceiptDate) => {
+  const handleConfirmCreateWarehouseReceipt = async (selectedItems, actualReceiptDate, warehouseId, reason, notes) => {
     const invoiceId = invoice.id
     if (!invoiceId) return
 
@@ -202,10 +202,8 @@ const MobileInvoiceCard = ({
         .map(item => ({
           productId: item.productId || item.id,
           unitId: item.unitId || item.unit?.id,
-          movement: 'out',
-          qtyActual: item.quantity,
-          unitPrice: item.price || 0,
-          content: `Xuất kho theo đơn bán ${invoice.code}`,
+          quantity: Number(item.quantity),
+          notes: reason || `Xuất kho theo đơn bán ${invoice.orderCode}`,
           salesContractId: invoice.salesContractId,
           salesContractItemId: item.salesContractItemId
         }))
@@ -220,12 +218,13 @@ const MobileInvoiceCard = ({
         businessType: 'sale_out',
 
         actualReceiptDate: actualReceiptDate || null,
-        reason: `Xuất kho cho đơn bán ${invoice.code}`,
-        note: invoice.note || 'Xuất kho từ hóa đơn',
-        warehouseId: null,
+        reason: reason || `Xuất kho cho đơn bán ${invoice.orderCode}`,
+        notes: notes || invoice.notes || 'Xuất kho từ hóa đơn',
+        warehouseId: Number(warehouseId),
         customerId: invoice.customerId,
         salesContractId: invoice.salesContractId,
-        invoiceId: invoice.id,
+        referenceType: 'invoice',
+        referenceId: invoice.id,
         details: selectedDetails
       }
 

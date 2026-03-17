@@ -26,7 +26,7 @@ const SALARY_COMPONENT_LABELS = {
     overtimePay: "Lương làm thêm",
     bonus: "Thưởng",
     commission: "Hoa hồng",
-    deduction: "Khấu trừ",
+    deduction: "Khấu trừ (Bảo hiểm, Thuế, Lương vượt phép...)",
     advance: "Tạm ứng",
     totalSalary: "Tổng lương",
 };
@@ -199,8 +199,8 @@ export function SalaryBreakdown({
     totalSalary = 0,
     className = "",
 }) {
-    const additions = basicSalary + allowance + overtimePay + bonus + commission;
-    const deductions = deduction + advance;
+    const additions = Number(basicSalary || 0) + Number(allowance || 0) + Number(overtimePay || 0) + Number(bonus || 0) + Number(commission || 0);
+    const deductions = Number(deduction || 0) + Number(advance || 0);
 
     return (
         <div

@@ -78,9 +78,9 @@ export const checkIn = createAsyncThunk(
             toast.success('Chấm công vào thành công!')
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Chấm công vào thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Chấm công vào thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )
@@ -95,9 +95,9 @@ export const checkOut = createAsyncThunk(
             toast.success('Chấm công ra thành công!')
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Chấm công ra thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Chấm công ra thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )
@@ -112,9 +112,9 @@ export const requestLeave = createAsyncThunk(
             toast.success('Yêu cầu nghỉ phép đã được gửi!')
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Gửi yêu cầu nghỉ phép thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Gửi yêu cầu nghỉ phép thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )
@@ -129,9 +129,9 @@ export const approveLeave = createAsyncThunk(
             toast.success('Đã phê duyệt thông qua nghỉ phép!')
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Xử lý phê duyệt thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Xử lý phê duyệt thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )
@@ -146,9 +146,9 @@ export const rejectLeave = createAsyncThunk(
             toast.success('Đã từ chối nghỉ phép!')
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Từ chối thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Từ chối thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )
@@ -163,9 +163,9 @@ export const updateAttendance = createAsyncThunk(
             toast.success('Cập nhật chấm công thành công!')
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Cập nhật chấm công thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Cập nhật chấm công thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )
@@ -185,9 +185,9 @@ export const importAttendance = createAsyncThunk(
             toast.success(`Nhập thành công ${summary.validCount || 0} bản ghi. ${summary.invalidCount > 0 ? `${summary.invalidCount} bản ghi lỗi.` : ''}`)
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Nhập dữ liệu thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Nhập dữ liệu thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )
@@ -202,9 +202,9 @@ export const lockAttendanceMonth = createAsyncThunk(
             toast.success('Chốt công tháng thành công!')
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Chốt công tháng thất bại!')
-            return rejectWithValue(message)
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Chốt công tháng thất bại!')
+            return rejectWithValue(errObj)
         }
     }
 )

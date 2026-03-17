@@ -41,7 +41,7 @@ const DeliveryReminderDialog = ({ open, onOpenChange, selectedInvoices = [] }) =
     if (!firstInvoice) return
 
     const customerName = firstInvoice.customer?.name || 'Quý khách'
-    const invoiceCode = firstInvoice.code || ''
+    const invoiceCode = firstInvoice.orderCode || firstInvoice.code || ''
     const deliveryDate = firstInvoice.salesContract?.deliveryDate
       ? dateFormat(firstInvoice.salesContract.deliveryDate)
       : 'sớm nhất'
@@ -139,7 +139,7 @@ const DeliveryReminderDialog = ({ open, onOpenChange, selectedInvoices = [] }) =
                       <div className="flex-1 text-sm">
                         <div className="flex items-center justify-between gap-3">
                           <div className="font-medium">
-                            {invoice.code} - {invoice.customer?.name}
+                            {invoice.orderCode || invoice.code} - {invoice.customer?.name}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {moneyFormat(invoice.amount)}

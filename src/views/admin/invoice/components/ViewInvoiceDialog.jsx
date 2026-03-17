@@ -30,7 +30,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { statuses, paymentStatuses } from '../data'
 import { receiptStatus } from '../../receipt/data'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { CreditCard, Mail, MapPin, Pencil, Trash2, QrCode, Printer, X } from 'lucide-react'
+import { CreditCard, Mail, MapPin, Pencil, Trash2, QrCode, Printer, X, Truck, Store, Calendar, User } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { IconPlus, IconFileText, IconCircleCheck, IconCircleX } from '@tabler/icons-react'
 import { dateFormat } from '@/utils/date-format'
@@ -225,6 +225,10 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
     }
   }
 
+  const getWarehouseReceiptStatusObj = (statusValue) => {
+    return warehouseReceiptStatuses.find((s) => s.value === statusValue)
+  }
+
   const [selectedWarehouseReceipt, setSelectedWarehouseReceipt] = useState(null)
   const [showUpdateWarehouseReceiptStatus, setShowUpdateWarehouseReceiptStatus] = useState(false)
 
@@ -284,7 +288,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
     setShowConfirmWarehouseDialog(true)
   }
 
-  const handleConfirmCreateWarehouseReceipt = async (selectedItems, actualReceiptDate) => {
+  const handleConfirmCreateWarehouseReceipt = async (selectedItems, actualReceiptDate, warehouseId, reason, notes) => {
     const invoiceId = invoice?.id
     if (!invoiceId) return
 
@@ -296,10 +300,8 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         .map(item => ({
           productId: item.productId || item.id,
           unitId: item.unitId || item.unit?.id,
-          movement: 'out',
-          qtyActual: item.quantity,
-          unitPrice: item.price || 0,
-          content: `Xuất kho theo đơn bán ${invoice.code}`,
+          quantity: Number(item.quantity),
+          notes: reason || `Xuất kho theo đơn bán ${invoice.orderCode}`,
         }))
 
       if (selectedDetails.length === 0) {
@@ -308,16 +310,15 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
       }
 
       const payload = {
-        // code: `XK-${invoice.code}-${Date.now().toString().slice(-4)}`,
-        receiptType: 2, // ISSUE
+        receiptType: 2, 
         businessType: 'sale_out',
-
         actualReceiptDate: actualReceiptDate || null,
-        reason: `Xuất kho cho đơn bán ${invoice.code}`,
-        note: invoice.note || 'Xuất kho từ hóa đơn',
-        warehouseId: null,
+        reason: reason || `Xuất kho cho đơn bán ${invoice.orderCode}`,
+        notes: notes || invoice.notes || 'Xuất kho từ hóa đơn',
+        warehouseId: Number(warehouseId),
         customerId: invoice.customerId,
-        invoiceId: invoice.id,
+        referenceType: 'invoice',
+        referenceId: invoice.id,
         details: selectedDetails
       }
 
@@ -363,8 +364,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
     switch (statusValue) {
       case 'draft': return 'bg-yellow-100 text-yellow-700'
       case 'posted': return 'bg-green-100 text-green-700'
-      case 'cancelled': return 'bg-red-100 text-red-700'
-      case 'canceled': return 'bg-red-100 text-red-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
@@ -755,16 +754,28 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                         </span>
                                         {statusObj?.label || 'Không xác định'}
                                       </Badge>
-                                      <Badge
-                                        variant="outline"
-                                        className={`cursor-default select-none border-0 ${paymentStatusObj?.color || 'text-gray-500'}`}
-                                      >
-                                        <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
-                                          {paymentStatusObj?.icon ? <paymentStatusObj.icon className="h-4 w-4" /> : null}
-                                        </span>
-                                        {paymentStatusObj?.label || 'Không xác định'}
-                                      </Badge>
-                                    </>
+                                          <Badge
+                                            variant="outline"
+                                            className={`cursor-default select-none border-0 ${paymentStatusObj?.color || 'text-gray-500'}`}
+                                          >
+                                            <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
+                                              {paymentStatusObj?.icon ? <paymentStatusObj.icon className="h-4 w-4" /> : null}
+                                            </span>
+                                            {paymentStatusObj?.label || 'Không xác định'}
+                                          </Badge>
+
+                                          {invoice.isPickupOrder ? (
+                                            <Badge variant="outline" className="cursor-default select-none border-0 bg-blue-50 text-blue-700 hover:bg-blue-50">
+                                              <Store className="mr-1 h-3.5 w-3.5" />
+                                              Tại cửa hàng
+                                            </Badge>
+                                          ) : (
+                                            <Badge variant="outline" className="cursor-default select-none border-0 bg-purple-50 text-purple-700 hover:bg-purple-50">
+                                              <Truck className="mr-1 h-3.5 w-3.5" />
+                                              Chờ giao hàng
+                                            </Badge>
+                                          )}
+                                        </>
                                   )
                                 })()}
                               </div>
@@ -1222,7 +1233,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                       <TableHead className="min-w-32">Mã phiếu</TableHead>
                                       <TableHead className="min-w-32">Loại phiếu</TableHead>
                                       <TableHead className="min-w-32">Trạng thái</TableHead>
-                                      <TableHead className="min-w-32 text-right">Tổng tiền</TableHead>
                                       <TableHead className="min-w-32">Ngày xuất TT</TableHead>
                                       <TableHead className="min-w-28">Người tạo</TableHead>
                                       <TableHead className="min-w-32">Ngày tạo</TableHead>
@@ -1261,19 +1271,12 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                             <span
                                               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getWarehouseReceiptStatusColor(receipt.status)}`}
                                             >
-                                              {receipt.status === 'draft' ? <IconFileText className="h-3 w-3" /> : (receipt.status === 'posted' ? <IconCircleCheck className="h-3 w-3" /> : (receipt.status === 'cancelled' || receipt.status === 'canceled' ? <IconCircleX className="h-3 w-3" /> : null))}
-                                              {receipt.status === 'draft'
-                                                ? 'Nháp'
-                                                : receipt.status === 'posted'
-                                                  ? 'Đã ghi sổ'
-                                                  : (receipt.status === 'cancelled' || receipt.status === 'canceled')
-                                                    ? 'Đã hủy'
-                                                    : receipt.status}
+                                              {getWarehouseReceiptStatusObj(receipt.status)?.icon &&
+                                                React.createElement(getWarehouseReceiptStatusObj(receipt.status).icon, { className: "h-3 w-3" })
+                                              }
+                                              {getWarehouseReceiptStatusObj(receipt.status)?.label || receipt.status}
                                             </span>
                                           </div>
-                                        </TableCell>
-                                        <TableCell className="text-right font-semibold">
-                                          {moneyFormat(receipt.totalAmount)}
                                         </TableCell>
                                         <TableCell className="text-sm">
                                           {receipt.actualReceiptDate ? dateFormat(receipt.actualReceiptDate) : '—'}
@@ -1287,7 +1290,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                         <TableCell>
                                           {/* Action buttons */}
                                           <div className="flex items-center justify-end gap-1">
-                                            {(receipt.status === 'draft' || receipt.status === 'cancelled') && (
+                                            {receipt.status === 'draft' && (
                                               <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -1361,26 +1364,17 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                           <SelectTrigger className="h-auto border-none bg-transparent p-0 text-xs focus:ring-0 focus:ring-offset-0">
                                             <SelectValue>
                                               <span
-                                                className={`inline-flex items-center gap-1 text-xs font-medium ${getWarehouseReceiptStatusColor(receipt.status).replace('bg-', 'text-')}`}
+                                                className={`inline-flex items-center gap-1 text-xs font-medium ${getWarehouseReceiptStatusColor(receipt.status).replace(/bg-[^ ]+/, '').trim()}`}
                                               >
-                                                {receipt.status === 'draft' ? <IconFileText className="h-3 w-3" /> : (receipt.status === 'posted' ? <IconCircleCheck className="h-3 w-3" /> : (receipt.status === 'cancelled' || receipt.status === 'canceled' ? <IconCircleX className="h-3 w-3" /> : null))}
-                                                {receipt.status === 'draft'
-                                                  ? 'Nháp'
-                                                  : receipt.status === 'posted'
-                                                    ? 'Đã ghi sổ'
-                                                    : (receipt.status === 'cancelled' || receipt.status === 'canceled')
-                                                      ? 'Đã hủy'
-                                                      : receipt.status}
+                                                {getWarehouseReceiptStatusObj(receipt.status)?.icon &&
+                                                  React.createElement(getWarehouseReceiptStatusObj(receipt.status).icon, { className: "h-3 w-3" })
+                                                }
+                                                {getWarehouseReceiptStatusObj(receipt.status)?.label || receipt.status}
                                               </span>
                                             </SelectValue>
                                           </SelectTrigger>
                                           <SelectContent align="end" className="w-[140px]">
                                             {warehouseReceiptStatuses
-                                              .filter((s) => {
-                                                // Should possibly filter transitions here if needed
-                                                // For now showing all options similar to UpdateWarehouseReceiptStatusDialog
-                                                return true
-                                              })
                                               .map((s) => (
                                                 <SelectItem
                                                   key={s.value}
@@ -1405,12 +1399,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                       <span>{dateFormat(receipt.receiptDate)}</span>
                                     </div>
 
-                                    <div className="flex justify-between border-t pt-2">
-                                      <strong>Tổng tiền:</strong>
-                                      <span className="font-bold text-primary">
-                                        {moneyFormat(receipt.totalAmount)}
-                                      </span>
-                                    </div>
+
                                   </div>
                                 ))}
                               </div>
@@ -1537,6 +1526,49 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                             {invoice?.customer?.address || 'Chưa cập nhật'}
                           </div>
                         </div>
+
+                        {/* Thông tin giao hàng - Chỉ hiện nếu không phải đơn tại chỗ */}
+                        {!invoice?.isPickupOrder && (
+                          <>
+                            <Separator className="my-4" />
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="font-medium text-sm">Thông tin giao hàng</div>
+                              </div>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex items-start gap-2">
+                                  <User className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                                  <div>
+                                    <div className="font-medium text-blue-600">
+                                      {invoice?.recipientName || 'Chưa cập nhật'}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {invoice?.recipientPhone || 'Chưa cập nhật'}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                                  <span className="text-xs text-muted-foreground italic">
+                                    {invoice?.deliveryAddress || 'Chưa cập nhật'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                                  <span className="text-xs">
+                                    Dự kiến: {invoice?.expectedDeliveryDate ? dateFormat(invoice.expectedDeliveryDate) : 'Chưa cập nhật'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Truck className="h-4 w-4 text-muted-foreground shrink-0" />
+                                  <span className="text-xs font-medium">
+                                    Phí giao: <span className="text-destructive">{moneyFormat(invoice?.shippingFee || 0)}</span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 

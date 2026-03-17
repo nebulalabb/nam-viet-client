@@ -83,8 +83,14 @@ export function TimeDisplay({ time, label }) {
         return <span className="text-gray-400 dark:text-gray-500">—</span>
     }
 
-    // Time format: HH:MM:SS -> HH:MM
-    const formattedTime = time.substring(0, 5)
+    let formattedTime = time;
+    if (typeof time === 'string' && time.includes('T')) {
+        const date = new Date(time);
+        formattedTime = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    } else if (typeof time === 'string' && time.length >= 5) {
+        // HH:mm:ss format fallback
+        formattedTime = time.substring(0, 5);
+    }
 
     return (
         <div className="flex items-center gap-1">

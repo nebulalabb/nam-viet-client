@@ -310,7 +310,7 @@ const MobileWarehouseReceiptCard = ({
           {invoice && (
             <div className="flex justify-between items-start">
               <span className="text-xs text-muted-foreground w-20 flex-shrink-0">Hóa đơn:</span>
-              <span className="text-xs text-right font-medium text-primary">{invoice.code}</span>
+              <span className="text-xs text-right font-medium text-primary">{invoice.orderCode || invoice.code}</span>
             </div>
           )}
         </div>

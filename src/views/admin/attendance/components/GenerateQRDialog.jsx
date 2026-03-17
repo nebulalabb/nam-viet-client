@@ -51,7 +51,7 @@ export default function GenerateQRDialog({ isOpen, onClose }) {
                 shift,
                 type,
             })
-            setGeneratedQR(response.data)
+            setGeneratedQR(response.data.data)
             toast.success('Tạo QR code thành công')
         } catch (error) {
             console.error('Failed to generate QR:', error)
@@ -277,7 +277,7 @@ export default function GenerateQRDialog({ isOpen, onClose }) {
                                 type="button"
                                 variant="primary"
                                 onClick={handleGenerate}
-                                isLoading={loading}
+                                loading={loading}
                                 disabled={!startDate || !endDate || loading}
                             >
                                 <QrCode className="h-4 w-4" />

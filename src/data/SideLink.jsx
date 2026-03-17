@@ -315,7 +315,7 @@ export const sideLinks = [
         permission: 'GET_REVENUE_REPORT',
       },
       {
-        title: 'Tồn kho',
+        title: 'Báo cáo tồn kho',
         href: '/inventory-report',
         icon: <Archive size={18} strokeWidth={1.5} />,
         permission: 'GET_INVENTORY_REPORT',

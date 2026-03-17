@@ -7,7 +7,11 @@ export default function DailyStatsCard({ attendances = [], users = [], selectedD
 
     const stats = useMemo(() => {
         const today = selectedDate || new Date().toISOString().split('T')[0]
-        const todayAttendances = safeAttendances.filter((att) => att.date === today)
+        const todayAttendances = safeAttendances.filter((att) => {
+            if (!att.date) return false;
+            const attDateStr = new Date(att.date).toISOString().split('T')[0];
+            return attDateStr === today
+        })
 
         return {
             totalUsers: safeUsers.length,

@@ -87,17 +87,17 @@ const RevenuePage = () => {
 
     return (
         <Layout>
-            <div className="p-6 space-y-6 overflow-auto h-full bg-gray-50 dark:bg-gray-900">
-                {/* Page Header */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border-l-4 border-green-600 flex items-center justify-between">
+            <LayoutBody className="flex flex-col overflow-y-auto">
+                <div className="mb-4 flex items-center justify-between">
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Báo cáo Doanh thu</h2>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">Phân tích chi tiết doanh thu và hiệu suất kinh doanh</p>
+                        <h2 className="text-2xl font-bold tracking-tight">Báo cáo Doanh thu</h2>
+                        <p className="text-muted-foreground">
+                            Phân tích chi tiết doanh thu và hiệu suất kinh doanh
+                        </p>
                     </div>
                     <Button
                         onClick={handleExport}
-                        className="flex items-center gap-2"
-                        variant="default"
+                        className="flex items-center gap-2 bg-white text-green-700 border-2 border-green-600 hover:bg-green-600 hover:text-white font-medium"
                     >
                         <Download className="h-4 w-4" />
                         Xuất Excel
@@ -183,7 +183,7 @@ const RevenuePage = () => {
                         </CardContent>
                     </Card>
                 )}
-            </div>
+            </LayoutBody>
         </Layout>
     )
 }

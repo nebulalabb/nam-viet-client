@@ -331,7 +331,7 @@ const MobileReceiptCard = ({
             {invoice && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Hóa đơn:</span>
-                <span className="font-medium">{invoice.code}</span>
+                <span className="font-medium">{invoice.orderCode || invoice.code}</span>
               </div>
             )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getMyAttendance, getAttendanceList, getAttendanceStatistics, approveLeave, rejectLeave } from '@/stores/AttendanceSlice'
 import { getUsers } from '@/stores/UserSlice'
@@ -9,11 +9,16 @@ import AttendanceApprovalsTab from './components/AttendanceApprovalsTab'
 import AttendanceToolbar from './components/AttendanceToolbar'
 import GenerateQRDialog from './components/GenerateQRDialog'
 import RequestLeaveDialog from './components/RequestLeaveDialog'
+import AttendanceEditDialog from './components/AttendanceEditDialog'
 import AttendanceStatusBadge, {
     TimeDisplay,
     WorkHoursDisplay,
     LeaveTypeDisplay,
 } from './components/AttendanceStatus'
+import { MonthPicker } from './components/MonthPicker'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { cn } from '@/lib/utils'
 import {
     Calendar,
     List,
@@ -24,6 +29,9 @@ import {
     Grid3x3,
     CheckCircle2,
     QrCode,
+    Edit2,
+    ChevronsUpDown,
+    Check
 } from 'lucide-react'
 
 // Simple ClassicCard component since we couldn't find the exact one from Next.js
@@ -68,28 +76,46 @@ export default function AttendancePage() {
     const [selectedDate, setSelectedDate] = useState(null)
     const [showQRDialog, setShowQRDialog] = useState(false)
     const [showRequestLeave, setShowRequestLeave] = useState(false)
+    const [editDialogRecord, setEditDialogRecord] = useState(null)
+    const [openUserCombobox, setOpenUserCombobox] = useState(false)
 
     const { attendanceList, myAttendance, statistics, loading } = useSelector((state) => state.attendance)
     const { users } = useSelector((state) => state.user)
-    const authUser = useSelector((state) => state.auth?.user)
+    const authUser = useSelector((state) => state.auth?.authUserWithRoleHasPermissions)
 
     const isMyView = selectedUserId === 'me'
+    const isAllView = selectedUserId === 'all'
     const monthFormatted = selectedMonth.replace('-', '') // YYYY-MM -> YYYYMM
+
+    const displayedUsers = useMemo(() => {
+        if (isMyView) return authUser ? [authUser] : [{ id: 0, fullName: 'Của tôi' }]
+        if (isAllView) return users
+        return users.filter(u => u.id === selectedUserId)
+    }, [isMyView, isAllView, users, authUser, selectedUserId])
 
     // Initial fetch
     useEffect(() => {
         dispatch(getUsers({ status: 'active' }))
     }, [dispatch])
 
-    useEffect(() => {
+    // Fetching data logic wrapped in useCallback so we can trigger it manually
+    const loadData = useCallback(() => {
         if (isMyView) {
             dispatch(getMyAttendance({ month: monthFormatted }))
+        } else if (isAllView) {
+            dispatch(getAttendanceList({ month: monthFormatted }))
         } else {
             dispatch(getAttendanceList({ userId: selectedUserId, month: monthFormatted }))
-            // Always fetch user's own data to populate dropdown properly if they switch back later
         }
-        dispatch(getAttendanceStatistics({ month: monthFormatted }))
-    }, [dispatch, selectedMonth, selectedUserId, isMyView, monthFormatted])
+        dispatch(getAttendanceStatistics({ 
+            month: monthFormatted,
+            userId: (isMyView || isAllView) ? undefined : selectedUserId 
+        }))
+    }, [dispatch, isMyView, isAllView, monthFormatted, selectedUserId])
+
+    useEffect(() => {
+        loadData()
+    }, [loadData])
 
     const rawAttendances = isMyView ? myAttendance : attendanceList
     const attendances = Array.isArray(rawAttendances) ? rawAttendances : []
@@ -97,7 +123,11 @@ export default function AttendancePage() {
     // Filter attendances by selected date if in list view
     const filteredAttendances = useMemo(() => {
         if (!selectedDate || viewMode !== 'list') return attendances
-        return attendances.filter((att) => att.date === selectedDate)
+        return attendances.filter((att) => {
+            if (!att.date) return false
+            const dateStr = new Date(att.date).toISOString().split('T')[0]
+            return dateStr === selectedDate
+        })
     }, [attendances, selectedDate, viewMode])
 
     const handleDateClick = (date) => {
@@ -118,7 +148,7 @@ export default function AttendancePage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 h-full overflow-y-auto pb-10 pr-2">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -222,7 +252,7 @@ export default function AttendancePage() {
             {/* Daily Stats Card */}
             <DailyStatsCard
                 attendances={attendances}
-                users={isMyView ? (authUser ? [authUser] : []) : users}
+                users={users}
                 selectedDate={selectedDate || undefined}
             />
 
@@ -256,55 +286,120 @@ export default function AttendancePage() {
                     </button>
                 </div>
             </div>
-
+{/* fix */}
             {/* Tab Content */}
             {activeTab === 'overview' && (
                 <div className="space-y-6">
-                    {/* Filters */}
-                    <div className="flex items-center gap-4">
-                        {/* Month Selector */}
-                        <div className="flex-1">
-                            <label htmlFor="month" className="sr-only">
-                                Tháng
+                    {/* Filters - Moved to vertical layout with better card styling */}
+                    <div className="grid gap-6 sm:grid-cols-2">
+                        {/* Month Selector Card */}
+                        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                            <label htmlFor="month" className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                📅 Chọn tháng xem chấm công
                             </label>
-                            <input
-                                type="month"
-                                id="month"
+                            <MonthPicker 
                                 value={selectedMonth}
-                                onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                onChange={setSelectedMonth}
                             />
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                Dữ liệu chấm công sẽ được hiển thị theo tháng được chọn.
+                            </p>
                         </div>
 
-                        {/* User Selector */}
-                        <div className="flex-1">
-                            <label htmlFor="user" className="sr-only">
-                                Nhân viên
+                        {/* User Selector Combobox Card */}
+                        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                            <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                👤 Chọn nhân viên
                             </label>
-                            <select
-                                id="user"
-                                value={selectedUserId}
-                                onChange={(e) =>
-                                    setSelectedUserId(
-                                        e.target.value === 'me' ? 'me' : Number(e.target.value)
-                                    )
-                                }
-                                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                            >
-                                <option value="me">Của tôi</option>
-                                {users.map((user) => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.fullName} ({user.employeeCode})
-                                    </option>
-                                ))}
-                            </select>
+                            <Popover open={openUserCombobox} onOpenChange={setOpenUserCombobox}>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        role="combobox"
+                                        aria-expanded={openUserCombobox}
+                                        className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-base font-medium focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-800"
+                                    >
+                                        <span className="truncate">
+                                            {selectedUserId === 'me'
+                                                ? 'Của tôi'
+                                                : selectedUserId === 'all'
+                                                    ? 'Tất cả nhân viên'
+                                                    : users.find((user) => user.id === selectedUserId)?.fullName || 'Chọn nhân viên...'}
+                                        </span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-full min-w-[300px] p-0" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="Gõ tên hoặc mã nhân viên..." />
+                                        <CommandList>
+                                            <CommandEmpty>Không tìm thấy nhân viên.</CommandEmpty>
+                                            <CommandGroup>
+                                                <CommandItem
+                                                    value="Của tôi"
+                                                    onSelect={() => {
+                                                        setSelectedUserId('me')
+                                                        setOpenUserCombobox(false)
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            'mr-2 h-4 w-4',
+                                                            selectedUserId === 'me' ? 'opacity-100' : 'opacity-0'
+                                                        )}
+                                                    />
+                                                    Của tôi
+                                                </CommandItem>
+                                                <CommandItem
+                                                    value="Tất cả nhân viên"
+                                                    onSelect={() => {
+                                                        setSelectedUserId('all')
+                                                        setOpenUserCombobox(false)
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            'mr-2 h-4 w-4',
+                                                            selectedUserId === 'all' ? 'opacity-100' : 'opacity-0'
+                                                        )}
+                                                    />
+                                                    Tất cả nhân viên
+                                                </CommandItem>
+                                                {users.map((user) => (
+                                                    <CommandItem
+                                                        key={user.id}
+                                                        value={user.fullName + ' ' + user.employeeCode}
+                                                        onSelect={() => {
+                                                            setSelectedUserId(user.id)
+                                                            setOpenUserCombobox(false)
+                                                        }}
+                                                    >
+                                                        <Check
+                                                            className={cn(
+                                                                'mr-2 h-4 w-4',
+                                                                selectedUserId === user.id ? 'opacity-100' : 'opacity-0'
+                                                            )}
+                                                        />
+                                                        <div className="flex flex-col">
+                                                            <span>{user.fullName}</span>
+                                                            <span className="text-xs text-gray-500">{user.employeeCode}</span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                Lọc danh sách công theo từng cá nhân.
+                            </p>
                         </div>
                     </div>
 
                     {/* Toolbar */}
                     <AttendanceToolbar
                         attendances={attendances}
-                        users={isMyView ? (authUser ? [authUser] : []) : users}
+                        users={displayedUsers}
                         month={selectedMonth}
                     />
 
@@ -312,7 +407,7 @@ export default function AttendancePage() {
                     {viewMode === 'matrix' && (
                         <AttendanceMonthlyMatrix
                             attendances={attendances}
-                            users={isMyView ? (authUser ? [authUser] : [{ id: 0, fullName: 'Của tôi' }]) : users}
+                            users={displayedUsers}
                             month={selectedMonth}
                             onCellClick={(userId, date) => {
                                 setSelectedDate(date)
@@ -336,16 +431,28 @@ export default function AttendancePage() {
                         <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
                             {selectedDate && (
                                 <div className="border-b border-gray-200 p-4 dark:border-gray-700">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Hiển thị dữ liệu cho ngày:{' '}
-                                        <span className="font-medium text-gray-900 dark:text-white">
-                                            {new Date(selectedDate).toLocaleDateString('vi-VN')}
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                        <span>Hiển thị dữ liệu cho ngày:{' '}
+                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                {new Date(selectedDate).toLocaleDateString('vi-VN')}
+                                            </span>
                                         </span>
                                         <button
                                             onClick={() => setSelectedDate(null)}
-                                            className="ml-2 text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
                                         >
                                             Xem tất cả
+                                        </button>
+                                        <span className="text-gray-300">|</span>
+                                        <button
+                                            onClick={() => {
+                                                setSelectedDate(null)
+                                                setViewMode('matrix')
+                                            }}
+                                            className="text-gray-600 hover:text-gray-900 flex items-center gap-1 dark:text-gray-400 dark:hover:text-white"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                            Quay lại Bảng
                                         </button>
                                     </p>
                                 </div>
@@ -413,7 +520,21 @@ export default function AttendancePage() {
                                                         <LeaveTypeDisplay leaveType={attendance.leaveType} />
                                                     </td>
                                                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                                        {attendance.notes || '—'}
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className="truncate max-w-[150px] block" title={attendance.notes || ''}>
+                                                                {attendance.notes || '—'}
+                                                            </span>
+                                                            {/* Chỉ có Admin/Quản lý hoặc role phù hợp mới thấy nút sửa */}
+                                                            {authUser?.role?.roleKey === 'admin' && (
+                                                                <button
+                                                                    onClick={() => setEditDialogRecord(attendance)}
+                                                                    className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                                                    title="Sửa chấm công"
+                                                                >
+                                                                    <Edit2 className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))
@@ -441,6 +562,14 @@ export default function AttendancePage() {
             <GenerateQRDialog isOpen={showQRDialog} onClose={() => setShowQRDialog(false)} />
 
             <RequestLeaveDialog isOpen={showRequestLeave} onClose={() => setShowRequestLeave(false)} />
+
+            {/* Edit Attendance Dialog */}
+            <AttendanceEditDialog 
+                isOpen={!!editDialogRecord} 
+                onClose={() => setEditDialogRecord(null)} 
+                attendance={editDialogRecord}
+                onSuccess={loadData}
+            />
         </div>
     )
 }

@@ -43,7 +43,7 @@ const DeleteInvoiceDialog = ({ invoice, showTrigger = true, ...props }) => {
           <DialogDescription>
             Hành động này không thể hoàn tác. Loại thuế:{' '}
             <strong>
-              {invoice.code} - {invoice.customer.name}
+              {invoice.orderCode || invoice.code} - {invoice.customer.name}
             </strong>{' '}
             sẽ bị xóa
           </DialogDescription>
