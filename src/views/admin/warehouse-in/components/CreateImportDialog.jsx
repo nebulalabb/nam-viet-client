@@ -235,7 +235,7 @@ export default function CreateImportDialog({
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Tạo Phiếu Nhập Kho</DialogTitle>
-                    <DialogDescription>Phiếu sẽ được tạo ở trạng thái Nháp.</DialogDescription>
+                    <DialogDescription>Phiếu sẽ được tạo ở trạng thái Chờ duyệt.</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

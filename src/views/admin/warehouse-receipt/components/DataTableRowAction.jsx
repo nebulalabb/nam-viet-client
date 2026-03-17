@@ -12,16 +12,19 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   getWarehouseReceiptById,
+  postWarehouseReceipt,
 } from '@/stores/WarehouseReceiptSlice'
 import ViewWarehouseReceiptDialog from './ViewWarehouseReceiptDialog'
 import UpdateWarehouseReceiptDialog from './UpdateWarehouseReceiptDialog'
 import Can from '@/utils/can'
-import { Eye, Printer, Trash2, Pencil, FileSpreadsheet } from 'lucide-react'
+import { Eye, Printer, Trash2, Pencil, FileSpreadsheet, CheckCircle } from 'lucide-react'
 import { DeleteWarehouseReceiptDialog } from './DeleteWarehouseReceiptDialog'
 import { CancelWarehouseReceiptDialog } from './CancelWarehouseReceiptDialog'
 import PrintWarehouseReceiptView from './PrintWarehouseReceiptView'
 import ExportWarehouseReceiptPreview from './ExportWarehouseReceiptPreview'
 import { toast } from 'sonner'
+import { getProducts } from '@/stores/ProductSlice'
+import { getWarehouses } from '@/stores/WarehouseSlice'
 
 export function DataTableRowActions({ row, onRefresh }) {
   const dispatch = useDispatch()
@@ -64,15 +67,21 @@ export function DataTableRowActions({ row, onRefresh }) {
     }
   }
 
+  const [showApproveDialog, setShowApproveDialog] = useState(false)
+
   const handlePost = async () => {
     if (receipt.status === 'posted') {
       return
     }
-    const confirm = window.confirm(
-      'Bạn có chắc chắn muốn duyệt phiếu kho này không? Sau khi duyệt sẽ không thể chỉnh sửa.'
-    )
-    if (confirm) {
-      await dispatch(postWarehouseReceipt(receipt.id))
+    try {
+      await dispatch(postWarehouseReceipt(receipt.id)).unwrap()
+      toast.success('Phê duyệt phiếu thành công')
+      setShowApproveDialog(false)
+      dispatch(getProducts())
+      dispatch(getWarehouses())
+      if (onRefresh) onRefresh()
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -190,6 +199,18 @@ export function DataTableRowActions({ row, onRefresh }) {
               <FileSpreadsheet className="h-4 w-4" />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
+
+          {receipt.status === 'draft' && (
+            <DropdownMenuItem
+              onClick={handlePost}
+              className="text-green-600 hover:text-green-700 focus:text-green-700"
+            >
+              Phê duyệt
+              <DropdownMenuShortcut>
+                <CheckCircle className="h-4 w-4" />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          )}
 
           {(receipt.status === 'draft' || receipt.status === 'cancelled') && (
             <>

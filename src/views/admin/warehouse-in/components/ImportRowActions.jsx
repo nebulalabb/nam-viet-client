@@ -22,6 +22,7 @@ export function ImportRowActions({ row }) {
 
     const [showDetail, setShowDetail] = useState(false)
     const [detailData, setDetailData] = useState(null)
+    const [showApprove, setShowApprove] = useState(false)
     const isPosted = transaction.isPosted
 
     const refresh = () =>
@@ -33,7 +34,7 @@ export function ImportRowActions({ row }) {
         setShowDetail(true)
     }
 
-    const handlePost = async () => {
+    const handleApprove = async () => {
         await dispatch(postTransaction({ id: transaction.id, notes: '' })).unwrap()
         refresh()
         setShowApprove(false)
@@ -47,15 +48,15 @@ export function ImportRowActions({ row }) {
             <AlertDialog open={showApprove} onOpenChange={setShowApprove}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Ghi sổ phiếu nhập kho?</AlertDialogTitle>
+                        <AlertDialogTitle>Phê duyệt phiếu nhập kho?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Phiếu <b>{transaction.transactionCode || `#${transaction.id}`}</b> sẽ được ghi sổ và tồn kho sẽ được cập nhật.
+                            Phiếu <b>{transaction.transactionCode || `#${transaction.id}`}</b> sẽ được phê duyệt, ghi sổ và tồn kho sẽ được cập nhật.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction onClick={handlePost} disabled={actionLoading}>
-                            {actionLoading ? 'Đang ghi sổ...' : 'Ghi sổ'}
+                        <AlertDialogAction onClick={handleApprove} disabled={actionLoading}>
+                            {actionLoading ? 'Đang phê duyệt...' : 'Phê duyệt'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -79,7 +80,7 @@ export function ImportRowActions({ row }) {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => setShowApprove(true)} className="text-green-700 focus:text-green-700">
                                 <CheckCircle className="mr-2 h-4 w-4" />
-                                Ghi sổ phiếu
+                                Phê duyệt
                             </DropdownMenuItem>
                         </>
                     )}

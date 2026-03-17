@@ -133,23 +133,7 @@ export const getColumns = (onView, type = 'all', onRefresh) => [
     enableSorting: true,
     enableHiding: true,
   },
-  {
-    accessorKey: 'totalAmount',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Tổng tiền" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-32 truncate sm:max-w-72 md:max-w-[31rem]">
-            {moneyFormat(row.getValue('totalAmount'))}
-          </span>
-        </div>
-      )
-    },
-    enableSorting: true,
-    enableHiding: true,
-  },
+
   {
     accessorKey: 'status',
     header: ({ column }) => (
