@@ -57,6 +57,8 @@ import SalaryCalculatePage from '@/views/admin/salary/SalaryCalculatePage'
 import SalaryDetailPage from '@/views/admin/salary/SalaryDetailPage'
 import WarrantyPage from '@/views/admin/warranty/WarrantyPage'
 import DeliveryPage from '@/views/admin/delivery/DeliveryPage'
+import InventorySummaryPage from '@/views/admin/warehouse-report/InventorySummaryPage'
+import InventoryDetailPage from '@/views/admin/warehouse-report/InventoryDetailPage'
 
 const routes = [
   {
@@ -280,6 +282,16 @@ const routes = [
   {
     path: '/financial-report',
     element: FinancialReportPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/warehouse-report/summary',
+    element: InventorySummaryPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/warehouse-report/detail',
+    element: InventoryDetailPage,
     layout: AdminLayout,
   },
   // {
