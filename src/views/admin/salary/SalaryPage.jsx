@@ -15,6 +15,8 @@ import SalaryStatusBadge, {
     PostedStatus,
     formatCurrency,
 } from "./components/SalaryStatus";
+import AutoCalculateDialog from "./components/AutoCalculateDialog";
+import SalaryDetailDialog from "./components/SalaryDetailDialog";
 import {
     CheckCircle,
     Trash2,
@@ -24,6 +26,7 @@ import {
     X,
     Search,
     FileText,
+    Plus,
 } from "lucide-react";
 import Pagination from "@/components/Pagination";
 
@@ -42,6 +45,9 @@ function useDebounce(value, delay) {
 export default function SalaryPage() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
+    const [showAutoCalcDialog, setShowAutoCalcDialog] = useState(false);
+    const [selectedSalaryId, setSelectedSalaryId] = useState(null);
 
     // Pagination & Filters
     const [page, setPage] = useState(1);
@@ -176,7 +182,7 @@ export default function SalaryPage() {
     };
 
     return (
-        <div className="w-full space-y-6 overflow-x-auto">
+        <div className="w-full space-y-6 h-full overflow-y-auto pb-10 pr-2">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
@@ -189,11 +195,18 @@ export default function SalaryPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
+                        onClick={() => setShowAutoCalcDialog(true)}
+                        className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm"
+                    >
+                        <Calculator className="w-4 h-4" />
+                        Tính tự động hàng loạt
+                    </button>
+                    <button
                         onClick={() => navigate("/salary/calculate")}
                         className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
                     >
-                        <Calculator className="w-4 h-4" />
-                        Tính lương
+                        <Plus className="w-4 h-4" />
+                        Tính lương cá nhân
                     </button>
                 </div>
             </div>
@@ -470,13 +483,13 @@ export default function SalaryPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                                             <div className="flex items-center justify-end gap-3">
-                                                <Link
-                                                    to={`/admin/salary/${salary.id}`}
+                                                <button
+                                                    onClick={() => setSelectedSalaryId(salary.id)}
                                                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                                                     title="Xem chi tiết"
                                                 >
                                                     <Eye className="w-5 h-5" />
-                                                </Link>
+                                                </button>
                                                 {salary.status === "pending" && (
                                                     <>
                                                         <button
@@ -514,6 +527,18 @@ export default function SalaryPage() {
                     />
                 </div>
             )}
+
+            <AutoCalculateDialog 
+                isOpen={showAutoCalcDialog} 
+                onClose={() => setShowAutoCalcDialog(false)} 
+            />
+
+            <SalaryDetailDialog
+                isOpen={!!selectedSalaryId}
+                onClose={() => setSelectedSalaryId(null)}
+                salaryId={selectedSalaryId}
+            />
         </div>
     );
 }
+

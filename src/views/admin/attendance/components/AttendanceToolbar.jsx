@@ -1,8 +1,8 @@
 import React, { useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Download, Upload, Lock } from 'lucide-react'
+import { Download, Lock } from 'lucide-react'
 import { handleExportAttendance } from '@/utils/attendance-excel-export'
-import { importAttendance, lockAttendanceMonth } from '@/stores/AttendanceSlice'
+import { lockAttendanceMonth } from '@/stores/AttendanceSlice'
 
 export default function AttendanceToolbar({
     attendances = [],
@@ -18,21 +18,6 @@ export default function AttendanceToolbar({
 
     const handleExport = () => {
         handleExportAttendance(attendances, users, month)
-    }
-
-    const handleImportClick = () => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click()
-        }
-    }
-
-    const handleFileChange = (e) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            dispatch(importAttendance(file))
-        }
-        // Reset input so the same file can be selected again if needed
-        e.target.value = null
     }
 
     const handleLockMonth = () => {
@@ -57,25 +42,6 @@ export default function AttendanceToolbar({
                 <Download className="h-4 w-4" />
                 Xuất Excel
             </button>
-
-            {/* Import Button */}
-            <input
-                type="file"
-                ref={fileInputRef}
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={handleFileChange}
-            />
-            <button
-                onClick={handleImportClick}
-                disabled={loading}
-                className="inline-flex items-center gap-2 rounded-lg border border-blue-600 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-500 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
-                title="Nhập dữ liệu từ máy chấm công (Excel/CSV)"
-            >
-                <Upload className="h-4 w-4" />
-                Nhập dữ liệu
-            </button>
-
             {/* Lock Month Button */}
             <button
                 onClick={handleLockMonth}

@@ -50,6 +50,23 @@ export const getSalaryById = createAsyncThunk(
     }
 );
 
+export const calculateBatchSalary = createAsyncThunk(
+    'salary/calculateBatch',
+    async (data, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.post('/salary/calculate-batch', data);
+            toast.success('Tính lương tự động thành công!');
+            dispatch(getSalaries());
+            dispatch(getSalarySummary({ fromMonth: data.month, toMonth: data.month }));
+            return response.data;
+        } catch (error) {
+            const message = handleError(error);
+            toast.error(message || 'Không thể tạo lương tự động');
+            return rejectWithValue(message);
+        }
+    }
+);
+
 export const getSalaryByUserMonth = createAsyncThunk(
     'salary/getSalaryByUserMonth',
     async ({ userId, month }, { rejectWithValue }) => {
@@ -241,6 +258,13 @@ const salarySlice = createSlice({
                 state.calculationPreview = action.payload.data || action.payload
             })
             .addCase(calculateSalary.rejected, handleRejected)
+
+            // calculateBatchSalary
+            .addCase(calculateBatchSalary.pending, handlePending)
+            .addCase(calculateBatchSalary.fulfilled, (state) => {
+                state.loading = false
+            })
+            .addCase(calculateBatchSalary.rejected, handleRejected)
 
             // action thunks only set loading states
             .addCase(recalculateSalary.pending, handlePending)

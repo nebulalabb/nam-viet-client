@@ -198,7 +198,7 @@ export const lockAttendanceMonth = createAsyncThunk(
     async (month, { rejectWithValue, dispatch }) => {
         try {
             const response = await api.post('/attendance/lock-month', { month })
-            await dispatch(getAttendanceStatistics()).unwrap()
+            await dispatch(getAttendanceStatistics({ month })).unwrap()
             toast.success('Chốt công tháng thành công!')
             return response.data
         } catch (error) {
