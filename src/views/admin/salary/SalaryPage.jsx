@@ -6,15 +6,16 @@ import {
     getSalarySummary,
     approveSalary,
     deleteSalary,
+    paySalary,
 } from "@/stores/SalarySlice";
 import { getUsers } from "@/stores/UserSlice";
 import { getRoles } from "@/stores/RoleSlice";
 import { getWarehouses } from "@/stores/WarehouseSlice";
 import SalaryStatusBadge, {
     MonthDisplay,
-    PostedStatus,
     formatCurrency,
 } from "./components/SalaryStatus";
+import { MonthPicker } from "../attendance/components/MonthPicker";
 import AutoCalculateDialog from "./components/AutoCalculateDialog";
 import SalaryDetailDialog from "./components/SalaryDetailDialog";
 import {
@@ -28,7 +29,8 @@ import {
     FileText,
     Plus,
 } from "lucide-react";
-import Pagination from "@/components/Pagination";
+import CustomPagination from "@/components/CustomPagination";
+import { Layout, LayoutBody } from '@/components/custom/Layout';
 
 // Custom debounce hook for search
 function useDebounce(value, delay) {
@@ -55,13 +57,9 @@ export default function SalaryPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const debouncedSearch = useDebounce(searchTerm, 400);
 
-    // Month filter default to current month YYYYMM
-    const [monthFilter, setMonthFilter] = useState(() => {
-        const now = new Date();
-        return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
-    });
+    // Month filter default to empty string (all months)
+    const [monthFilter, setMonthFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
-    const [userFilter, setUserFilter] = useState(0);
     const [roleFilter, setRoleFilter] = useState(0);
     const [warehouseFilter, setWarehouseFilter] = useState(0);
 
@@ -84,18 +82,26 @@ export default function SalaryPage() {
         const params = {
             page,
             limit,
-            month: monthFilter,
         };
+        if (monthFilter) params.month = monthFilter;
         if (debouncedSearch) params.search = debouncedSearch;
-        if (userFilter !== 0) params.userId = userFilter;
         if (statusFilter !== "all") params.status = statusFilter;
         if (roleFilter !== 0) params.roleId = roleFilter;
         if (warehouseFilter !== 0) params.warehouseId = warehouseFilter;
 
         dispatch(getSalaries(params));
         // Fetch summary for the selected month limit
+        const summaryParams = {};
+        if (monthFilter) {
+            summaryParams.fromMonth = monthFilter;
+            summaryParams.toMonth = monthFilter;
+        } else {
+            const currentYear = new Date().getFullYear();
+            summaryParams.fromMonth = `${currentYear}01`;
+            summaryParams.toMonth = `${currentYear}12`;
+        }
         dispatch(
-            getSalarySummary({ fromMonth: monthFilter, toMonth: monthFilter })
+            getSalarySummary(summaryParams)
         );
     }, [
         dispatch,
@@ -103,7 +109,6 @@ export default function SalaryPage() {
         limit,
         debouncedSearch,
         monthFilter,
-        userFilter,
         statusFilter,
         roleFilter,
         warehouseFilter,
@@ -115,7 +120,6 @@ export default function SalaryPage() {
     }, [
         debouncedSearch,
         monthFilter,
-        userFilter,
         statusFilter,
         roleFilter,
         warehouseFilter,
@@ -131,6 +135,12 @@ export default function SalaryPage() {
         }
     };
 
+    const handlePay = (id) => {
+        if (window.confirm("Xác nhận thanh toán cho bảng lương này?")) {
+            dispatch(paySalary({ id, data: { paymentDate: new Date().toISOString(), paymentMethod: 'cash', notes: 'Thanh toán tự động' } }));
+        }
+    };
+
     const handleDelete = (id) => {
         if (
             window.confirm("Xác nhận xóa bảng lương này? Hành động này không thể hoàn tác!")
@@ -141,16 +151,13 @@ export default function SalaryPage() {
 
     const hasActiveFilters =
         !!searchTerm ||
-        userFilter !== 0 ||
         statusFilter !== "all" ||
         roleFilter !== 0 ||
         warehouseFilter !== 0;
 
     const handleResetFilters = () => {
         setSearchTerm("");
-        const now = new Date();
-        setMonthFilter(`${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`);
-        setUserFilter(0);
+        setMonthFilter("");
         setStatusFilter("all");
         setRoleFilter(0);
         setWarehouseFilter(0);
@@ -166,239 +173,79 @@ export default function SalaryPage() {
         return labels[status] || status;
     };
 
-    // Safe parsing for month input which expects YYYY-MM
-    const monthInputDisplay =
-        monthFilter.length === 6
-            ? `${monthFilter.substring(0, 4)}-${monthFilter.substring(4, 6)}`
-            : "";
-
-    const handleMonthChange = (e) => {
-        const val = e.target.value; // YYYY-MM
-        if (val) {
-            setMonthFilter(val.replace("-", ""));
-        } else {
-            setMonthFilter("");
-        }
-    };
-
     return (
-        <div className="w-full space-y-6 h-full overflow-y-auto pb-10 pr-2">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        Quản lý Lương
-                    </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Quản lý và theo dõi bảng lương nhân viên
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setShowAutoCalcDialog(true)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors shadow-sm"
-                    >
-                        <Calculator className="w-4 h-4" />
-                        Tính tự động hàng loạt
-                    </button>
-                    <button
-                        onClick={() => navigate("/salary/calculate")}
-                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Tính lương cá nhân
-                    </button>
-                </div>
-            </div>
-
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-yellow-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-yellow-950">
-                    <div className="flex items-center justify-between relative z-10">
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                Chờ Duyệt
-                            </p>
-                            <p className="mt-3 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-                                {salarySummary?.byStatus?.pending || 0}
-                            </p>
-                        </div>
-                        <div className="border-2 border-yellow-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50">
-                            <Calculator className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                        </div>
+        <Layout>
+            <LayoutBody className="flex flex-col" fixedHeight>
+                <div className="mb-2 flex items-center justify-between space-y-2">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            Danh sách bảng lương
+                        </h2>
                     </div>
                 </div>
 
-                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-blue-950">
-                    <div className="flex items-center justify-between relative z-10">
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                Đã Duyệt
-                            </p>
-                            <p className="mt-3 text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                {salarySummary?.byStatus?.approved || 0}
-                            </p>
+                <div className="-mx-4 flex-1 overflow-hidden px-4 py-1 flex flex-col space-y-4">
+                    {/* Toolbar */}
+                    <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
+                        <div className="flex flex-1 items-center space-x-2">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm tên, mã NV..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="flex h-8 w-[150px] lg:w-[200px] rounded-md border border-input bg-transparent px-8 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                            </div>
+
+                            <MonthPicker 
+                                value={monthFilter ? `${monthFilter.substring(0,4)}-${monthFilter.substring(4,6)}` : ""} 
+                                onChange={(val) => setMonthFilter(val.replace("-", ""))} 
+                            />
+
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="flex h-8 min-w-[180px] items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            >
+                                <option value="all">Trạng thái (Tất cả)</option>
+                                <option value="pending">Chờ duyệt</option>
+                                <option value="approved">Đã duyệt</option>
+                                <option value="paid">Đã thanh toán</option>
+                            </select>
+
+                            {hasActiveFilters && (
+                                <button
+                                    onClick={handleResetFilters}
+                                    className="inline-flex h-8 items-center justify-center rounded-md px-2 lg:px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                    Đặt lại
+                                    <X className="ml-2 h-4 w-4" />
+                                </button>
+                            )}
                         </div>
-                        <div className="border-2 border-blue-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50">
-                            <CheckCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+
+                        <div className="flex items-center space-x-2">
+                            <button
+                                onClick={() => setShowAutoCalcDialog(true)}
+                                className="inline-flex h-8 items-center justify-center rounded-md bg-green-600 px-3 text-sm font-medium text-white shadow hover:bg-green-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-700"
+                            >
+                                <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
+                                Tính tự động
+                            </button>
+                            <button
+                                onClick={() => navigate("/salary/calculate")}
+                                className="inline-flex h-8 items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-medium text-white shadow hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-700"
+                            >
+                                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                                Lương cá nhân
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-green-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-green-950">
-                    <div className="flex items-center justify-between relative z-10">
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                Đã Thanh Toán
-                            </p>
-                            <p className="mt-3 text-3xl font-bold text-green-600 dark:text-green-400">
-                                {salarySummary?.byStatus?.paid || 0}
-                            </p>
-                        </div>
-                        <div className="border-2 border-green-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50">
-                            <Banknote className="h-6 w-6 text-green-600 dark:text-green-400" />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-purple-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-purple-950">
-                    <div className="flex items-center justify-between relative z-10">
-                        <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                Tổng Tiền
-                            </p>
-                            <p className="mt-3 text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {formatCurrency(
-                                    (salarySummary?.totalBasicSalary || 0) +
-                                    (salarySummary?.totalAllowance || 0) +
-                                    (salarySummary?.totalBonus || 0)
-                                )}
-                            </p>
-                        </div>
-                        <div className="border-2 border-purple-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50">
-                            <Banknote className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Tìm kiếm
-                    </label>
-                    <div className="relative">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <Search className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                            placeholder="Tên, mã NV..."
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Tháng
-                    </label>
-                    <input
-                        type="month"
-                        value={monthInputDisplay}
-                        onChange={handleMonthChange}
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    />
-                </div>
-
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Nhân viên
-                    </label>
-                    <select
-                        value={userFilter}
-                        onChange={(e) => setUserFilter(Number(e.target.value))}
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    >
-                        <option value={0}>Tất cả</option>
-                        {users?.map((u) => (
-                            <option key={u.id} value={u.id}>
-                                {u.fullName}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Trạng thái
-                    </label>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    >
-                        <option value="all">Tất cả</option>
-                        <option value="pending">Chờ duyệt</option>
-                        <option value="approved">Đã duyệt</option>
-                        <option value="paid">Đã thanh toán</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Vai trò
-                    </label>
-                    <select
-                        value={roleFilter}
-                        onChange={(e) => setRoleFilter(Number(e.target.value))}
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    >
-                        <option value={0}>Tất cả</option>
-                        {roles?.map((r) => (
-                            <option key={r.id} value={r.id}>
-                                {r.roleName}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Kho
-                    </label>
-                    <select
-                        value={warehouseFilter}
-                        onChange={(e) => setWarehouseFilter(Number(e.target.value))}
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                    >
-                        <option value={0}>Tất cả</option>
-                        {warehouses?.map((w) => (
-                            <option key={w.id} value={w.id}>
-                                {w.warehouseName}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {hasActiveFilters && (
-                <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        onClick={handleResetFilters}
-                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                    >
-                        <X className="h-3.5 w-3.5" />
-                        Xóa bộ lọc
-                    </button>
-                </div>
-            )}
-
-            {/* Table Content */}
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    {/* Table Content */}
+                    <div className="flex-1 overflow-auto rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                 {loading ? (
                     <div className="flex h-64 items-center justify-center">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
@@ -478,7 +325,6 @@ export default function SalaryPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-center">
                                             <div className="flex flex-col items-center gap-2">
                                                 <SalaryStatusBadge status={salary.status} />
-                                                <PostedStatus isPosted={salary.isPosted} />
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -508,6 +354,15 @@ export default function SalaryPage() {
                                                         </button>
                                                     </>
                                                 )}
+                                                {salary.status === "approved" && (
+                                                    <button
+                                                        onClick={() => handlePay(salary.id)}
+                                                        className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+                                                        title="Thanh toán"
+                                                    >
+                                                        <Banknote className="w-5 h-5" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -516,29 +371,31 @@ export default function SalaryPage() {
                         </table>
                     </div>
                 )}
-            </div>
-
-            {meta && meta.totalPages > 1 && (
-                <div className="mt-4 flex justify-end">
-                    <Pagination
-                        currentPage={page}
-                        totalPages={meta.totalPages}
-                        onPageChange={handlePageChange}
-                    />
                 </div>
-            )}
 
-            <AutoCalculateDialog 
-                isOpen={showAutoCalcDialog} 
-                onClose={() => setShowAutoCalcDialog(false)} 
-            />
+                {meta && (
+                    <CustomPagination 
+                        totalItems={meta.total || 0}
+                        currentPage={page}
+                        pageSize={limit}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={(s) => { setLimit(s); setPage(1); }}
+                    />
+                )}
 
-            <SalaryDetailDialog
-                isOpen={!!selectedSalaryId}
-                onClose={() => setSelectedSalaryId(null)}
-                salaryId={selectedSalaryId}
-            />
-        </div>
+                <AutoCalculateDialog 
+                    isOpen={showAutoCalcDialog} 
+                    onClose={() => setShowAutoCalcDialog(false)} 
+                />
+
+                <SalaryDetailDialog
+                    isOpen={!!selectedSalaryId}
+                    onClose={() => setSelectedSalaryId(null)}
+                    salaryId={selectedSalaryId}
+                />
+                </div>
+            </LayoutBody>
+        </Layout>
     );
 }
 

@@ -10,9 +10,10 @@ export const getSalaries = createAsyncThunk(
             const response = await api.get('/salary', { params })
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Không thể lấy danh sách lương')
-            return rejectWithValue(message)
+            const errorObj = handleError(error)
+            const errorMsg = errorObj?.message || errorObj || 'Không thể lấy danh sách lương'
+            toast.error(errorMsg)
+            return rejectWithValue(errorObj)
         }
     }
 )
@@ -55,14 +56,17 @@ export const calculateBatchSalary = createAsyncThunk(
     async (data, { rejectWithValue, dispatch }) => {
         try {
             const response = await api.post('/salary/calculate-batch', data);
-            toast.success('Tính lương tự động thành công!');
-            dispatch(getSalaries());
-            dispatch(getSalarySummary({ fromMonth: data.month, toMonth: data.month }));
+            if (!data.preview) {
+                toast.success('Tính lương tự động thành công!');
+                dispatch(getSalaries());
+                dispatch(getSalarySummary({ fromMonth: data.month, toMonth: data.month }));
+            }
             return response.data;
         } catch (error) {
-            const message = handleError(error);
-            toast.error(message || 'Không thể tạo lương tự động');
-            return rejectWithValue(message);
+            const errorObj = handleError(error);
+            const errorMsg = errorObj?.message || errorObj || 'Không thể tạo lương tự động';
+            if (data?.preview !== true) toast.error(errorMsg);
+            return rejectWithValue(errorObj);
         }
     }
 );
@@ -85,12 +89,15 @@ export const calculateSalary = createAsyncThunk(
     async (data, { rejectWithValue }) => {
         try {
             const response = await api.post('/salary/calculate', data)
-            toast.success('Tính toán trước lương thành công!')
+            if (!data.preview) {
+                toast.success('Tính toán lương thành công!')
+            }
             return response.data
         } catch (error) {
-            const message = handleError(error)
-            toast.error(message || 'Tính toán lương thất bại!')
-            return rejectWithValue(message)
+            const errorObj = handleError(error)
+            const errorMsg = errorObj?.message || errorObj || 'Tính toán lương thất bại!'
+            if (data?.preview !== true) toast.error(errorMsg)
+            return rejectWithValue(errorObj)
         }
     }
 )

@@ -101,7 +101,7 @@ export default function SalaryDetailDialog({ isOpen, onClose, salaryId }) {
                                             <span className="font-medium text-gray-900 dark:text-white">{formatMonth(currentSalary.month)}</span>
                                         </div>
                                         <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2">
-                                            <span className="text-gray-500 dark:text-gray-400">Hạch toán:</span>
+                                            <span className="text-gray-500 dark:text-gray-400">Thanh toán:</span>
                                             <PostedStatus isPosted={currentSalary.isPosted} />
                                         </div>
                                         {currentSalary.paymentMethod && (
@@ -158,7 +158,7 @@ export default function SalaryDetailDialog({ isOpen, onClose, salaryId }) {
                                             </div>
                                             <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-gray-200 bg-white shadow dark:bg-gray-800 dark:border-gray-700 relative z-10">
                                                 <div className="flex items-center justify-between mb-1">
-                                                    <div className="font-bold text-gray-900 dark:text-white">Tạo phiếu lương</div>
+                                                    <div className="font-bold text-gray-900 dark:text-white">Chờ duyệt</div>
                                                     <time className="text-xs text-gray-500 dark:text-gray-400">
                                                         {new Date(currentSalary.createdAt).toLocaleDateString('vi-VN')}
                                                     </time>
@@ -177,7 +177,7 @@ export default function SalaryDetailDialog({ isOpen, onClose, salaryId }) {
                                                 </div>
                                                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-gray-200 bg-white shadow dark:bg-gray-800 dark:border-gray-700 relative z-10">
                                                     <div className="flex items-center justify-between mb-1">
-                                                        <div className="font-bold text-gray-900 dark:text-white">Duyệt phiếu lương</div>
+                                                        <div className="font-bold text-gray-900 dark:text-white">Xác nhận</div>
                                                         <time className="text-xs text-gray-500 dark:text-gray-400">
                                                             {new Date(currentSalary.approvedAt).toLocaleDateString('vi-VN')}
                                                         </time>
@@ -190,7 +190,7 @@ export default function SalaryDetailDialog({ isOpen, onClose, salaryId }) {
                                         )}
 
                                         {/* Paid */}
-                                        {currentSalary.paidAt && (
+                                        {currentSalary.paymentDate && (
                                             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-purple-100 text-purple-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 dark:bg-purple-900/30 dark:border-gray-800 dark:text-purple-400 z-10 relative">
                                                     <Clock className="w-4 h-4" />
@@ -199,11 +199,11 @@ export default function SalaryDetailDialog({ isOpen, onClose, salaryId }) {
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="font-bold text-gray-900 dark:text-white">Thanh toán</div>
                                                         <time className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {new Date(currentSalary.paidAt).toLocaleDateString('vi-VN')}
+                                                            {new Date(currentSalary.paymentDate).toLocaleDateString('vi-VN')}
                                                         </time>
                                                     </div>
-                                                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                        Người chi: {currentSalary.payer?.fullName || "—"}
+                                                    <div className="text-sm text-gray-600 dark:text-gray-400 flex flex-col gap-1">
+                                                        <span>Người thanh toán: {currentSalary.payer?.fullName || "—"}</span>
                                                     </div>
                                                 </div>
                                             </div>

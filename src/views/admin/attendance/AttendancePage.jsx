@@ -33,6 +33,8 @@ import {
     ChevronsUpDown,
     Check
 } from 'lucide-react'
+import { Layout, LayoutBody } from '@/components/custom/Layout'
+import CustomPagination from '@/components/CustomPagination'
 
 // Simple ClassicCard component since we couldn't find the exact one from Next.js
 function ClassicCard({ title, value, icon, color, description }) {
@@ -76,8 +78,14 @@ export default function AttendancePage() {
     const [selectedDate, setSelectedDate] = useState(null)
     const [showQRDialog, setShowQRDialog] = useState(false)
     const [showRequestLeave, setShowRequestLeave] = useState(false)
-    const [editDialogRecord, setEditDialogRecord] = useState(null)
     const [openUserCombobox, setOpenUserCombobox] = useState(false)
+    const [editDialogRecord, setEditDialogRecord] = useState(null)
+    const [page, setPage] = useState(1)
+    const [limit, setLimit] = useState(20)
+
+    useEffect(() => {
+        setPage(1)
+    }, [viewMode])
 
     const { attendanceList, myAttendance, statistics, loading } = useSelector((state) => state.attendance)
     const { users } = useSelector((state) => state.user)
@@ -148,251 +156,158 @@ export default function AttendancePage() {
     }
 
     return (
-        <div className="space-y-6 h-full overflow-y-auto pb-10 pr-2">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Chấm công</h1>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Quản lý và theo dõi chấm công nhân viên
-                    </p>
+        <Layout>
+            <LayoutBody className="flex flex-col" fixedHeight>
+                <div className="mb-2 flex items-center justify-between space-y-2">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            Chấm công
+                        </h2>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setShowRequestLeave(true)}
+                            className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            Xin nghỉ phép
+                        </button>
+
+                        <button
+                            onClick={() => setShowQRDialog(true)}
+                            className="inline-flex h-8 items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-medium text-white shadow focus-visible:outline-none focus-visible:ring-1 hover:bg-blue-700 focus-visible:ring-blue-700"
+                        >
+                            <QrCode className="mr-2 h-4 w-4" />
+                            Tạo QR
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setShowRequestLeave(true)}
-                        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    >
-                        <Calendar className="h-4 w-4" />
-                        Xin nghỉ phép
-                    </button>
-
-                    {/* QR Code Button - usually for admins/managers */}
-                    <button
-                        onClick={() => setShowQRDialog(true)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-                    >
-                        <QrCode className="h-4 w-4" />
-                        Tạo QR
-                    </button>
-
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center gap-2 rounded-lg border border-gray-200 p-1 dark:border-gray-700">
+                <div className="-mx-4 flex-1 overflow-hidden px-4 py-1 flex flex-col space-y-4">
+                    {/* View Modes */}
+                    <div className="border-b border-gray-200 dark:border-gray-700 flex justify-start items-center p-2 gap-2">
                         <button
                             onClick={() => setViewMode('matrix')}
-                            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${viewMode === 'matrix'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-                                }`}
+                            className={`inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${viewMode === 'matrix' ? 'bg-muted shadow-sm text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
                         >
                             <Grid3x3 className="h-4 w-4" />
                             Bảng công
                         </button>
                         <button
                             onClick={() => setViewMode('calendar')}
-                            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${viewMode === 'calendar'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-                                }`}
+                            className={`inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${viewMode === 'calendar' ? 'bg-muted shadow-sm text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
                         >
                             <Calendar className="h-4 w-4" />
                             Lịch
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${viewMode === 'list'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
-                                }`}
+                            className={`inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-muted shadow-sm text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
                         >
                             <List className="h-4 w-4" />
                             Danh sách
                         </button>
                     </div>
-                </div>
-            </div>
 
-            {/* Statistics Cards */}
-            {statistics && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <ClassicCard
-                        title="Ngày Có Mặt"
-                        value={statistics?.presentDays || 0}
-                        icon={UserCheck}
-                        color="green"
-                        description="Nhân viên đã chấm công"
-                    />
+                <div className="flex-1 overflow-hidden flex flex-col space-y-4">
+                    {/* Filters - Compact Toolbar */}
+                    <div className="flex w-full items-center space-x-2 overflow-auto p-1">
+                        <div className="flex flex-1 items-center space-x-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Tháng:</span>
+                                <div className="w-[140px]">
+                                    <MonthPicker 
+                                        value={selectedMonth}
+                                        onChange={setSelectedMonth}
+                                    />
+                                </div>
+                            </div>
 
-                    <ClassicCard
-                        title="Ngày Vắng"
-                        value={statistics?.absentDays || 0}
-                        icon={UserX}
-                        color="red"
-                        description="Nhân viên vắng mặt"
-                    />
-
-                    <ClassicCard
-                        title="Tổng Giờ Công"
-                        value={`${(statistics?.totalWorkHours || 0).toFixed(1)}h`}
-                        icon={Clock}
-                        color="blue"
-                        description="Tính trong kỳ"
-                    />
-
-                    <ClassicCard
-                        title="TB Giờ/Ngày"
-                        value={`${(statistics?.averageWorkHours || 0).toFixed(1)}h`}
-                        icon={TrendingUp}
-                        color="purple"
-                        description="Bình quân mỗi ngày"
-                    />
-                </div>
-            )}
-
-            {/* Daily Stats Card */}
-            <DailyStatsCard
-                attendances={attendances}
-                users={users}
-                selectedDate={selectedDate || undefined}
-            />
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setActiveTab('overview')}
-                        className={`px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'overview'
-                            ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
-                            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                            }`}
-                    >
-                        <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Tổng quan
-                        </div>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('approvals')}
-                        className={`px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'approvals'
-                            ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
-                            : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                            }`}
-                    >
-                        <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Cần duyệt
-                        </div>
-                    </button>
-                </div>
-            </div>
-{/* fix */}
-            {/* Tab Content */}
-            {activeTab === 'overview' && (
-                <div className="space-y-6">
-                    {/* Filters - Moved to vertical layout with better card styling */}
-                    <div className="grid gap-6 sm:grid-cols-2">
-                        {/* Month Selector Card */}
-                        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
-                            <label htmlFor="month" className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                📅 Chọn tháng xem chấm công
-                            </label>
-                            <MonthPicker 
-                                value={selectedMonth}
-                                onChange={setSelectedMonth}
-                            />
-                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                Dữ liệu chấm công sẽ được hiển thị theo tháng được chọn.
-                            </p>
-                        </div>
-
-                        {/* User Selector Combobox Card */}
-                        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
-                            <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                👤 Chọn nhân viên
-                            </label>
-                            <Popover open={openUserCombobox} onOpenChange={setOpenUserCombobox}>
-                                <PopoverTrigger asChild>
-                                    <button
-                                        role="combobox"
-                                        aria-expanded={openUserCombobox}
-                                        className="mt-1 flex w-full items-center justify-between rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-base font-medium focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-900 dark:text-white dark:focus:bg-gray-800"
-                                    >
-                                        <span className="truncate">
-                                            {selectedUserId === 'me'
-                                                ? 'Của tôi'
-                                                : selectedUserId === 'all'
-                                                    ? 'Tất cả nhân viên'
-                                                    : users.find((user) => user.id === selectedUserId)?.fullName || 'Chọn nhân viên...'}
-                                        </span>
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-gray-400" />
-                                    </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-full min-w-[300px] p-0" align="start">
-                                    <Command>
-                                        <CommandInput placeholder="Gõ tên hoặc mã nhân viên..." />
-                                        <CommandList>
-                                            <CommandEmpty>Không tìm thấy nhân viên.</CommandEmpty>
-                                            <CommandGroup>
-                                                <CommandItem
-                                                    value="Của tôi"
-                                                    onSelect={() => {
-                                                        setSelectedUserId('me')
-                                                        setOpenUserCombobox(false)
-                                                    }}
-                                                >
-                                                    <Check
-                                                        className={cn(
-                                                            'mr-2 h-4 w-4',
-                                                            selectedUserId === 'me' ? 'opacity-100' : 'opacity-0'
-                                                        )}
-                                                    />
-                                                    Của tôi
-                                                </CommandItem>
-                                                <CommandItem
-                                                    value="Tất cả nhân viên"
-                                                    onSelect={() => {
-                                                        setSelectedUserId('all')
-                                                        setOpenUserCombobox(false)
-                                                    }}
-                                                >
-                                                    <Check
-                                                        className={cn(
-                                                            'mr-2 h-4 w-4',
-                                                            selectedUserId === 'all' ? 'opacity-100' : 'opacity-0'
-                                                        )}
-                                                    />
-                                                    Tất cả nhân viên
-                                                </CommandItem>
-                                                {users.map((user) => (
-                                                    <CommandItem
-                                                        key={user.id}
-                                                        value={user.fullName + ' ' + user.employeeCode}
-                                                        onSelect={() => {
-                                                            setSelectedUserId(user.id)
-                                                            setOpenUserCombobox(false)
-                                                        }}
-                                                    >
-                                                        <Check
-                                                            className={cn(
-                                                                'mr-2 h-4 w-4',
-                                                                selectedUserId === user.id ? 'opacity-100' : 'opacity-0'
-                                                            )}
-                                                        />
-                                                        <div className="flex flex-col">
-                                                            <span>{user.fullName}</span>
-                                                            <span className="text-xs text-gray-500">{user.employeeCode}</span>
-                                                        </div>
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                Lọc danh sách công theo từng cá nhân.
-                            </p>
+                            <div className="flex items-center gap-2 ml-4">
+                                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Nhân viên:</span>
+                                <div className="w-[200px]">
+                                    <Popover open={openUserCombobox} onOpenChange={setOpenUserCombobox}>
+                                        <PopoverTrigger asChild>
+                                            <button
+                                                role="combobox"
+                                                aria-expanded={openUserCombobox}
+                                                className="flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                            >
+                                                <span className="truncate">
+                                                    {selectedUserId === 'me'
+                                                        ? 'Của tôi'
+                                                        : selectedUserId === 'all'
+                                                            ? 'Tuyển chọn nhân viên'
+                                                            : users.find((user) => user.id === selectedUserId)?.fullName || 'Chọn NV...'}
+                                                </span>
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[300px] p-0" align="start">
+                                            <Command>
+                                                <CommandInput placeholder="Gõ tên hoặc mã nhân viên..." />
+                                                <CommandList>
+                                                    <CommandEmpty>Không tìm thấy nhân viên.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        <CommandItem
+                                                            value="Của tôi"
+                                                            onSelect={() => {
+                                                                setSelectedUserId('me')
+                                                                setOpenUserCombobox(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    'mr-2 h-4 w-4',
+                                                                    selectedUserId === 'me' ? 'opacity-100' : 'opacity-0'
+                                                                )}
+                                                            />
+                                                            Của tôi
+                                                        </CommandItem>
+                                                        <CommandItem
+                                                            value="Tất cả nhân viên"
+                                                            onSelect={() => {
+                                                                setSelectedUserId('all')
+                                                                setOpenUserCombobox(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    'mr-2 h-4 w-4',
+                                                                    selectedUserId === 'all' ? 'opacity-100' : 'opacity-0'
+                                                                )}
+                                                            />
+                                                            Tất cả nhân viên
+                                                        </CommandItem>
+                                                        {users.map((user) => (
+                                                            <CommandItem
+                                                                key={user.id}
+                                                                value={user.fullName + ' ' + user.employeeCode}
+                                                                onSelect={() => {
+                                                                    setSelectedUserId(user.id)
+                                                                    setOpenUserCombobox(false)
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        'mr-2 h-4 w-4',
+                                                                        selectedUserId === user.id ? 'opacity-100' : 'opacity-0'
+                                                                    )}
+                                                                />
+                                                                <div className="flex flex-col">
+                                                                    <span>{user.fullName}</span>
+                                                                    <span className="text-xs text-muted-foreground">{user.employeeCode}</span>
+                                                                </div>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -405,30 +320,43 @@ export default function AttendancePage() {
 
                     {/* Matrix View */}
                     {viewMode === 'matrix' && (
-                        <AttendanceMonthlyMatrix
-                            attendances={attendances}
-                            users={displayedUsers}
-                            month={selectedMonth}
-                            onCellClick={(userId, date) => {
-                                setSelectedDate(date)
-                                setViewMode('list')
-                            }}
-                        />
+                        <div className="flex-1 overflow-auto flex flex-col">
+                            <div className="flex-1 overflow-auto rounded-md border text-sm bg-white dark:bg-gray-900">
+                                <AttendanceMonthlyMatrix
+                                    attendances={attendances}
+                                    users={displayedUsers.slice((page - 1) * limit, page * limit)}
+                                    month={selectedMonth}
+                                    onCellClick={(userId, date) => {
+                                        setSelectedDate(date)
+                                        setViewMode('list')
+                                    }}
+                                />
+                            </div>
+                            <CustomPagination 
+                                totalItems={displayedUsers.length}
+                                currentPage={page}
+                                pageSize={limit}
+                                onPageChange={setPage}
+                                onPageSizeChange={(s) => { setLimit(s); setPage(1); }}
+                            />
+                        </div>
                     )}
 
                     {/* Calendar View */}
                     {viewMode === 'calendar' && (
-                        <AttendanceCalendar
-                            attendances={attendances}
-                            month={selectedMonth}
-                            onMonthChange={setSelectedMonth}
-                            onDateClick={handleDateClick}
-                        />
+                        <div className="flex-1 overflow-auto rounded-md border text-sm bg-white dark:bg-gray-900">
+                            <AttendanceCalendar
+                                attendances={attendances}
+                                month={selectedMonth}
+                                onMonthChange={setSelectedMonth}
+                                onDateClick={handleDateClick}
+                            />
+                        </div>
                     )}
 
                     {/* List View */}
                     {viewMode === 'list' && (
-                        <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+                        <div className="flex-1 overflow-auto flex flex-col rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
                             {selectedDate && (
                                 <div className="border-b border-gray-200 p-4 dark:border-gray-700">
                                     <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
@@ -466,6 +394,9 @@ export default function AttendancePage() {
                                                 Ngày
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                Nhân viên
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                                 Giờ vào
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -489,20 +420,26 @@ export default function AttendancePage() {
                                         {filteredAttendances.length === 0 ? (
                                             <tr>
                                                 <td
-                                                    colSpan={7}
+                                                    colSpan={8}
                                                     className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
                                                 >
                                                     Không có dữ liệu chấm công
                                                 </td>
                                             </tr>
                                         ) : (
-                                            filteredAttendances.map((attendance) => (
+                                            filteredAttendances.slice((page - 1) * limit, page * limit).map((attendance) => (
                                                 <tr
                                                     key={attendance.id}
                                                     className="hover:bg-gray-50 dark:hover:bg-gray-800"
                                                 >
                                                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-white">
                                                         {new Date(attendance.date).toLocaleDateString('vi-VN')}
+                                                    </td>
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                        {(() => {
+                                                            const user = users.find(u => u.id === attendance.userId);
+                                                            return user ? <div className="flex flex-col"><span>{user.fullName}</span><span className="text-xs text-gray-500">{user.employeeCode}</span></div> : '—';
+                                                        })()}
                                                     </td>
                                                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                                                         <TimeDisplay time={attendance.checkInTime} />
@@ -542,21 +479,16 @@ export default function AttendancePage() {
                                     </tbody>
                                 </table>
                             </div>
+                            <CustomPagination 
+                                totalItems={filteredAttendances.length}
+                                currentPage={page}
+                                pageSize={limit}
+                                onPageChange={setPage}
+                                onPageSizeChange={(s) => { setLimit(s); setPage(1); }}
+                            />
                         </div>
                     )}
                 </div>
-            )}
-
-            {/* Approvals Tab */}
-            {activeTab === 'approvals' && (
-                <AttendanceApprovalsTab
-                    attendances={attendanceList}
-                    users={users}
-                    isLoading={loading}
-                    onApprove={handleApproveLeave}
-                    onReject={handleRejectLeave}
-                />
-            )}
 
             {/* QR Code Dialog */}
             <GenerateQRDialog isOpen={showQRDialog} onClose={() => setShowQRDialog(false)} />
@@ -570,6 +502,8 @@ export default function AttendancePage() {
                 attendance={editDialogRecord}
                 onSuccess={loadData}
             />
-        </div>
+            </div>
+            </LayoutBody>
+        </Layout>
     )
 }

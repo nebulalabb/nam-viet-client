@@ -362,12 +362,12 @@ export function PostedStatus({ isPosted, className = "" }) {
             {isPosted ? (
                 <>
                     <CheckCircle className="w-4 h-4" />
-                    Đã hạch toán
+                    Đã thanh toán
                 </>
             ) : (
                 <>
                     <AlertCircle className="w-4 h-4" />
-                    Chưa hạch toán
+                    Chưa thanh toán
                 </>
             )}
         </span>

@@ -117,7 +117,7 @@ export default function AttendanceMonthlyMatrix({
             <table className="w-full">
                 <thead>
                     <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
-                        <th className="sticky left-0 z-10 bg-gray-50 px-4 py-3 text-left text-xs font-semibold text-gray-600 dark:bg-gray-900 dark:text-gray-400">
+                        <th className="sticky left-0 z-10 bg-gray-50 px-4 py-3 min-w-[250px] text-left text-xs font-semibold text-gray-600 dark:bg-gray-900 dark:text-gray-400">
                             Nhân viên
                         </th>
                         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
@@ -148,7 +148,7 @@ export default function AttendanceMonthlyMatrix({
                                 className="border-b border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50"
                             >
                                 {/* User Name */}
-                                <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-medium text-gray-900 dark:bg-gray-800 dark:text-white">
+                                <td className="sticky left-0 z-10 bg-white px-4 py-3 min-w-[250px] text-sm font-medium text-gray-900 dark:bg-gray-800 dark:text-white">
                                     <div className="flex items-center gap-2">
                                         <div>
                                             <p className="font-medium">{user.fullName}</p>

@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
 import {
-    calculateSalary, // from Thunk
+    calculateSalary,
+    getSalaryByUserMonth,
 } from "@/stores/SalarySlice";
+import { toast } from "sonner";
 import { getUsers } from "@/stores/UserSlice";
 import { SalaryBreakdown, formatMonth } from "./components/SalaryStatus";
 import {
@@ -14,6 +16,7 @@ import {
     Calculator,
     CheckCircle,
     ArrowLeft,
+    AlertTriangle,
 } from "lucide-react";
 
 export default function SalaryCalculatePage() {
@@ -21,6 +24,9 @@ export default function SalaryCalculatePage() {
     const dispatch = useDispatch();
 
     const [step, setStep] = useState(1);
+    const [existingSalary, setExistingSalary] = useState(null);
+    const [isChecking, setIsChecking] = useState(false);
+    
     // Store the preview from API or calculation locally
     const { calculationPreview, loading } = useSelector((state) => state.salary);
     const { users } = useSelector((state) => state.user);
@@ -54,12 +60,34 @@ export default function SalaryCalculatePage() {
     const selectedUserId = watch("userId");
     const selectedMonth = watch("month");
 
+    useEffect(() => {
+        const checkExisting = async () => {
+            if (selectedUserId && selectedMonth && selectedMonth.length === 6) {
+                setIsChecking(true);
+                setExistingSalary(null);
+                try {
+                    const actionResult = await dispatch(getSalaryByUserMonth({ userId: selectedUserId, month: selectedMonth }));
+                    if (getSalaryByUserMonth.fulfilled.match(actionResult)) {
+                        setExistingSalary(actionResult.payload.data || actionResult.payload);
+                    }
+                } catch (err) {
+                    console.log("No existing salary");
+                } finally {
+                    setIsChecking(false);
+                }
+            } else {
+                setExistingSalary(null);
+            }
+        };
+        checkExisting();
+    }, [selectedUserId, selectedMonth, dispatch]);
+
     const selectedUser = useMemo(
         () => users.find((u) => u.id === Number(selectedUserId)),
         [users, selectedUserId]
     );
 
-    const onSubmit = async (data) => {
+    const onSubmitPreview = async (data) => {
         const payload = {
             ...data,
             userId: Number(data.userId),
@@ -67,6 +95,7 @@ export default function SalaryCalculatePage() {
             allowance: Number(data.allowance || 0),
             bonus: Number(data.bonus || 0),
             advance: Number(data.advance || 0),
+            preview: true,
         };
         const actionResult = await dispatch(calculateSalary(payload));
         if (calculateSalary.fulfilled.match(actionResult)) {
@@ -74,12 +103,22 @@ export default function SalaryCalculatePage() {
         }
     };
 
-    const handleConfirm = () => {
-        // When confirm, normally the endpoint already saves it as 'pending' according to NextJs code,
-        // or it returns preview and we need a separate create API.
-        // Based on useSalary in Nextjs, calculateMutation is expected to do the actual saving or at least calculate
-        // The previous component just called onSuccess.
-        navigate("/salary");
+    const handleConfirm = async () => {
+        const data = watch();
+        const payload = {
+            ...data,
+            userId: Number(data.userId),
+            basicSalary: Number(data.basicSalary || 0),
+            allowance: Number(data.allowance || 0),
+            bonus: Number(data.bonus || 0),
+            advance: Number(data.advance || 0),
+            preview: false,
+        };
+        const actionResult = await dispatch(calculateSalary(payload));
+        if (calculateSalary.fulfilled.match(actionResult)) {
+            toast.success("Đã ghi nhận bảng lương thành công!");
+            navigate("/salary");
+        }
     };
 
     const handleBack = () => {
@@ -153,7 +192,7 @@ export default function SalaryCalculatePage() {
                         </div>
                     </div>
 
-                    <form onSubmit={handleSubmit(onSubmit)}>
+                    <form onSubmit={handleSubmit(onSubmitPreview)}>
                         {/* Step 1: Select Employee & Month */}
                         {step === 1 && (
                             <div className="space-y-6 max-w-2xl mx-auto">
@@ -210,14 +249,31 @@ export default function SalaryCalculatePage() {
                                     </div>
                                 )}
 
+                                {existingSalary && (
+                                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4 flex gap-3 items-start">
+                                        <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-400">
+                                                Cảnh báo trùng lặp
+                                            </h4>
+                                            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                                                Nhân viên này đã có bảng lương trong tháng. Trạng thái hiện tại: <strong className="uppercase">{existingSalary.status}</strong>.
+                                            </p>
+                                            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                                                Việc tạo mới sẽ <strong>ghi đè</strong> lên bảng lương cũ này. Bạn có chắc chắn muốn tiếp tục không?
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-end pt-4">
                                     <button
                                         type="button"
                                         onClick={() => setStep(2)}
-                                        disabled={!selectedUserId || !selectedMonth}
+                                        disabled={!selectedUserId || !selectedMonth || isChecking}
                                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
                                     >
-                                        Tiếp theo
+                                        {isChecking ? "Đang kiểm tra..." : "Tiếp theo"}
                                     </button>
                                 </div>
                             </div>
@@ -407,11 +463,21 @@ export default function SalaryCalculatePage() {
                                 <div className="flex justify-end pt-4">
                                     <button
                                         type="button"
+                                        disabled={loading}
                                         onClick={handleConfirm}
-                                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 shadow-sm transition-colors"
+                                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
                                     >
-                                        <CheckCircle className="w-5 h-5" />
-                                        Xác nhận & Trở về
+                                        {loading ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                Đang lưu...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="w-5 h-5" />
+                                                Xác nhận & Lưu
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
