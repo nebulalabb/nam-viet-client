@@ -57,7 +57,7 @@ const PrintableContent = React.forwardRef(
         <thead>
           <tr className="border bg-gray-100">
             <th className="border p-2 text-center text-sm font-semibold">STT</th>
-            <th className="border p-2 text-center text-sm font-semibold">Sản phẩm</th>
+            <th className="border p-2 text-center text-sm font-semibold">Nguyên liệu</th>
             <th className="border p-2 text-center text-sm font-semibold">Đơn vị</th>
             <th className="border p-2 text-center text-sm font-semibold">Số lượng</th>
             <th className="border p-2 text-center text-sm font-semibold">Đơn giá</th>

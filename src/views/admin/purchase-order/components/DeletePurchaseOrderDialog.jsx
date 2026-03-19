@@ -23,11 +23,11 @@ const DeletePurchaseOrderDialog = ({
   const handleDelete = async () => {
     try {
       await dispatch(deletePurchaseOrder(purchaseOrder.id)).unwrap()
-      toast.success('Xóa đơn đặt hàng thành công')
+      toast.success('Xóa đơn mua hàng thành công')
       onOpenChange(false)
     } catch (error) {
       console.error('Delete error:', error)
-      toast.error('Xóa đơn đặt hàng thất bại')
+      toast.error('Xóa đơn mua hàng thất bại')
     }
   }
 
@@ -35,9 +35,9 @@ const DeletePurchaseOrderDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Xác nhận xóa đơn đặt hàng</DialogTitle>
+          <DialogTitle>Xác nhận xóa đơn mua hàng</DialogTitle>
           <DialogDescription>
-            Bạn có chắc chắn muốn xóa đơn đặt hàng <strong>{purchaseOrder?.code}</strong> không?
+            Bạn có chắc chắn muốn xóa đơn mua hàng <strong>{purchaseOrder?.code}</strong> không?
             Hành động này không thể hoàn tác.
           </DialogDescription>
         </DialogHeader>

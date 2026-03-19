@@ -64,10 +64,10 @@ const PurchaseOrderCart = ({
         <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
           <CartIcon className="h-16 w-16 text-muted-foreground/30" />
           <p className="mt-4 text-sm text-muted-foreground">
-            Chưa có sản phẩm nào
+            Chưa có nguyên liệu nào
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Click vào sản phẩm để thêm vào đơn hàng
+            Click vào nguyên liệu để thêm vào đơn hàng
           </p>
         </div>
       </div>

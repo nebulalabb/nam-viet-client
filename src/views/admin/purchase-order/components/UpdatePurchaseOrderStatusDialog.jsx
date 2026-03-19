@@ -30,7 +30,7 @@ const UpdatePurchaseOrderStatusDialog = ({
   selectContentClassName,
 }) => {
   const filteredStatuses = useMemo(
-    () => statuses.filter((s) => s.value !== 'completed'),
+    () => statuses.filter((s) => !['completed', 'received'].includes(s.value)),
     [statuses]
   )
 
@@ -78,7 +78,7 @@ const UpdatePurchaseOrderStatusDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn("sm:max-w-[460px]", contentClassName)} overlayClassName={overlayClassName}>
         <DialogHeader>
-          <DialogTitle>Cập nhật trạng thái đơn đặt hàng</DialogTitle>
+          <DialogTitle>Cập nhật trạng thái đơn mua hàng</DialogTitle>
           <DialogDescription>
             Đơn đặt hàng: <span className="font-semibold">#{purchaseOrderId}</span>
             {current?.label ? (

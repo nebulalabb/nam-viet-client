@@ -163,7 +163,7 @@ const PurchaseOrderSidebar = ({
       <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-border/40 to-transparent" />
 
       <div className="p-4 border-b bg-background">
-        <h3 className="font-semibold">Thông tin đơn hàng</h3>
+        <h3 className="font-semibold">Thông tin đơn mua hàng</h3>
       </div>
 
       <ScrollArea className="flex-1">
@@ -592,7 +592,7 @@ const PurchaseOrderSidebar = ({
                         minDay.setHours(0, 0, 0, 0)
                         const checkDay = new Date(date)
                         checkDay.setHours(0, 0, 0, 0)
-                        return checkDay <= minDay
+                        return checkDay < minDay
                       }}
                     />
                   </PopoverContent>
@@ -725,7 +725,7 @@ const PurchaseOrderSidebar = ({
           loading={loading}
         >
           <IconDatabasePlus className="h-4 w-4 mr-2" />
-          {isUpdate ? 'Cập nhật đơn hàng' : 'Tạo đơn đặt hàng'}
+          {isUpdate ? 'Cập nhật đơn hàng' : 'Tạo đơn mua hàng'}
         </Button>
       </div >
     </div >

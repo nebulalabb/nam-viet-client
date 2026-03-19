@@ -35,7 +35,7 @@ export const paymentStatus = [
     icon: IconFileText,
   },
   {
-    value: 'completed',
+    value: 'posted',
     label: 'Đã chi',
     icon: IconCheck,
   },

@@ -9,21 +9,21 @@ const attributes = {
 
 const purchaseOrderStatuses = [
   {
-    value: 'draft',
+    value: 'pending',
     label: 'Chờ xác nhận',
     icon: Circle,
     color: 'text-gray-500',
     bgColor: 'bg-gray-500 text-white',
   },
   {
-    value: 'ordered',
-    label: 'Đã đặt',
+    value: 'approved',
+    label: 'Đã duyệt',
     icon: CheckCircle2,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500 text-white',
   },
   {
-    value: 'completed',
+    value: 'received',
     label: 'Hoàn thành',
     icon: CheckCircle2,
     color: 'text-green-500',

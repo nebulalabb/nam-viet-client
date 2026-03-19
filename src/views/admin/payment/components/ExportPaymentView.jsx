@@ -38,7 +38,7 @@ const getPaymentMethodLabel = (method) => {
 
 const getPaymentStatusLabel = (status) => {
   switch (status) {
-    case 'completed':
+    case 'posted':
       return 'Hoàn thành'
     case 'draft':
       return 'Nháp'

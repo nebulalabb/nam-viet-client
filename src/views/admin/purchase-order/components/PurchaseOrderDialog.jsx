@@ -564,7 +564,7 @@ const PurchaseOrderDialog = ({
   // ====== SUBMIT ======
   const onSubmit = async (data) => {
     if (selectedProducts.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 sản phẩm')
+      toast.error('Vui lòng chọn ít nhất 1 nguyên liệu')
       return
     }
 
@@ -592,7 +592,7 @@ const PurchaseOrderDialog = ({
     for (const product of selectedProducts) {
       const priceUnit = getDisplayPrice(product)
       if (priceUnit <= 0) {
-        toast.error(`Đơn giá của sản phẩm "${product.name}" phải lớn hơn 0`)
+        toast.error(`Đơn giá của nguyên liệu "${product.name}" phải lớn hơn 0`)
         return
       }
     }
@@ -608,33 +608,37 @@ const PurchaseOrderDialog = ({
       const qtyBase = factor > 0 ? qtyUnit / factor : qtyUnit
       const priceUnit = getDisplayPrice(product)
 
-      // Only basic fields needed for simple implementation
-      // Logic from existing Create and Update dialogs merged:
       const subTotal = calculateSubTotal(product.id)
       const taxAmt = calculateTaxForProduct(product.id)
       const rate = discountRates[product.id] || 0
       const discountAmount = (priceUnit * qtyUnit * rate) / 100
 
+      const taxRate = (() => {
+        const productTaxes = selectedTaxes[product.id] || []
+        const allTaxes = product?.taxes || product?.prices?.[0]?.taxes || []
+        return allTaxes
+          .filter((t) => productTaxes.includes(t.id))
+          .reduce((sum, t) => sum + t.percentage, 0)
+      })()
+
       return {
-        lineNo: index + 1,
         productId: product.id,
-        productCode: product.code || '',
-        image: product.image,
-        productName: product.name,
         productType: product.type,
         unitId,
         unitName,
         quantity: qtyUnit,
-        receivedQuantity: 0,
         baseQuantity: qtyBase,
         conversionFactor: factor,
-        unitPrice: priceUnit,
-        taxAmount: taxAmt,
+        price: priceUnit,
+        taxRate: String(taxRate),
         taxIds: selectedTaxes[product.id] || [],
-        subTotal: subTotal,
-        discount: discountAmount,
+        taxAmount: taxAmt,
+        discountRate: rate,
+        discountAmount: discountAmount,
         total: subTotal + taxAmt,
-        note: notes[product.id] || '',
+        periodMonths: "0",
+        warrantyCost: 0,
+        applyWarranty: false,
       }
     })
 
@@ -644,20 +648,13 @@ const PurchaseOrderDialog = ({
 
 
     const commonPayload = {
-      supplierId: data.supplierId || (isUpdateMode ? targetOrder?.supplierId : null),
+      supplierId: data.supplierId ? Number(data.supplierId) : (isUpdateMode ? Number(targetOrder?.supplierId) : null),
       orderDate: data.orderDate ? new Date(data.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       expectedDeliveryDate: formattedDate,
-      expectedReturnDate: formattedDate,
-      externalOrderCode: '',
-      terms: data.paymentTerms,
       otherCosts: otherExpenses.price,
-      isPrintContract: false,
       isAutoApprove: data.isAutoApprove,
 
-      note: data.note,
-      status: data.status,
-      paymentMethod: data.paymentMethod,
-      paymentNote: data.paymentNote,
+      notes: data.note,
       paymentTerms: data.paymentTerms,
       updatedBy: authUserWithRoleHasPermissions.id,
 
@@ -678,14 +675,11 @@ const PurchaseOrderDialog = ({
         const updatePayload = {
           ...commonPayload,
           purchaseOrderId: targetOrder.id,
-          taxRate: 0,
-          details: items.map(item => ({
-            productId: item.productId,
-            unitId: item.unitId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            notes: item.note || '',
-          })),
+          taxAmount: calculateTotalTax(),
+          discount: calculateTotalDiscount(),
+          subTotal: handleCalculateSubTotalInvoice(),
+          totalAmount: calculateTotalAmount(),
+          details: items,
         }
         await dispatch(updatePurchaseOrder(updatePayload)).unwrap()
         toast.success('Cập nhật đơn hàng thành công')
@@ -693,21 +687,11 @@ const PurchaseOrderDialog = ({
         // CREATE PAYLOAD
         const createPayload = {
           ...commonPayload,
-          taxRate: 0, // Default tax rate, can be enhanced later
           taxAmount: calculateTotalTax(),
-          amount: calculateTotalAmount(),
           discount: calculateTotalDiscount(),
           subTotal: handleCalculateSubTotalInvoice(),
           totalAmount: calculateTotalAmount(),
-          paymentStatus: 'unpaid',
-          paidAmount: 0,
-          details: items.map(item => ({
-            productId: item.productId,
-            unitId: item.unitId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            notes: item.note || '',
-          })),
+          details: items,
           createdBy: authUserWithRoleHasPermissions.id,
         }
         const newOrder = await dispatch(createPurchaseOrder(createPayload)).unwrap()
@@ -755,11 +739,11 @@ const PurchaseOrderDialog = ({
               )}
               <div>
                 <h2 className="text-lg font-semibold">
-                  {mobileView === 'products' ? 'Chọn sản phẩm' : 'Đơn hàng'}
+                  {mobileView === 'products' ? 'Chọn nguyên liệu' : 'Đơn hàng'}
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {mobileView === 'products' ?
-                    (isUpdateMode ? 'Cập nhật đơn hàng' : `${selectedProducts.length} sản phẩm đã chọn`) :
+                    (isUpdateMode ? 'Cập nhật đơn hàng' : `${selectedProducts.length} nguyên liệu đã chọn`) :
                     (isUpdateMode ? 'Cập nhật đơn hàng' : 'Hoàn tất đơn hàng')
                   }
                 </p>
@@ -858,7 +842,7 @@ const PurchaseOrderDialog = ({
                       }}
                     >
                       <Plus className="h-3 w-3 mr-1" />
-                      Thêm sản phẩm
+                      Thêm nguyên liệu
                     </Button>
                   </div>
 
@@ -956,7 +940,7 @@ const PurchaseOrderDialog = ({
           onSuccess={() => {
             dispatch(getProducts())
             setShowCreateProduct(false)
-            toast.success('Đã thêm sản phẩm mới')
+            toast.success('Đã thêm nguyên liệu mới')
           }}
           showTrigger={false}
           contentClassName="z-[10006]"

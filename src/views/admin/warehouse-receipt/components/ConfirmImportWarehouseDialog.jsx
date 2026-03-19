@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { getPurchaseOrderDetail } from '@/stores/PurchaseOrderSlice'
 import { getWarehouseReceiptDetail } from '@/stores/WarehouseReceiptSlice'
-
+import { getWarehouses } from '@/stores/WarehouseSlice'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -43,12 +50,15 @@ const ConfirmImportWarehouseDialog = ({
   const [loading, setLoading] = useState(false)
   const [selectedItems, setSelectedItems] = useState({})
   const [receiptDetailsMap, setReceiptDetailsMap] = useState({})
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState('')
   const [actualReceiptDate, setActualReceiptDate] = useState(() => new Date().toISOString().split('T')[0])
   const [reason, setReason] = useState('')
   const [notes, setNotes] = useState('')
   const [detailNotes, setDetailNotes] = useState({}) // { itemDetailId: note }
   const dispatch = useDispatch()
   const isMobile = useMediaQuery('(max-width: 768px)')
+  const warehouses = useSelector((state) => state.warehouse.warehouses) || []
+  const productWarehouses = warehouses.filter(w => w.warehouseType === 'product')
 
   // Fetch PO/Contract data and then Warehouse Receipt details
   useEffect(() => {
@@ -65,24 +75,26 @@ const ConfirmImportWarehouseDialog = ({
           }
 
           if (data) {
-            setPurchaseOrder(data)
+            const actualPO = data.data || data
+            setPurchaseOrder(actualPO)
             
             // Set default reason and notes
-            setReason(`Nhập kho từ đơn mua hàng ${data.code}`)
-            setNotes(data.note || 'Nhập kho từ đơn mua')
+            setReason(`Nhập kho từ đơn mua hàng ${actualPO.code || 'không xác định'}`)
+            setNotes(actualPO.note || 'Nhập kho từ đơn mua')
             
             const initialDetailNotes = {}
-            if (data.items) {
-              data.items.forEach(item => {
-                initialDetailNotes[item.id] = `Nhập kho theo đơn mua ${data.code}`
+            const items = actualPO.details || actualPO.items || []
+            if (items) {
+              items.forEach(item => {
+                initialDetailNotes[item.id] = `Nhập kho theo đơn mua ${actualPO.code || ''}`
               })
             }
             setDetailNotes(initialDetailNotes)
 
             // Fetch details for all related warehouse receipts to calculate accurate imported quantities
-            if (data.warehouseReceipts && data.warehouseReceipts.length > 0) {
+            if (actualPO.warehouseReceipts && actualPO.warehouseReceipts.length > 0) {
               const detailsMap = {}
-              await Promise.all(data.warehouseReceipts.map(async (receipt) => {
+              await Promise.all(actualPO.warehouseReceipts.map(async (receipt) => {
                 if (receipt.status === 'cancelled') return // Skip cancelled receipts
 
                 try {
@@ -108,13 +120,20 @@ const ConfirmImportWarehouseDialog = ({
         }
       }
       fetchData()
+      dispatch(getWarehouses({ limit: 100 }))
+    } else if (!open) {
+      setReason('')
+      setNotes('')
+      setSelectedWarehouseId('')
     }
   }, [open, purchaseOrderId, purchaseContractId, dispatch])
 
   // Normalize items to display
-  const itemsToDisplay = (purchaseOrder?.items && purchaseOrder.items.length > 0)
-    ? purchaseOrder.items
-    : (purchaseOrder?.purchaseOrders ? purchaseOrder.purchaseOrders.flatMap(po => po.items.map(item => ({ ...item, purchaseOrderId: po.id }))) : [])
+  const itemsToDisplay = (purchaseOrder?.details && purchaseOrder.details.length > 0)
+    ? purchaseOrder.details
+    : (purchaseOrder?.items && purchaseOrder.items.length > 0)
+      ? purchaseOrder.items
+      : (purchaseOrder?.purchaseOrders ? purchaseOrder.purchaseOrders.flatMap(po => (po.details || po.items || []).map(item => ({ ...item, purchaseOrderId: po.id }))) : [])
 
   // Helper to calculate total imported quantity from receipts (including drafts)
   const calculateTotalImported = (item) => {
@@ -211,7 +230,13 @@ const ConfirmImportWarehouseDialog = ({
           }
         })
 
-      await onConfirm?.(selectedItemObjects, actualReceiptDate || null, reason, notes)
+      if (!selectedWarehouseId) {
+        toast?.error?.('Vui lòng chọn kho nhập hàng')
+        setLoading(false)
+        return
+      }
+
+      await onConfirm?.(selectedItemObjects, actualReceiptDate || null, selectedWarehouseId, reason, notes)
       onOpenChange(false)
     } catch (error) {
       console.error(error)
@@ -246,13 +271,35 @@ const ConfirmImportWarehouseDialog = ({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <span className="text-muted-foreground">Nhà cung cấp:</span>
-                <div className="font-medium">{purchaseOrder?.supplier?.name}</div>
+                <div className="font-medium">{purchaseOrder?.supplier?.name || purchaseOrder?.supplier?.supplierName || '—'}</div>
               </div>
               <div>
                 <span className="text-muted-foreground">Mã đơn hàng:</span>
-                <div className="font-medium">{purchaseOrder?.code}</div>
+                <div className="font-medium">{purchaseOrder?.code || '—'}</div>
               </div>
             </div>
+          </div>
+
+          {/* Warehouse Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Chọn kho nhập hàng <span className="text-red-500">*</span></label>
+            <Select value={selectedWarehouseId} onValueChange={setSelectedWarehouseId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn kho tĩnh nhập sản phẩm" />
+              </SelectTrigger>
+              <SelectContent>
+                {productWarehouses.map((warehouse) => (
+                  <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-900">{warehouse.warehouseName}</span>
+                        <span className="text-xs text-slate-500">({warehouse.warehouseCode})</span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Products to import */}

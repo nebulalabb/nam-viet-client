@@ -40,7 +40,7 @@ export const columns = [
     enableHiding: false,
   },
   {
-    accessorKey: 'code',
+    accessorKey: 'voucherCode',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Mã PC" />
     ),
@@ -64,7 +64,7 @@ export const columns = [
             className={cn(" font-medium cursor-pointer text-primary hover:underline")}
             onClick={handleViewPayment}
           >
-            {row.getValue('code')}
+            {row.getValue('voucherCode')}
           </div>
         </>
       )
@@ -73,30 +73,32 @@ export const columns = [
     enableHiding: true,
   },
   {
-    accessorKey: 'receiverType',
+    accessorKey: 'voucherType',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Loại" />
     ),
     cell: ({ row }) => {
-      const type = row.getValue('receiverType')
+      const type = row.getValue('voucherType')
       let label = 'Khác'
       let Icon = CircleHelp
       let colorClass = 'text-gray-600'
 
-      if (type === 'customer') {
-        label = 'Khách hàng'
-        Icon = User
-        colorClass = 'text-blue-600'
-      } else if (type === 'supplier') {
+      if (type === 'supplier_payment') {
         label = 'Nhà cung cấp'
         Icon = Building2
         colorClass = 'text-orange-600'
-      } else if (type === 'employee' || type === 'user') {
-        label = 'Nhân viên'
+      } else if (type === 'salary') {
+        label = 'Lương'
         Icon = Contact
         colorClass = 'text-purple-600'
-      } else if (type) {
-        label = type
+      } else if (type === 'operating_cost') {
+        label = 'Chi phí VH'
+        Icon = CircleHelp
+        colorClass = 'text-blue-600'
+      } else if (type === 'refund') {
+        label = 'Hoàn tiền'
+        Icon = CircleHelp
+        colorClass = 'text-green-600'
       }
 
       return (
@@ -113,29 +115,34 @@ export const columns = [
   },
   {
     id: 'receiverName',
-    accessorFn: (row) => row.receiver?.name,
+    accessorFn: (row) => row.supplier?.supplierName || row.receiver?.name,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Người nhận" />
     ),
     cell: ({ row }) => {
+      const supplier = row.original.supplier;
       const receiver = row.original.receiver;
-      if (!receiver) return <div className="text-gray-500">Không có</div>;
+      const type = row.original.voucherType;
+
+      if (!supplier && !receiver && type !== 'salary') {
+        return <div className="text-gray-500">Tự do</div>;
+      }
+      if (type === 'salary') {
+        return <div className="text-purple-600 font-medium">Nhân viên</div>;
+      }
+
+      const name = supplier ? (supplier.supplierName || supplier.name) : receiver?.name;
+      const phone = supplier ? supplier.phone : receiver?.phone;
 
       return (
         <div className="flex flex-col gap-1 min-w-[150px] pr-4">
           <span className="font-semibold text-[15px] break-words" >
-            {receiver.name}
+            {name}
           </span>
-          {receiver.phone && (
+          {phone && (
             <div className="flex items-center text-[13px] text-blue-600 gap-1.5">
               <svg xmlns="http://www.w3.org/0000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-              <a href={`tel:${receiver.phone}`} className="hover:underline">{receiver.phone}</a>
-            </div>
-          )}
-          {receiver.identityCard && (
-            <div className="flex items-center text-[13px] text-gray-600 gap-1.5">
-              <svg xmlns="http://www.w3.org/0000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>
-              <span>{receiver.identityCard}</span>
+              <a href={`tel:${phone}`} className="hover:underline">{phone}</a>
             </div>
           )}
         </div>
@@ -209,13 +216,13 @@ export const columns = [
             <Badge
               className={cn(
                 "cursor-pointer hover:underline",
-                status === 'completed' ? 'bg-green-500' :
+                status === 'posted' ? 'bg-green-500' :
                   status === 'cancelled' ? 'bg-red-500' :
                     'bg-yellow-500'
               )}
               onClick={() => setShowUpdateStatusDialog(true)}
             >
-              {status === 'completed' ? 'Đã chi' : status === 'draft' ? 'Nháp' : status === 'cancelled' ? 'Đã hủy' : status}
+              {status === 'posted' ? 'Đã chi' : status === 'draft' ? 'Nháp' : status === 'cancelled' ? 'Đã hủy' : status}
             </Badge>
           </div>
           {showUpdateStatusDialog && (
@@ -242,25 +249,37 @@ export const columns = [
       <DataTableColumnHeader column={column} title="Ngày chi" />
     ),
     cell: ({ row }) => (
-      <div className="w-36">{dateFormat(row.getValue('paymentDate'), true)}</div>
+      <div className="w-36">{dateFormat(row.getValue('paymentDate'))}</div>
     ),
     enableSorting: true,
     enableHiding: true,
   },
   {
-    accessorKey: 'updatedAt',
+    id: 'creator',
+    accessorFn: (row) => row.creator?.fullName,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Cập nhật" />
+      <DataTableColumnHeader column={column} title="Người tạo" />
     ),
     cell: ({ row }) => {
+      const creator = row.original.creator
+      
       return (
-        <div className="flex space-x-2">
-          <span className="max-w-36 truncate sm:max-w-72 md:max-w-[31rem]">
-            {dateFormat(row.getValue('updatedAt'), true)}
+        <div className="flex flex-col gap-0.5">
+          {creator ? (
+            <span className="font-medium text-[14px] max-w-[150px] truncate text-primary">
+              {creator.fullName}
+            </span>
+          ) : (
+            <span className="font-medium text-[14px] text-gray-500">Hệ thống</span>
+          )}
+          <span className="text-[12px] text-muted-foreground">
+            {dateFormat(row.original?.createdAt, true)}
           </span>
         </div>
       )
     },
+    enableSorting: true,
+    enableHiding: true,
   },
   {
     id: 'actions',

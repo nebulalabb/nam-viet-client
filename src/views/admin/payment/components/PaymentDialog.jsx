@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/table'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Mail, MapPin } from 'lucide-react'
+import { Mail, MapPin, User } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -95,7 +95,14 @@ const PaymentDialog = ({
   const supplier = party // keep alias for backward compat below
 
   let items = []
-  if (effectivePurchaseOrder?.items?.length > 0) {
+  if (effectivePurchaseOrder?.details?.length > 0) {
+    items = effectivePurchaseOrder.details.map(d => ({
+      ...d,
+      productName: d.product?.productName || d.productName,
+      productCode: d.product?.productCode || d.productCode,
+      unitName: d.unitName || d.product?.unit?.unitName,
+    }))
+  } else if (effectivePurchaseOrder?.items?.length > 0) {
     items = effectivePurchaseOrder.items
   } else if (salesContract?.items?.length > 0) {
     items = salesContract.items
@@ -134,8 +141,9 @@ const PaymentDialog = ({
       paymentMethod: 'cash',
       paymentNote: '',
       bankAccount: null,
-      status: 'success', // Default for new payments often 'success' or 'draft' depending on workflow. Keep 'success' from original create dialog?
+      status: 'posted', 
       dueDate: null,
+      paymentDate: new Date().toISOString(),
     },
   })
 
@@ -196,6 +204,7 @@ const PaymentDialog = ({
           bankAccount: bankAccount || null,
           status: dataToUse.status || 'draft',
           dueDate: dataToUse.dueDate || null,
+          paymentDate: dataToUse.paymentDate || new Date().toISOString(),
         })
       } else if (effectivePurchaseOrder) {
         // Create Mode
@@ -206,7 +215,8 @@ const PaymentDialog = ({
           paymentMethod: 'cash',
           paymentNote: '',
           bankAccount: null,
-          status: 'success',
+          status: 'draft',
+          paymentDate: new Date().toISOString(),
         })
       }
     }
@@ -229,9 +239,10 @@ const PaymentDialog = ({
       paymentMethod: data.paymentMethod,
       bankName: data.paymentMethod === 'transfer' && data.bankAccount
         ? JSON.stringify(data.bankAccount)
-        : null,
-      reason: data.note || (effectivePurchaseOrder ? `Chi trả đơn hàng ${effectivePurchaseOrder.code}` : ''),
-      note: data.paymentNote,
+        : undefined, // undefined passes z.string().optional() better than null, but we'll fix validator too
+      reason: data.note || (effectivePurchaseOrder ? `Chi trả đơn hàng ${effectivePurchaseOrder.code}` : undefined),
+      notes: data.paymentNote,
+      paymentDate: data.paymentDate,
     }
 
     try {
@@ -242,6 +253,11 @@ const PaymentDialog = ({
           id: effectivePaymentId,
           ...commonData
         }
+        delete dataToSend.note
+        delete dataToSend.paymentNote
+        delete dataToSend.paymentAmount
+        delete dataToSend.dueDate
+
         await dispatch(updatePayment(dataToSend)).unwrap()
         toast.success('Cập nhật phiếu chi thành công')
       } else {
@@ -250,13 +266,15 @@ const PaymentDialog = ({
           ...data,
           ...commonData,
           purchaseOrderId: effectivePurchaseOrder?.id,
-          voucherType: 'payment_out',
-          transactionType: 'payment',
-          receiverType: isCustomerPO ? 'customer' : 'supplier',
-          receiverId: party?.id,
+          voucherType: isCustomerPO ? 'refund' : 'supplier_payment',
+          supplierId: !isCustomerPO ? party?.id : undefined,
           voucherDate: new Date().toISOString(),
-          paymentDate: new Date().toISOString(),
         }
+        delete dataToSend.note
+        delete dataToSend.paymentNote
+        delete dataToSend.paymentAmount
+        delete dataToSend.dueDate
+
         await dispatch(createPayment(dataToSend)).unwrap()
         // Create usually handles its own toast in slice, typically.
         // But CreatePurchaseOrderPaymentDialog had a toast.success in slice too?
@@ -328,12 +346,16 @@ const PaymentDialog = ({
                           <TableHeader>
                             <TableRow className="bg-secondary text-xs">
                               <TableHead className="w-8">TT</TableHead>
-                              <TableHead className="min-w-40">Sản phẩm</TableHead>
-                              <TableHead className="min-w-20">SL</TableHead>
+                              <TableHead className="min-w-40">Nguyên liệu</TableHead>
+                              <TableHead className="min-w-16 text-right">Số lượng</TableHead>
                               <TableHead className="min-w-16">ĐVT</TableHead>
-                              <TableHead className="min-w-20 text-right">Đơn giá</TableHead>
-                              <TableHead className="min-w-28 text-right">Thành tiền</TableHead>
-                              <TableHead className="min-w-28">Ghi chú</TableHead>
+                              <TableHead className="min-w-20 text-right">Giá nhập</TableHead>
+                              <TableHead className="min-w-24 text-right">Tổng tiền</TableHead>
+                              <TableHead className="min-w-16 text-right">Thuế (%)</TableHead>
+                              <TableHead className="min-w-24 text-right">Tiền thuế</TableHead>
+                              <TableHead className="min-w-16 text-right">CK (%)</TableHead>
+                              <TableHead className="min-w-24 text-right">Tiền CK</TableHead>
+                              <TableHead className="min-w-28 text-right">Tổng cộng</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -357,11 +379,15 @@ const PaymentDialog = ({
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell>{Number(item.quantity)}</TableCell>
+                                <TableCell className="text-right">{Number(item.quantity)}</TableCell>
                                 <TableCell>{item.unitName || item.unit || '—'}</TableCell>
-                                <TableCell className="text-end">{moneyFormat(item.unitPrice || item.price)}</TableCell>
-                                <TableCell className="text-end">{moneyFormat((item.total || item.totalAmount) || (item.quantity * (item.unitPrice || item.price)))}</TableCell>
-                                <TableCell>{item.note || '—'}</TableCell>
+                                <TableCell className="text-end">{moneyFormat(item.price || item.unitPrice)}</TableCell>
+                                <TableCell className="text-end">{moneyFormat(Number(item.quantity) * Number(item.price || item.unitPrice))}</TableCell>
+                                <TableCell className="text-right">{Number(item.taxRate) > 0 ? `${Number(item.taxRate)}%` : '—'}</TableCell>
+                                <TableCell className="text-right">{item.taxAmount > 0 ? moneyFormat(item.taxAmount) : '—'}</TableCell>
+                                <TableCell className="text-right">{Number(item.discountRate) > 0 ? `${Number(item.discountRate)}%` : '—'}</TableCell>
+                                <TableCell className="text-right text-destructive">{item.discountAmount > 0 ? moneyFormat(item.discountAmount) : '—'}</TableCell>
+                                <TableCell className="text-right font-medium">{moneyFormat(item.total || item.totalAmount)}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -458,8 +484,28 @@ const PaymentDialog = ({
 
                       <div className="space-y-4 text-sm">
                         <div className="flex justify-between">
+                          <strong>Tổng tiền hàng:</strong>
+                          <span>{moneyFormat(effectivePurchaseOrder?.subTotalAmount ?? effectivePurchaseOrder?.subTotal ?? 0)}</span>
+                        </div>
+                        {(effectivePurchaseOrder?.discountAmount ?? effectivePurchaseOrder?.totalDiscountAmount ?? effectivePurchaseOrder?.discount ?? 0) > 0 && (
+                          <div className="flex justify-between text-destructive">
+                            <strong>Giảm giá:</strong>
+                            <span>-{moneyFormat(effectivePurchaseOrder?.discountAmount ?? effectivePurchaseOrder?.totalDiscountAmount ?? effectivePurchaseOrder?.discount ?? 0)}</span>
+                          </div>
+                        )}
+                        {(effectivePurchaseOrder?.totalTaxAmount ?? effectivePurchaseOrder?.taxAmount ?? 0) > 0 && (
+                          <div className="flex justify-between text-blue-600">
+                            <strong>Tiền thuế:</strong>
+                            <span>+{moneyFormat(effectivePurchaseOrder?.totalTaxAmount ?? effectivePurchaseOrder?.taxAmount ?? 0)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <strong>Chi phí khác:</strong>
+                          <span>{moneyFormat(effectivePurchaseOrder?.otherCosts || 0)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-base border-t pt-2 mt-2">
                           <strong>Tổng giá trị đơn hàng:</strong>
-                          <span>{moneyFormat(totalAmount)}</span>
+                          <span className="font-bold text-primary">{moneyFormat(totalAmount)}</span>
                         </div>
                         <div className="flex justify-between text-muted-foreground">
                           <strong>Đã thanh toán:</strong>
@@ -488,6 +534,31 @@ const PaymentDialog = ({
                         <Separator />
 
                         <div className="mb-3">
+                          <FormField
+                            control={form.control}
+                            name="paymentDate"
+                            render={({ field }) => (
+                              <FormItem className="mb-3 flex flex-col pt-1">
+                                <FormLabel required={true}>Ngày chi</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="date"
+                                    value={field.value ? new Date(field.value).toISOString().substring(0, 10) : ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value
+                                      if (val) {
+                                        field.onChange(new Date(val).toISOString())
+                                      } else {
+                                        field.onChange('')
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
                           <FormField
                             control={form.control}
                             name="paymentAmount"
@@ -648,15 +719,18 @@ const PaymentDialog = ({
                       <div className="flex items-center gap-4">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={`https://ui-avatars.com/api/?bold=true&background=random&name=${party?.name}`}
-                            alt={party?.name}
+                            src={`https://ui-avatars.com/api/?bold=true&background=random&name=${party?.supplierName || party?.fullName || party?.name}`}
+                            alt={party?.supplierName || party?.fullName || party?.name}
                           />
                           <AvatarFallback>
                             {isCustomerPO || payment?.receiverType === 'customer' ? 'KH' : 'NCC'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <div className="font-medium">{party?.name}</div>
+                          <div className="font-medium">{party?.supplierName || party?.fullName || party?.name}</div>
+                          {(party?.supplierCode || party?.code) && (
+                            <div className="text-xs text-muted-foreground">{party.supplierCode || party.code}</div>
+                          )}
                         </div>
                       </div>
 
@@ -666,6 +740,16 @@ const PaymentDialog = ({
                         </div>
 
                         <div className="mt-4 space-y-2 text-sm">
+                          {party?.contactName && (
+                            <div className="flex items-center text-muted-foreground">
+                              <div className="mr-2 h-4 w-4">
+                                <User className="h-4 w-4" />
+                              </div>
+                              <span className="font-medium text-foreground">
+                                Liên hệ: {party.contactName}
+                              </span>
+                            </div>
+                          )}
                           <div className="flex cursor-pointer items-center text-primary hover:text-secondary-foreground">
                             <div className="mr-2 h-4 w-4">
                               <MobileIcon className="h-4 w-4" />

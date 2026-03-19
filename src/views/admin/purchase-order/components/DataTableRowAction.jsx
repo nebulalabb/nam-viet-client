@@ -90,8 +90,8 @@ const DataTableRowActions = ({ row, table }) => {
       receiptType: 1, // IMPORT / RECEIPT
       businessType: 'purchase_in',
 
-      reason: `Nhập kho từ đơn mua hàng ${purchaseOrder.code}`,
-      note: purchaseOrder.note || '',
+      reason: `Nhập kho từ đơn mua hàng ${purchaseOrder.poCode}`,
+      notes: purchaseOrder.notes || '',
       warehouseId: null,
       supplierId: purchaseOrder.supplierId,
       purchaseOrderId: purchaseOrder.id,
@@ -101,7 +101,7 @@ const DataTableRowActions = ({ row, table }) => {
         movement: 'in',
         qtyActual: item.quantity,
         unitPrice: item.unitPrice || 0,
-        content: `Nhập kho theo đơn mua ${purchaseOrder.code}`,
+        content: `Nhập kho theo đơn mua ${purchaseOrder.poCode}`,
         purchaseOrderId: purchaseOrder.id,
         purchaseOrderItemId: item.id
       }))
@@ -136,12 +136,12 @@ const DataTableRowActions = ({ row, table }) => {
     }
   }
 
-  const canEdit = purchaseOrder?.status === 'draft'
-  const canDelete = ['draft', 'cancelled', 'canceled'].includes(purchaseOrder?.status)
-  const canCancel = !['draft', 'cancelled', 'completed'].includes(purchaseOrder?.status)
+  const canEdit = purchaseOrder?.status === 'pending'
+  const canDelete = ['pending', 'cancelled', 'canceled'].includes(purchaseOrder?.status)
+  const canCancel = !['pending', 'cancelled', 'completed'].includes(purchaseOrder?.status)
 
-  const canImportWarehouse = ['ordered', 'confirmed', 'partial'].includes(purchaseOrder?.status) && !purchaseOrder?.warehouseReceiptId
-  const canPayment = !['draft', 'cancelled'].includes(purchaseOrder?.status) && purchaseOrder.paymentStatus !== 'paid'
+  const canImportWarehouse = ['approved', 'confirmed', 'partial'].includes(purchaseOrder?.status) && !purchaseOrder?.warehouseReceiptId
+  const canPayment = !['pending', 'cancelled'].includes(purchaseOrder?.status) && purchaseOrder.paymentStatus !== 'paid'
 
   const handleShowPaymentDialog = async () => {
     try {

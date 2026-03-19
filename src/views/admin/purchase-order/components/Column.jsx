@@ -18,7 +18,7 @@ import {
 } from '@/stores/PurchaseOrderSlice'
 import { Badge } from '@/components/ui/badge'
 import UpdatePurchaseOrderStatusDialog from './UpdatePurchaseOrderStatusDialog'
-import { Phone, CreditCard, Receipt } from 'lucide-react'
+import { Phone, CreditCard, Receipt, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const getColumns = (onView) => [
@@ -48,17 +48,17 @@ export const getColumns = (onView) => [
   },
   {
     id: 'code',
-    accessorFn: (row) => normalizeText(row.code || ''),
+    accessorFn: (row) => normalizeText(row.poCode || ''),
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Mã ĐĐH" />
     ),
     cell: ({ row }) => {
       return (
         <div
-          className="cursor-pointer font-medium text-blue-600 hover:underline"
+          className="cursor-pointer font-bold text-blue-600 hover:underline"
           onClick={() => onView(row.original.id)}
         >
-          {row.original.code}
+          {row.original.poCode}
         </div>
       )
     },
@@ -78,7 +78,7 @@ export const getColumns = (onView) => [
   {
     accessorKey: 'supplier',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nhà CC / Khách hàng" />
+      <DataTableColumnHeader column={column} title="Nhà cung cấp" />
     ),
     cell: function Cell({ row }) {
       const { supplier, customer } = row.original
@@ -88,7 +88,7 @@ export const getColumns = (onView) => [
       if (!party) return <span className="text-muted-foreground italic">—</span>
 
       return (
-        <div className="flex w-44 flex-col break-words gap-0.5" title={party.name}>
+        <div className="flex w-64 flex-col break-words gap-0.5" title={party.supplierName || party.name}>
           <div className="flex items-center gap-1.5">
             <span
               className={cn(
@@ -100,8 +100,15 @@ export const getColumns = (onView) => [
             >
               {isCustomer ? 'KH' : 'NCC'}
             </span>
-            <span className="font-semibold truncate">{party.name}</span>
+            <span className="font-semibold">{party.supplierName || party.name}</span>
           </div>
+
+          {party.contactName && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <User className="h-3 w-3 shrink-0" />
+              {party.contactName}
+            </span>
+          )}
 
           {!isCustomer && party.taxCode && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -132,7 +139,7 @@ export const getColumns = (onView) => [
       const supplier = row.original.supplier
       const customer = row.original.customer
       const searchableText = normalizeText(
-        `${supplier?.name || ''} ${supplier?.taxCode || ''} ${customer?.name || ''} ${customer?.code || ''}`,
+        `${supplier?.supplierName || supplier?.name || ''} ${supplier?.taxCode || ''} ${customer?.name || ''} ${customer?.code || ''}`,
       )
       return searchableText.includes(normalizeText(value))
     },
@@ -145,6 +152,7 @@ export const getColumns = (onView) => [
     cell: ({ row }) => {
       const amount = row.original.totalAmount
       const discount = row.original.discountAmount
+      const paidAmount = row.original.paidAmount || 0
 
       return (
         <div className="flex flex-col">
@@ -153,6 +161,12 @@ export const getColumns = (onView) => [
           {discount > 0 && (
             <span className="text-xs text-red-500">
               Giảm: {moneyFormat(discount)}
+            </span>
+          )}
+
+          {row.original.otherCosts > 0 && (
+            <span className="text-xs text-blue-500">
+              Chi phí khác: {moneyFormat(row.original.otherCosts)}
             </span>
           )}
 
@@ -238,21 +252,22 @@ export const getColumns = (onView) => [
 
       const handleSubmit = async (nextStatus) => {
         try {
-          if (nextStatus === 'ordered') {
+          if (nextStatus === 'approved') {
             await dispatch(confirmPurchaseOrder(row.original.id)).unwrap()
           } else if (nextStatus === 'cancelled') {
             await dispatch(cancelPurchaseOrder(row.original.id)).unwrap()
-          } else if (nextStatus === 'draft' && row.original.status === 'ordered') {
+          } else if (nextStatus === 'pending' && row.original.status === 'approved') {
             await dispatch(revertPurchaseOrder(row.original.id)).unwrap()
           } else {
             await dispatch(
               updatePurchaseOrderStatus({ id: row.original.id, status: nextStatus }),
             ).unwrap()
           }
-          toast.success('Cập nhật trạng thái đơn đặt hàng thành công')
+          toast.success('Cập nhật trạng thái đơn mua hàng thành công')
           setOpenUpdateStatus(false)
         } catch (error) {
           console.log('Submit error: ', error)
+          toast.error(error?.message || 'Có lỗi xảy ra khi cập nhật trạng thái')
         }
       }
 
@@ -343,12 +358,12 @@ export const getColumns = (onView) => [
       <DataTableColumnHeader column={column} title="Người tạo" />
     ),
     cell: ({ row }) => {
-      const user = row.original.createdByUser
+      const user = row.original.creator || row.original.createdByUser
       const createdAt = row.original.createdAt
 
       return (
         <div className="flex w-32 flex-col">
-          <span className="truncate font-medium" title={user?.fullName}>
+          <span className="font-medium" title={user?.fullName}>
             {user?.fullName || '—'}
           </span>
           <span className="text-xs text-muted-foreground">
@@ -359,11 +374,11 @@ export const getColumns = (onView) => [
     },
     // Server-side filtering, no filterFn needed
 
-    accessorFn: (row) => row.createdByUser?.id || null,
+    accessorFn: (row) => (row.creator || row.createdByUser)?.id || null,
 
     sortingFn: (rowA, rowB) => {
-      const idA = rowA.original?.createdByUser?.id || 0
-      const idB = rowB.original?.createdByUser?.id || 0
+      const idA = (rowA.original?.creator || rowA.original?.createdByUser)?.id || 0
+      const idB = (rowB.original?.creator || rowB.original?.createdByUser)?.id || 0
       return idA - idB
     },
     enableSorting: true,

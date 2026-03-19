@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog'
@@ -25,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
-import { MobileIcon, PlusIcon } from '@radix-ui/react-icons'
+import { MobileIcon } from '@radix-ui/react-icons'
 import React, { useEffect, useState, useMemo } from 'react'
 import { purchaseOrderStatuses, purchaseOrderPaymentStatuses } from '../data'
 import { paymentStatus } from '../../payment/data'
@@ -39,7 +38,7 @@ import { useMediaQuery } from '@/hooks/UseMediaQuery'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { getPublicUrl } from '@/utils/file'
-import { Mail, MapPin, Pencil, Trash2, Printer, X, CreditCard, Receipt, PackagePlus } from 'lucide-react'
+import { Mail, MapPin, Pencil, Trash2, Printer, X, CreditCard, Receipt, PackagePlus, User } from 'lucide-react'
 import { IconPlus, IconPencil, IconCheck } from '@tabler/icons-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import ConfirmImportWarehouseDialog from '../../warehouse-receipt/components/ConfirmImportWarehouseDialog'
@@ -64,7 +63,6 @@ import UpdatePaymentStatusDialog from '../../payment/components/UpdatePaymentSta
 import { DeletePaymentDialog } from '../../payment/components/DeletePaymentDialog'
 import { UpdateWarehouseReceiptStatusDialog } from '../../warehouse-receipt/components/UpdateWarehouseReceiptStatusDialog'
 import { DeleteWarehouseReceiptDialog } from '../../warehouse-receipt/components/DeleteWarehouseReceiptDialog'
-import { updateReceiptStatus } from '@/stores/ReceiptSlice'
 import { updateWarehouseReceipt, postWarehouseReceipt, cancelWarehouseReceipt } from '@/stores/WarehouseReceiptSlice'
 import { updatePaymentStatus } from '@/stores/PaymentSlice'
 import ViewSupplierDialog from '../../supplier/components/ViewSupplierDialog'
@@ -85,7 +83,6 @@ const ViewPurchaseOrderDialog = ({
   const [loading, setLoading] = useState(false)
   const dispatch = useDispatch()
   const setting = useSelector((state) => state.setting.setting)
-  const isViewInvoiceDialog = true
 
   // Dialog States
   const [showConfirmImportDialog, setShowConfirmImportDialog] = useState(false)
@@ -126,7 +123,7 @@ const ViewPurchaseOrderDialog = ({
 
 
   const filteredStatuses = useMemo(
-    () => purchaseOrderStatuses.filter((s) => s.value !== 'completed'),
+    () => purchaseOrderStatuses.filter((s) => s.value !== 'received'),
     []
   )
 
@@ -145,11 +142,11 @@ const ViewPurchaseOrderDialog = ({
 
   const handleUpdateStatus = async (status, id) => {
     try {
-      if (status === 'ordered') {
+      if (status === 'approved') {
         await dispatch(confirmPurchaseOrder(id)).unwrap()
       } else if (status === 'cancelled') {
         await dispatch(cancelPurchaseOrder(id)).unwrap()
-      } else if (status === 'draft' && purchaseOrder.status === 'ordered') {
+      } else if (status === 'pending' && purchaseOrder.status === 'approved') {
         await dispatch(revertPurchaseOrder(id)).unwrap()
       } else {
         await dispatch(updatePurchaseOrderStatus({ id, status })).unwrap()
@@ -243,7 +240,7 @@ const ViewPurchaseOrderDialog = ({
 
   // Handlers
   const handleCreateImport = () => {
-    if (purchaseOrder?.status !== 'ordered' && purchaseOrder?.status !== 'partial' && purchaseOrder?.status !== 'completed') {
+    if (purchaseOrder?.status !== 'approved' && purchaseOrder?.status !== 'partial' && purchaseOrder?.status !== 'received') {
       toast.error('Chỉ có thể tạo phiếu nhập kho cho đơn hàng đã xác nhận (Đã đặt).')
       return
     }
@@ -251,7 +248,7 @@ const ViewPurchaseOrderDialog = ({
   }
 
   const handleCreatePayment = () => {
-    if (purchaseOrder?.status !== 'ordered' && purchaseOrder?.status !== 'partial' && purchaseOrder?.status !== 'completed') {
+    if (purchaseOrder?.status !== 'approved' && purchaseOrder?.status !== 'partial' && purchaseOrder?.status !== 'received') {
       toast.error('Chỉ có thể tạo phiếu chi cho đơn hàng đã xác nhận (Đã đặt).')
       return
     }
@@ -311,7 +308,6 @@ const ViewPurchaseOrderDialog = ({
       case 'draft': return 'bg-yellow-100 text-yellow-700'
       case 'posted': return 'bg-green-100 text-green-700'
       case 'cancelled': return 'bg-red-100 text-red-700'
-      case 'canceled': return 'bg-red-100 text-red-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
@@ -320,9 +316,8 @@ const ViewPurchaseOrderDialog = ({
   const getReceiptStatusColor = (statusValue) => {
     switch (statusValue) {
       case 'draft': return 'bg-yellow-100 text-yellow-700'
-      case 'completed': return 'bg-green-100 text-green-700'
+      case 'posted': return 'bg-green-100 text-green-700'
       case 'cancelled': return 'bg-red-100 text-red-700'
-      case 'canceled': return 'bg-red-100 text-red-700'
       default: return 'bg-gray-100 text-gray-700'
     }
   }
@@ -340,16 +335,8 @@ const ViewPurchaseOrderDialog = ({
       >
         <DialogHeader className={cn(!isDesktop && "px-4 pt-4")}>
           <DialogTitle className={cn(!isDesktop && "text-base")}>
-            Thông tin chi tiết đơn mua hàng: <span className={cn(!isDesktop && "block")}>{purchaseOrder?.code}</span>
+            Thông tin chi tiết đơn mua hàng: <span className={cn(!isDesktop && "block")}>{purchaseOrder?.poCode}</span>
           </DialogTitle>
-          {purchaseOrder?.salesContractCode && (
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="border-purple-400 bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 gap-1.5 text-xs font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-purple-500 inline-block" />
-                Đơn từ thanh lý hợp đồng · {purchaseOrder.salesContractCode}
-              </Badge>
-            </div>
-          )}
         </DialogHeader>
 
         <div className={cn(
@@ -377,7 +364,7 @@ const ViewPurchaseOrderDialog = ({
                 <h2 className={cn(
                   "font-semibold",
                   isDesktop ? "text-lg" : "text-base"
-                )}>Thông tin đơn</h2>
+                )}>Thông tin nguyên liệu</h2>
 
                 <div className={cn("space-y-6", !isDesktop && "space-y-4")}>
                   {/* ITEMS TABLE */}
@@ -387,20 +374,20 @@ const ViewPurchaseOrderDialog = ({
                         <TableHeader>
                           <TableRow className="bg-secondary text-xs">
                             <TableHead className="w-8">STT</TableHead>
-                            <TableHead className="min-w-40">Sản phẩm</TableHead>
-                            <TableHead className="min-w-20 text-center">ĐVT</TableHead>
+                            <TableHead className="min-w-40">Nguyên liệu</TableHead>
                             <TableHead className="min-w-16 text-right">Số lượng</TableHead>
-                            <TableHead className="min-w-16 text-right">Đã nhận</TableHead>
+                            <TableHead className="min-w-20">ĐVT</TableHead>
                             <TableHead className="min-w-20 text-right">Giá nhập</TableHead>
-                            <TableHead className="min-w-16 text-center">% Thuế</TableHead>
+                            <TableHead className="min-w-28 text-right">Tổng tiền</TableHead>
+                            <TableHead className="min-w-16 text-right">Thuế (%)</TableHead>
                             <TableHead className="min-w-24 text-right">Tiền thuế</TableHead>
-                            <TableHead className="min-w-16 text-center">% CK</TableHead>
-                            <TableHead className="min-w-16 text-right">CK</TableHead>
-                            <TableHead className="min-w-28 text-right">Thành tiền</TableHead>
+                            <TableHead className="min-w-16 text-right">CK (%)</TableHead>
+                            <TableHead className="min-w-24 text-right">Tiền CK</TableHead>
+                            <TableHead className="min-w-28 text-right">Tổng cộng</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {purchaseOrder.items?.map((item, index) => (
+                          {purchaseOrder.details?.map((item, index) => (
                             <TableRow key={index}>
                               <TableCell>{index + 1}</TableCell>
                               <TableCell>
@@ -417,26 +404,26 @@ const ViewPurchaseOrderDialog = ({
                                     <div className="size-16 overflow-hidden rounded-md border shrink-0">
                                       <img
                                         src={getPublicUrl(item.product?.image)}
-                                        alt={item.productName}
+                                        alt={item.product?.productName}
                                         className="h-full w-full object-cover"
                                       />
                                     </div>
                                   )}
                                   <div>
-                                    <div className="font-medium text-blue-600 hover:underline">{item.productName}</div>
+                                    <div className="font-medium text-blue-600 hover:underline">{item.product?.productName}</div>
                                     <div className="text-xs text-muted-foreground">{item.productCode || item.product?.code}</div>
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className="text-center">{item.unitName}</TableCell>
                               <TableCell className="text-right">{Number(item.quantity)}</TableCell>
-                              <TableCell className="text-right">{Number(item.receivedQuantity)}</TableCell>
-                              <TableCell className="text-right">{moneyFormat(item.unitPrice)}</TableCell>
-                              <TableCell className="text-center">{Number(item.taxRate)}%</TableCell>
-                              <TableCell className="text-right">{moneyFormat(item.taxAmount)}</TableCell>
-                              <TableCell className="text-center">{Number(item.discountRate)}%</TableCell>
-                              <TableCell className="text-right">{moneyFormat(item.discountAmount)}</TableCell>
-                              <TableCell className="text-right font-medium">{moneyFormat(item.totalAmount)}</TableCell>
+                              <TableCell>{item.unitName || item.product?.unit?.unitName || '—'}</TableCell>
+                              <TableCell className="text-right">{moneyFormat(item.price)}</TableCell>
+                              <TableCell className="text-right">{moneyFormat(Number(item.quantity) * Number(item.price))}</TableCell>
+                              <TableCell className="text-right">{Number(item.taxRate) > 0 ? `${Number(item.taxRate)}%` : '—'}</TableCell>
+                              <TableCell className="text-right">{item.taxAmount > 0 ? moneyFormat(item.taxAmount) : '—'}</TableCell>
+                              <TableCell className="text-right">{Number(item.discountRate) > 0 ? `${Number(item.discountRate)}%` : '—'}</TableCell>
+                              <TableCell className="text-right text-destructive">{item.discountAmount > 0 ? moneyFormat(item.discountAmount) : '—'}</TableCell>
+                              <TableCell className="text-right font-medium">{moneyFormat(item.total)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -445,7 +432,7 @@ const ViewPurchaseOrderDialog = ({
                   ) : (
                     // MOBILE ITEMS
                     <div className="space-y-3">
-                      {purchaseOrder.items?.map((item, index) => (
+                      {purchaseOrder.details?.map((item, index) => (
                         <div key={index} className="border rounded-lg p-3 space-y-2 bg-card">
                           <div
                             className="flex gap-3 items-start cursor-pointer hover:opacity-80 transition-opacity"
@@ -463,26 +450,48 @@ const ViewPurchaseOrderDialog = ({
                             )}
                             <div>
                               <div className="font-medium text-sm text-blue-600 hover:underline">
-                                {index + 1}. {item.productName}
+                                {index + 1}. {item.product?.productName}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {item.productCode || item.code}
+                                {item.productCode || item.product?.code}
                               </div>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div>
                               <span className="text-muted-foreground">SL: </span>
-                              <span className="font-medium">{Number(item.quantity)} {item.unitName}</span>
+                              <span className="font-medium">{Number(item.quantity)} {item.unitName || item.product?.unit?.unitName || '—'}</span>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Giá: </span>
-                              <span className="font-medium">{moneyFormat(item.unitPrice)}</span>
+                              <span className="font-medium">{moneyFormat(item.price)}</span>
                             </div>
+                            <div>
+                              <span className="text-muted-foreground">Tổng tiền: </span>
+                              <span className="font-medium">{moneyFormat(Number(item.quantity) * Number(item.price))}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Thuế: </span>
+                              <span className="font-medium">{Number(item.taxRate) > 0 ? `${Number(item.taxRate)}%` : '—'}</span>
+                            </div>
+                            {item.discountRate > 0 && (
+                              <div>
+                                <span className="text-muted-foreground">CK: </span>
+                                <span className="font-medium text-destructive">{Number(item.discountRate)}%</span>
+                              </div>
+                            )}
                           </div>
                           <div className="flex justify-between border-t pt-2 font-semibold text-sm">
                             <span>Tổng cộng:</span>
-                            <span className="text-primary">{moneyFormat(item.total || item.totalAmount)}</span>
+                            <span className="text-primary">{moneyFormat(item.total)}</span>
+                          </div>
+                          <div className="text-xs space-y-1 border-t pt-2">
+                            {item.notes && (
+                              <div>
+                                <span className="text-muted-foreground">Ghi chú: </span>
+                                <span>{item.notes}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -502,10 +511,10 @@ const ViewPurchaseOrderDialog = ({
                         <strong>Tổng tiền hàng:</strong>
                         <span>{moneyFormat(purchaseOrder.subTotalAmount ?? purchaseOrder.subTotal ?? 0)}</span>
                       </div>
-                      {(purchaseOrder.totalDiscountAmount ?? purchaseOrder.discount ?? 0) > 0 && (
+                      {(purchaseOrder.discountAmount ?? purchaseOrder.totalDiscountAmount ?? purchaseOrder.discount ?? 0) > 0 && (
                         <div className="flex justify-between text-destructive">
                           <strong>Giảm giá:</strong>
-                          <span>-{moneyFormat(purchaseOrder.totalDiscountAmount ?? purchaseOrder.discount ?? 0)}</span>
+                          <span>-{moneyFormat(purchaseOrder.discountAmount ?? purchaseOrder.totalDiscountAmount ?? purchaseOrder.discount ?? 0)}</span>
                         </div>
                       )}
                       {(purchaseOrder.totalTaxAmount ?? purchaseOrder.taxAmount ?? 0) > 0 && (
@@ -542,12 +551,12 @@ const ViewPurchaseOrderDialog = ({
                             (() => {
                               const currentStatus = purchaseOrder.status
                               const statusObj = purchaseOrderStatuses.find((s) => s.value === currentStatus)
-                              const isTerminalStatus = ['cancelled', 'completed'].includes(currentStatus)
+                              const isTerminalStatus = ['cancelled', 'received'].includes(currentStatus)
                               return (
                                 <Badge
                                   className={cn(
                                     'select-none',
-                                    currentStatus === 'completed'
+                                    currentStatus === 'received'
                                       ? 'cursor-default bg-transparent p-0 text-green-600 hover:bg-transparent shadow-none border-0'
                                       : `cursor-pointer ${statusObj?.bgColor || ''}`,
                                   )}
@@ -567,7 +576,7 @@ const ViewPurchaseOrderDialog = ({
                             <Select
                               value={purchaseOrder.status}
                               onValueChange={(val) => handleUpdateStatus(val, purchaseOrder.id)}
-                              disabled={['cancelled', 'completed'].includes(purchaseOrder.status)}
+                              disabled={['cancelled', 'received'].includes(purchaseOrder.status)}
                             >
                               <SelectTrigger className="h-7 text-xs px-2">
                                 <SelectValue placeholder="Chọn trạng thái">
@@ -673,7 +682,7 @@ const ViewPurchaseOrderDialog = ({
                           Ghi chú:{' '}
                         </strong>
                         <span className="text-primary">
-                          {purchaseOrder.note || 'Không có'}
+                          {purchaseOrder.notes || 'Không có'}
                         </span>
                       </div>
 
@@ -687,7 +696,7 @@ const ViewPurchaseOrderDialog = ({
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">Phiếu chi</h3>
-                        {!['draft', 'completed', 'cancelled'].includes(purchaseOrder?.status) && (
+                        {!['pending', 'received', 'cancelled'].includes(purchaseOrder?.status) && purchaseOrder?.paymentStatus !== 'paid' && (
                           <Button
                             size="sm"
                             className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
@@ -714,7 +723,8 @@ const ViewPurchaseOrderDialog = ({
                                   <TableHead className="min-w-20">Trạng thái</TableHead>
                                   {/* <TableHead className="min-w-20">Loại GD</TableHead> */}
                                   {/* <TableHead className="min-w-32">Người tạo</TableHead> */}
-                                  <TableHead className="min-w-32">Ngày tạo</TableHead>
+                                  <TableHead className="min-w-32">Ngày chi</TableHead>
+                                  <TableHead className="min-w-32">Người lập/Ngày tạo</TableHead>
                                   <TableHead className="w-10"></TableHead>
                                 </TableRow>
                               </TableHeader>
@@ -730,7 +740,7 @@ const ViewPurchaseOrderDialog = ({
                                           setShowPaymentDetail(true)
                                         }}
                                       >
-                                        {voucher.code}
+                                        {voucher.voucherCode || voucher.code}
                                       </span>
                                     </TableCell>
                                     <TableCell className="text-right font-semibold">{moneyFormat(voucher.amount)}</TableCell>
@@ -748,11 +758,11 @@ const ViewPurchaseOrderDialog = ({
                                       >
                                         {(() => {
                                           const statusObj = paymentStatus.find(s => s.value === voucher.status)
-                                          return statusObj?.icon ? <statusObj.icon className="h-3 w-3" /> : (voucher.status === 'draft' ? <IconPencil className="h-3 w-3" /> : (voucher.status === 'completed' ? <IconCheck className="h-3 w-3" /> : null))
+                                          return statusObj?.icon ? <statusObj.icon className="h-3 w-3" /> : (voucher.status === 'draft' ? <IconPencil className="h-3 w-3" /> : (voucher.status === 'posted' ? <IconCheck className="h-3 w-3" /> : null))
                                         })()}
                                         {(() => {
                                           const statusObj = paymentStatus.find(s => s.value === voucher.status)
-                                          return statusObj?.label || (voucher.status === 'draft' ? 'Nháp' : voucher.status === 'completed' ? 'Đã chi' : voucher.status === 'cancelled' ? 'Đã hủy' : voucher.status)
+                                          return statusObj?.label || (voucher.status === 'draft' ? 'Nháp' : voucher.status === 'posted' ? 'Đã chi' : voucher.status === 'cancelled' ? 'Đã hủy' : voucher.status)
                                         })()}
                                       </span>
                                     </TableCell>
@@ -764,19 +774,13 @@ const ViewPurchaseOrderDialog = ({
                                     </TableCell> */}
                                     <TableCell>{dateFormat(voucher.paymentDate, true)}</TableCell>
                                     <TableCell>
-                                      {['draft'].includes(voucher.status) && (
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50 mr-1"
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            setSelectedPaymentForEdit(voucher)
-                                          }}
-                                        >
-                                          <Pencil className="h-4 w-4" />
-                                        </Button>
-                                      )}
+                                      <div className="flex flex-col">
+                                        <span className="font-medium text-[13px]">{voucher.creator?.fullName || '—'}</span>
+                                        <span className="text-muted-foreground text-xs">{dateFormat(voucher.createdAt, true)}</span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+
                                       {['draft', 'cancelled'].includes(voucher.status) && (
                                         <Button
                                           variant="ghost"
@@ -811,21 +815,9 @@ const ViewPurchaseOrderDialog = ({
                                         setShowPaymentDetail(true)
                                       }}
                                     >
-                                      {voucher.code}
+                                      {voucher.voucherCode || voucher.code}
                                     </span>
-                                    {['draft'].includes(voucher.status) && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 text-orange-600 hover:text-orange-700 hover:bg-orange-50 mr-1"
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          setSelectedPaymentForEdit(voucher)
-                                        }}
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                    )}
+
                                     {['draft', 'cancelled'].includes(voucher.status) && (
                                       <Button
                                         variant="ghost"
@@ -879,8 +871,15 @@ const ViewPurchaseOrderDialog = ({
                                   </div>
                                 </div>
                                 <div className="flex justify-between">
-                                  <strong>Ngày tạo:</strong>
+                                  <strong>Ngày chi:</strong>
                                   <span>{dateFormat(voucher.paymentDate, true)}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <strong>Người lập / Ngày tạo:</strong>
+                                  <div className="flex flex-col text-right">
+                                    <span className="font-medium">{voucher.creator?.fullName || '—'}</span>
+                                    <span className="text-muted-foreground">{dateFormat(voucher.createdAt, true)}</span>
+                                  </div>
                                 </div>
                               </div>
                             ))}
@@ -900,7 +899,7 @@ const ViewPurchaseOrderDialog = ({
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">Phiếu nhập kho</h3>
-                        {!['draft', 'completed', 'cancelled'].includes(purchaseOrder?.status) && (
+                        {!['pending', 'received', 'cancelled'].includes(purchaseOrder?.status) && (
                           <Button
                             size="sm"
                             className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
@@ -1107,8 +1106,8 @@ const ViewPurchaseOrderDialog = ({
                         <div className="flex items-center gap-4">
                           <Avatar className="h-8 w-8">
                             <AvatarImage
-                              src={`https://ui-avatars.com/api/?bold=true&background=random&name=${party?.name}`}
-                              alt={party?.name}
+                              src={`https://ui-avatars.com/api/?bold=true&background=random&name=${party?.supplierName || party?.name}`}
+                              alt={party?.supplierName || party?.name}
                             />
                             <AvatarFallback>{isCustomer ? 'KH' : 'NCC'}</AvatarFallback>
                           </Avatar>
@@ -1123,7 +1122,12 @@ const ViewPurchaseOrderDialog = ({
                                 className="font-medium cursor-pointer text-primary hover:underline"
                                 onClick={() => setShowSupplierDetail(true)}
                               >
-                                {party?.name}
+                                {party?.supplierName || party?.name}
+                                {(party?.supplierCode || party?.code) && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {party.supplierCode || party.code}
+                                  </div>
+                                )}
                               </div>
                             )}
                             {showSupplierDetail && purchaseOrder?.supplier && (
@@ -1144,6 +1148,16 @@ const ViewPurchaseOrderDialog = ({
                             <div className="font-medium">Thông tin liên hệ</div>
                           </div>
                           <div className="mt-4 space-y-2 text-sm">
+                            {party?.contactName && (
+                              <div className="flex items-center text-muted-foreground">
+                                <div className="mr-2 h-4 w-4">
+                                  <User className="h-4 w-4" />
+                                </div>
+                                <span className="font-medium text-foreground">
+                                  Liên hệ: {party.contactName}
+                                </span>
+                              </div>
+                            )}
                             <div className="flex cursor-pointer items-center text-primary hover:text-secondary-foreground">
                               <div className="mr-2 h-4 w-4">
                                 <MobileIcon className="h-4 w-4" />
@@ -1198,14 +1212,15 @@ const ViewPurchaseOrderDialog = ({
                   <div className="flex items-center gap-4">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${purchaseOrder?.createdByUser?.fullName}`}
-                        alt={purchaseOrder?.createdByUser?.fullName}
+                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${purchaseOrder?.creator?.fullName || purchaseOrder?.createdByUser?.fullName}`}
+                        alt={purchaseOrder?.creator?.fullName || purchaseOrder?.createdByUser?.fullName}
                       />
-                      <AvatarFallback>AD</AvatarFallback>
+                      <AvatarFallback>{(purchaseOrder?.creator?.fullName || purchaseOrder?.createdByUser?.fullName)?.slice(0, 2).toUpperCase() || 'AD'}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">
-                        {purchaseOrder?.createdByUser?.fullName} ({purchaseOrder?.createdByUser?.code})
+                        {purchaseOrder?.creator?.fullName || purchaseOrder?.createdByUser?.fullName}
+                        {(purchaseOrder?.creator?.employeeCode || purchaseOrder?.createdByUser?.code) && ` (${purchaseOrder?.creator?.employeeCode || purchaseOrder?.createdByUser?.code})`}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {dateFormat(purchaseOrder?.createdAt, true)}
@@ -1223,8 +1238,8 @@ const ViewPurchaseOrderDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <MobileIcon className="h-4 w-4" />
                         </div>
-                        <a href={`tel:${purchaseOrder?.createdByUser?.phone}`}>
-                          {purchaseOrder?.createdByUser?.phone || 'Chưa cập nhật'}
+                        <a href={`tel:${purchaseOrder?.creator?.phone || purchaseOrder?.createdByUser?.phone}`}>
+                          {purchaseOrder?.creator?.phone || purchaseOrder?.createdByUser?.phone || 'Chưa cập nhật'}
                         </a>
                       </div>
 
@@ -1232,8 +1247,8 @@ const ViewPurchaseOrderDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <Mail className="h-4 w-4" />
                         </div>
-                        <a href={`mailto:${purchaseOrder?.createdByUser?.email}`}>
-                          {purchaseOrder?.createdByUser?.email || 'Chưa cập nhật'}
+                        <a href={`mailto:${purchaseOrder?.creator?.email || purchaseOrder?.createdByUser?.email}`}>
+                          {purchaseOrder?.creator?.email || purchaseOrder?.createdByUser?.email || 'Chưa cập nhật'}
                         </a>
                       </div>
                     </div>
@@ -1277,7 +1292,7 @@ const ViewPurchaseOrderDialog = ({
         )}>
           {purchaseOrder && (
             <>
-              {(!['draft', 'cancelled'].includes(purchaseOrder.status) && purchaseOrder.paymentStatus !== 'paid') && (
+              {(!['pending', 'cancelled'].includes(purchaseOrder.status) && purchaseOrder.paymentStatus !== 'paid') && (
                 <Button
                   size="sm"
                   className="gap-2 bg-green-600 text-white hover:bg-green-700"
@@ -1288,7 +1303,7 @@ const ViewPurchaseOrderDialog = ({
                 </Button>
               )}
 
-              {['ordered', 'partial'].includes(purchaseOrder.status) && (
+              {['approved'].includes(purchaseOrder.status) && (
                 <Button
                   size="sm"
                   className="gap-2 bg-blue-600 text-white hover:bg-blue-700"

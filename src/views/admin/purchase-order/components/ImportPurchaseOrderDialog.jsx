@@ -96,7 +96,7 @@ const ImportPurchaseOrderDialog = ({
         // 9. Địa chỉ nhà cung cấp
         // 10. Mã số thuế NCC
         // 11. Người đại diện NCC
-        // 12. Mã sản phẩm (*)
+        // 12. Mã nguyên liệu (*)
         // 13. Số lượng (*)
         // 14. Mã đơn vị (*)
         // 15. Đơn giá (*)
@@ -268,9 +268,9 @@ const ImportPurchaseOrderDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange} {...props}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Import Excel Đơn Đặt Hàng</DialogTitle>
+          <DialogTitle>Import Excel Đơn Mua Hàng</DialogTitle>
           <DialogDescription>
-            Chọn file Excel chứa danh sách đơn đặt hàng.
+            Chọn file Excel chứa danh sách đơn mua hàng.
             <br />
             <span className="text-xs text-muted-foreground">Hệ thống sẽ gom nhóm các dòng cùng Mã NCC + Mã đơn hàng thành 1 đơn.</span>
           </DialogDescription>

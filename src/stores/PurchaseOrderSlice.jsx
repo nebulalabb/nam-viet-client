@@ -252,9 +252,9 @@ export const confirmPurchaseOrder = createAsyncThunk(
   'purchaseOrder/confirm',
   async (id, { rejectWithValue }) => {
     try {
-      await api.post(`/purchase-orders/${id}/confirm`)
+      await api.put(`/purchase-orders/${id}/approve`)
       toast.success('Đã xác nhận đơn hàng')
-      return { id, status: 'ordered' }
+      return { id, status: 'approved' }
     } catch (error) {
       return rejectWithValue(handleError(error))
     }
@@ -286,7 +286,7 @@ export const cancelPurchaseOrder = createAsyncThunk(
   'purchaseOrder/cancel',
   async (id, { rejectWithValue }) => {
     try {
-      await api.post(`/purchase-orders/${id}/cancel`)
+      await api.put(`/purchase-orders/${id}/cancel`)
       toast.success('Đã hủy đơn hàng')
       return { id, status: 'cancelled' }
     } catch (error) {
@@ -302,7 +302,7 @@ export const revertPurchaseOrder = createAsyncThunk(
     try {
       await api.post(`/purchase-orders/${id}/revert`)
       toast.success('Đã chuyển về nháp')
-      return { id, status: 'draft' }
+      return { id, status: 'pending' }
     } catch (error) {
       return rejectWithValue(handleError(error))
     }

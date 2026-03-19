@@ -57,6 +57,7 @@ const createPaymentSchema = z
     paymentNote: z.string().max(190, 'Tối đa 190 ký tự').optional().nullable(),
     bankAccount: z.any().optional().nullable(),
     dueDate: z.string().optional().nullable(),
+    paymentDate: z.string().nonempty('Vui lòng chọn ngày chi'),
   })
   .superRefine((data, ctx) => {
     if (data.paymentMethod === 'transfer' && !data.bankAccount) {

@@ -39,7 +39,7 @@ import MobilePaymentActions from './MobilePaymentActions'
 import { dateFormat } from '@/utils/date-format'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import { getPublicUrl } from '@/utils/file'
-import { getPaymentById, approvePayment, postPayment, updatePaymentStatus } from '@/stores/PaymentSlice'
+import { getPaymentById, postPayment, updatePaymentStatus } from '@/stores/PaymentSlice'
 import UpdatePaymentStatusDialog from './UpdatePaymentStatusDialog'
 import PaymentFormDialog from './PaymentDialog'
 import { DeletePaymentDialog } from './DeletePaymentDialog'
@@ -114,21 +114,6 @@ const ViewPaymentDialog = ({
 
   const dispatch = useDispatch()
 
-  const handleApprove = async () => {
-    try {
-      setActionLoading(true)
-      await dispatch(approvePayment({ id: paymentId })).unwrap()
-      const result = await dispatch(getPaymentById(paymentId)).unwrap()
-      setFetchedPayment(result)
-      onSuccess?.()
-      toast.success('Duyệt phiếu chi thành công')
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
   const handlePost = async () => {
     try {
       setActionLoading(true)
@@ -136,7 +121,6 @@ const ViewPaymentDialog = ({
       const result = await dispatch(getPaymentById(paymentId)).unwrap()
       setFetchedPayment(result)
       onSuccess?.()
-      toast.success('Ghi sổ phiếu chi thành công')
     } catch (error) {
       console.error(error)
     } finally {
@@ -437,10 +421,10 @@ const ViewPaymentDialog = ({
                         <div className="flex items-center gap-2">
                           <Badge
                             className={cn(
-                              payment?.isPosted ? 'bg-green-500' : payment?.approvedAt ? 'bg-blue-500' : (payment?.status === 'canceled' || payment?.status === 'cancelled') ? 'bg-red-500' : 'bg-yellow-500'
+                              payment?.status === 'posted' ? 'bg-green-500' : (payment?.status === 'cancelled' || payment?.status === 'canceled') ? 'bg-red-500' : 'bg-yellow-500'
                             )}
                           >
-                            {payment?.isPosted ? 'Đã ghi sổ' : payment?.approvedAt ? 'Đã duyệt' : (payment?.status === 'cancelled' || payment?.status === 'canceled') ? 'Đã hủy' : 'Chờ duyệt'}
+                            {payment?.status === 'posted' ? 'Đã ghi sổ' : (payment?.status === 'cancelled' || payment?.status === 'canceled') ? 'Đã hủy' : 'Bản nháp'}
                           </Badge>
                         </div>
                       </div>
@@ -646,18 +630,7 @@ const ViewPaymentDialog = ({
 
         <DialogFooter className={cn("hidden md:flex sm:space-x-0")}>
           <div className={cn("w-full grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end")}>
-            {(!payment?.approvedBy) && (
-              <Button
-                size="sm"
-                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-                onClick={handleApprove}
-                disabled={actionLoading}
-              >
-                Duyệt phiếu
-              </Button>
-            )}
-
-            {(payment?.approvedBy && !payment?.isPosted) && (
+            {(payment?.status === 'draft') && (
               <Button
                 size="sm"
                 className="gap-2 bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"

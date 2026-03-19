@@ -48,7 +48,7 @@ const UpdatePaymentStatusDialog = ({
   const getColor = (statusValue) => {
     switch (statusValue) {
       case 'draft': return 'text-yellow-600'
-      case 'completed': return 'text-green-600'
+      case 'posted': return 'text-green-600'
       case 'canceled':
       case 'cancelled': return 'text-red-600'
       default: return ''
@@ -92,7 +92,7 @@ const UpdatePaymentStatusDialog = ({
         (s) => s.value === 'cancelled',
       )
     }
-    if (normalizedStatus === 'completed') {
+    if (normalizedStatus === 'posted') {
       return statuses.filter((s) => s.value !== 'draft')
     }
     return statuses

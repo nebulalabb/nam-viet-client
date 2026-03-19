@@ -33,7 +33,7 @@ import { getSetting } from '@/stores/SettingSlice'
 // E  SĐT
 // F  Địa chỉ
 // G  Người tạo
-// H  Tên sản phẩm
+// H  Tên nguyên liệu
 // I  SL
 // J  ĐVT
 // K  Giá
@@ -179,7 +179,7 @@ const ExportPurchaseOrderView = ({
       14, // E – SĐT
       35, // F – Địa chỉ
       20, // G – Người tạo
-      30, // H – Tên sản phẩm
+      30, // H – Tên nguyên liệu
       8,  // I – SL
       10, // J – ĐVT
       18, // K – Giá
@@ -300,7 +300,7 @@ const ExportPurchaseOrderView = ({
                   <TableHead className="min-w-16">SĐT</TableHead>
                   <TableHead className="min-w-40">Địa chỉ</TableHead>
                   <TableHead className="min-w-40">Người tạo</TableHead>
-                  <TableHead className="min-w-28">Tên sản phẩm</TableHead>
+                  <TableHead className="min-w-28">Tên nguyên liệu</TableHead>
                   <TableHead className="min-w-16">SL</TableHead>
                   <TableHead className="min-w-16">ĐVT</TableHead>
                   <TableHead className="min-w-32">Giá</TableHead>
@@ -351,7 +351,7 @@ const ExportPurchaseOrderView = ({
                             order.user?.fullName ??
                             order.createdBy}
                         </TableCell>
-                        {/* H – Tên sản phẩm */}
+                        {/* H – Tên nguyên liệu */}
                         <TableCell>
                           {item.productName ?? item.product?.name}
                         </TableCell>

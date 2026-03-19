@@ -9,7 +9,6 @@ export const getPayments = createAsyncThunk(
     try {
       const response = await api.get('/payment-vouchers', {
         params: {
-          voucherType: 'payment_out',
           fromDate: fromDate ?? undefined,
           toDate: toDate ?? undefined,
           page,
@@ -30,7 +29,6 @@ export const getMyPayments = createAsyncThunk(
     try {
       const response = await api.get('/payment-vouchers/my-payment-vouchers', {
         params: {
-          voucherType: 'payment_out',
           fromDate: fromDate ?? undefined,
           toDate: toDate ?? undefined,
           page,
@@ -58,19 +56,7 @@ export const getPaymentById = createAsyncThunk(
   },
 )
 
-export const approvePayment = createAsyncThunk(
-  'payment/approve-payment',
-  async ({ id, notes }, { rejectWithValue }) => {
-    try {
-      const response = await api.put(`/payment-vouchers/${id}/approve`, { notes })
-      toast.success('Duyệt phiếu chi thành công')
-      return response.data.data
-    } catch (error) {
-      const message = handleError(error)
-      return rejectWithValue(message)
-    }
-  },
-)
+
 
 export const postPayment = createAsyncThunk(
   'payment/post-payment',
@@ -92,13 +78,10 @@ export const updatePaymentStatus = createAsyncThunk(
   async ({ id, status, notes }, { dispatch, rejectWithValue }) => {
     try {
       let response
-      if (status === 'approved') {
-        response = await api.put(`/payment-vouchers/${id}/approve`, { notes })
-      } else if (status === 'posted' || status === 'completed') {
+      if (status === 'posted' || status === 'completed') {
         response = await api.post(`/payment-vouchers/${id}/post`, { notes })
       } else if (status === 'cancelled' || status === 'canceled') {
-        response = await api.delete(`/payment-vouchers/${id}`)
-        return { id, status: 'canceled', deletedAt: new Date().toISOString() }
+        response = await api.post(`/payment-vouchers/${id}/cancel`, { notes })
       } else {
         response = await api.put(`/payment-vouchers/${id}`, { status, notes })
       }
@@ -158,7 +141,6 @@ export const deleteMultiplePayments = createAsyncThunk(
     try {
       await api.post('/payment-vouchers/bulk-delete', {
         ids,
-        voucherType: 'payment_out',
       })
 
       toast.success(`Đã xóa ${ids.length} phiếu chi thành công`)
@@ -227,10 +209,7 @@ export const paymentSlice = createSlice({
       })
       .addCase(updatePaymentStatus.fulfilled, (state, action) => {
         state.loading = false
-        const updatedPayment = {
-          ...action.payload,
-          status: action.payload.isPosted ? 'posted' : action.payload.approvedAt ? 'approved' : action.payload.deletedAt ? 'cancelled' : 'draft'
-        }
+        const updatedPayment = action.payload
         const index = state.payments.findIndex((p) => p.id === updatedPayment.id)
         if (index !== -1) {
           state.payments[index] = { ...state.payments[index], ...updatedPayment }
@@ -265,14 +244,7 @@ export const paymentSlice = createSlice({
       // .addCase(updatePaymentStatus.pending, (state) => {
       //   state.loading = true
       // })
-      .addCase(approvePayment.fulfilled, (state, action) => {
-        state.loading = false
-        const updatedPayment = action.payload
-        const index = state.payments.findIndex((p) => p.id === updatedPayment.id)
-        if (index !== -1) {
-          state.payments[index] = { ...state.payments[index], ...updatedPayment }
-        }
-      })
+
       .addCase(postPayment.fulfilled, (state, action) => {
         state.loading = false
         const updatedPayment = action.payload
