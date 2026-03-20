@@ -85,7 +85,12 @@ export function TimeDisplay({ time, label }) {
 
     let formattedTime = time;
     if (typeof time === 'string' && time.includes('T')) {
-        const date = new Date(time);
+        let timeStr = time;
+        if (time.startsWith('1970-01-01T')) {
+            const today = new Date().toISOString().split('T')[0];
+            timeStr = time.replace('1970-01-01', today);
+        }
+        const date = new Date(timeStr);
         formattedTime = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
     } else if (typeof time === 'string' && time.length >= 5) {
         // HH:mm:ss format fallback

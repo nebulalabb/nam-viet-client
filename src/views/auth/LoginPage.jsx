@@ -9,6 +9,10 @@ const LoginPage = () => {
 
   const checkAuthenticated = () => {
     if (isAuthenticated) {
+      const pendingScan = localStorage.getItem('pending_qr_scan')
+      if (pendingScan) {
+        return navigate(`/attendance/scan?qrData=${pendingScan}`)
+      }
       return navigate('/dashboard')
     }
   }

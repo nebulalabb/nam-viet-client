@@ -133,7 +133,8 @@ export default function AttendancePage() {
         if (!selectedDate || viewMode !== 'list') return attendances
         return attendances.filter((att) => {
             if (!att.date) return false
-            const dateStr = new Date(att.date).toISOString().split('T')[0]
+            const d = new Date(att.date)
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
             return dateStr === selectedDate
         })
     }, [attendances, selectedDate, viewMode])
@@ -362,7 +363,10 @@ export default function AttendancePage() {
                                     <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                         <span>Hiển thị dữ liệu cho ngày:{' '}
                                             <span className="font-medium text-gray-900 dark:text-white">
-                                                {new Date(selectedDate).toLocaleDateString('vi-VN')}
+                                                {(() => {
+                                                    const [y, m, d] = selectedDate.split('-');
+                                                    return `${d}/${m}/${y}`;
+                                                })()}
                                             </span>
                                         </span>
                                         <button

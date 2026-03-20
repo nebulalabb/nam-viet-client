@@ -50,6 +50,7 @@ export default function GenerateQRDialog({ isOpen, onClose }) {
                 endDate,
                 shift,
                 type,
+                clientUrl: window.location.origin
             })
             setGeneratedQR(response.data.data)
             toast.success('Tạo QR code thành công')

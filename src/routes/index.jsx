@@ -34,6 +34,7 @@ import TaxPage from '../views/admin/tax/TaxPage'
 import TicketPage from '@/views/admin/ticket/TicketPage'
 import TaskPage from '@/views/admin/task/TaskPage'
 import AttendancePage from '@/views/admin/attendance/AttendancePage'
+import QRScanPage from '@/views/admin/attendance/QRScanPage'
 
 import OvertimePage from '@/views/admin/overtime/OvertimePage'
 import InvoicePage from '@/views/admin/invoice/InvoicePage'
@@ -64,6 +65,11 @@ const routes = [
   {
     path: '/attendance',
     element: AttendancePage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/attendance/scan',
+    element: QRScanPage,
     layout: AdminLayout,
   },
   {

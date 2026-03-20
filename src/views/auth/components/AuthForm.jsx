@@ -50,7 +50,13 @@ const AuthForm = ({ className, ...props }) => {
     if (verifyOTP.fulfilled.match(result)) {
       await dispatch(getAuthUserRolePermissions()).unwrap()
       setOtpCode('')
-      navigate('/dashboard')
+      
+      const pendingScan = localStorage.getItem('pending_qr_scan')
+      if (pendingScan) {
+        navigate(`/attendance/scan?qrData=${pendingScan}`)
+      } else {
+        navigate('/dashboard')
+      }
     }
   }
 
