@@ -25,10 +25,13 @@ import {
     Calculator,
     Banknote,
     X,
-    Search,
     FileText,
     Plus,
 } from "lucide-react";
+import { Cross2Icon } from '@radix-ui/react-icons';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/custom/Button';
+import { StatusFacetedFilter } from '@/components/custom/StatusFacetedFilter';
 import CustomPagination from "@/components/CustomPagination";
 import { Layout, LayoutBody } from '@/components/custom/Layout';
 
@@ -186,61 +189,62 @@ export default function SalaryPage() {
 
                 <div className="-mx-4 flex-1 overflow-hidden px-4 py-1 flex flex-col space-y-4">
                     {/* Toolbar */}
-                    <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
-                        <div className="flex flex-1 items-center space-x-2">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm tên, mã NV..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="flex h-8 w-[150px] lg:w-[200px] rounded-md border border-input bg-transparent px-8 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                />
-                            </div>
+                    <div className="flex flex-col gap-2 p-1">
+                        {/* Top row: search + action buttons */}
+                        <div className="flex w-full items-center justify-between">
+                            <Input
+                                placeholder="Tìm tên, mã NV..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="h-8 w-[200px] lg:w-[300px]"
+                            />
 
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={() => setShowAutoCalcDialog(true)}
+                                    className="inline-flex h-8 items-center justify-center rounded-md bg-green-600 px-3 text-sm font-medium text-white shadow hover:bg-green-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-700"
+                                >
+                                    <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
+                                    Tính tự động
+                                </button>
+                                <button
+                                    onClick={() => navigate("/salary/calculate")}
+                                    className="inline-flex h-8 items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-medium text-white shadow hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-700"
+                                >
+                                    <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                                    Lương cá nhân
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Second row: filters */}
+                        <div className="flex items-center space-x-2">
                             <MonthPicker 
                                 value={monthFilter ? `${monthFilter.substring(0,4)}-${monthFilter.substring(4,6)}` : ""} 
                                 onChange={(val) => setMonthFilter(val.replace("-", ""))} 
                             />
 
-                            <select
+                            <StatusFacetedFilter
+                                title="Trạng thái"
+                                options={[
+                                    { value: 'pending', label: 'Chờ duyệt' },
+                                    { value: 'approved', label: 'Đã duyệt' },
+                                    { value: 'paid', label: 'Đã thanh toán' },
+                                ]}
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="flex h-8 min-w-[180px] items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                            >
-                                <option value="all">Trạng thái (Tất cả)</option>
-                                <option value="pending">Chờ duyệt</option>
-                                <option value="approved">Đã duyệt</option>
-                                <option value="paid">Đã thanh toán</option>
-                            </select>
+                                onChange={setStatusFilter}
+                            />
 
                             {hasActiveFilters && (
-                                <button
+                                <Button
+                                    variant="ghost"
                                     onClick={handleResetFilters}
-                                    className="inline-flex h-8 items-center justify-center rounded-md px-2 lg:px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="h-8 px-2 lg:px-3"
                                 >
                                     Đặt lại
-                                    <X className="ml-2 h-4 w-4" />
-                                </button>
+                                    <Cross2Icon className="ml-2 h-4 w-4" />
+                                </Button>
                             )}
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <button
-                                onClick={() => setShowAutoCalcDialog(true)}
-                                className="inline-flex h-8 items-center justify-center rounded-md bg-green-600 px-3 text-sm font-medium text-white shadow hover:bg-green-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-700"
-                            >
-                                <Calculator className="mr-2 h-4 w-4" aria-hidden="true" />
-                                Tính tự động
-                            </button>
-                            <button
-                                onClick={() => navigate("/salary/calculate")}
-                                className="inline-flex h-8 items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-medium text-white shadow hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-700"
-                            >
-                                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-                                Lương cá nhân
-                            </button>
                         </div>
                     </div>
 

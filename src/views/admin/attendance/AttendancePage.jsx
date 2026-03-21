@@ -8,6 +8,7 @@ import DailyStatsCard from './components/DailyStatsCard'
 import AttendanceApprovalsTab from './components/AttendanceApprovalsTab'
 import AttendanceToolbar from './components/AttendanceToolbar'
 import GenerateQRDialog from './components/GenerateQRDialog'
+import QRManagementDialog from './components/QRManagementDialog'
 import RequestLeaveDialog from './components/RequestLeaveDialog'
 import AttendanceEditDialog from './components/AttendanceEditDialog'
 import AttendanceStatusBadge, {
@@ -77,6 +78,7 @@ export default function AttendancePage() {
     const [selectedUserId, setSelectedUserId] = useState('me')
     const [selectedDate, setSelectedDate] = useState(null)
     const [showQRDialog, setShowQRDialog] = useState(false)
+    const [showQRManagement, setShowQRManagement] = useState(false)
     const [showRequestLeave, setShowRequestLeave] = useState(false)
     const [openUserCombobox, setOpenUserCombobox] = useState(false)
     const [editDialogRecord, setEditDialogRecord] = useState(null)
@@ -181,6 +183,14 @@ export default function AttendancePage() {
                         >
                             <QrCode className="mr-2 h-4 w-4" />
                             Tạo QR
+                        </button>
+
+                        <button
+                            onClick={() => setShowQRManagement(true)}
+                            className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            <QrCode className="mr-2 h-4 w-4" />
+                            Quản lý QR
                         </button>
                     </div>
                 </div>
@@ -410,6 +420,9 @@ export default function AttendancePage() {
                                                 Giờ công
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                OT
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                                 Trạng thái
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -424,7 +437,7 @@ export default function AttendancePage() {
                                         {filteredAttendances.length === 0 ? (
                                             <tr>
                                                 <td
-                                                    colSpan={8}
+                                                    colSpan={9}
                                                     className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
                                                 >
                                                     Không có dữ liệu chấm công
@@ -453,6 +466,15 @@ export default function AttendancePage() {
                                                     </td>
                                                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                                                         <WorkHoursDisplay hours={attendance.workHours} />
+                                                    </td>
+                                                    <td className="whitespace-nowrap px-6 py-4 text-sm">
+                                                        {attendance.overtimeHours && attendance.overtimeHours > 0 ? (
+                                                            <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                                                {Number(attendance.overtimeHours).toFixed(1)}h
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400">—</span>
+                                                        )}
                                                     </td>
                                                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                                                         <AttendanceStatusBadge status={attendance.status} />
@@ -496,6 +518,8 @@ export default function AttendancePage() {
 
             {/* QR Code Dialog */}
             <GenerateQRDialog isOpen={showQRDialog} onClose={() => setShowQRDialog(false)} />
+
+            <QRManagementDialog isOpen={showQRManagement} onClose={() => setShowQRManagement(false)} />
 
             <RequestLeaveDialog isOpen={showRequestLeave} onClose={() => setShowRequestLeave(false)} />
 

@@ -209,6 +209,23 @@ export const lockAttendanceMonth = createAsyncThunk(
     }
 )
 
+// Unlock Attendance Month
+export const unlockAttendanceMonth = createAsyncThunk(
+    'attendance/unlockMonth',
+    async (month, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await api.post('/attendance/unlock-month', { month })
+            await dispatch(getAttendanceStatistics({ month })).unwrap()
+            toast.success('Mở khóa công tháng thành công!')
+            return response.data
+        } catch (error) {
+            const errObj = handleError(error)
+            toast.error(errObj?.message || 'Mở khóa công tháng thất bại!')
+            return rejectWithValue(errObj)
+        }
+    }
+)
+
 const initialState = {
     attendanceList: [],
     myAttendance: [],
@@ -278,6 +295,11 @@ export const attendanceSlice = createSlice({
             .addCase(lockAttendanceMonth.pending, (state) => { state.loading = true })
             .addCase(lockAttendanceMonth.fulfilled, (state) => { state.loading = false })
             .addCase(lockAttendanceMonth.rejected, (state, action) => { state.loading = false; state.error = action.payload })
+
+            // unlockAttendanceMonth
+            .addCase(unlockAttendanceMonth.pending, (state) => { state.loading = true })
+            .addCase(unlockAttendanceMonth.fulfilled, (state) => { state.loading = false })
+            .addCase(unlockAttendanceMonth.rejected, (state, action) => { state.loading = false; state.error = action.payload })
 
             // importAttendance
             .addCase(importAttendance.pending, (state) => { state.loading = true })

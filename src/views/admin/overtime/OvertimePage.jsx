@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
-import { Eye, Search, RotateCcw, X, Users, Clock, CheckCircle, PlusIcon } from 'lucide-react'
+import { Eye, Edit2, X, Search, Users, Clock, CheckCircle, PlusIcon } from 'lucide-react'
+import { Cross2Icon } from '@radix-ui/react-icons'
 
 import { Layout, LayoutBody } from '@/components/custom/Layout'
-import { getOvertimeSessions, getOvertimeStats } from '@/stores/OvertimeSlice'
+import { getOvertimeSessions, getOvertimeStats, getOvertimeSessionDetail } from '@/stores/OvertimeSlice'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/custom/Button'
+import { StatusFacetedFilter } from '@/components/custom/StatusFacetedFilter'
 import CreateSessionDialog from './components/CreateSessionDialog'
 import SessionDetailsDialog from './components/SessionDetailsDialog'
+import EditSessionDialog from './components/EditSessionDialog'
 import CustomPagination from '@/components/CustomPagination'
 
 // Component render
@@ -67,6 +72,8 @@ export default function OvertimePage() {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [selectedSessionId, setSelectedSessionId] = useState(null)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+    const [editSessionData, setEditSessionData] = useState(null)
+    const [isEditOpen, setIsEditOpen] = useState(false)
 
     // Ensure we handle array or paginated response
     const sessionList = Array.isArray(sessions) ? sessions : (sessions?.data || [])
@@ -101,6 +108,16 @@ export default function OvertimePage() {
 
     const hasActiveFilters = searchTerm || statusFilter !== 'all'
 
+    const handleEditSession = async (sessionId) => {
+        try {
+            const result = await dispatch(getOvertimeSessionDetail(sessionId)).unwrap()
+            setEditSessionData(result)
+            setIsEditOpen(true)
+        } catch (error) {
+            console.error('Failed to load session detail for edit:', error)
+        }
+    }
+
     const getStatusLabel = (status) => {
         switch (status) {
             case 'open': return 'Đang mở'
@@ -134,57 +151,45 @@ export default function OvertimePage() {
                     {/* Toolbar */}
                     <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
                         <div className="flex flex-1 items-center space-x-2">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm phiên, người tạo..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="flex h-8 w-[150px] lg:w-[250px] rounded-md border border-input bg-transparent px-8 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                />
-                            </div>
+                            <Input
+                                placeholder="Tìm phiên, người tạo..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="h-8 w-[150px] lg:w-[250px]"
+                            />
 
-                            <select
+                            <StatusFacetedFilter
+                                title="Trạng thái"
+                                options={[
+                                    { value: 'open', label: 'Đang mở' },
+                                    { value: 'closed', label: 'Đã đóng' },
+                                    { value: 'cancelled', label: 'Đã hủy' },
+                                ]}
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="flex h-8 w-[150px] items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                            >
-                                <option value="all">Tất cả trạng thái</option>
-                                <option value="open">Đang mở</option>
-                                <option value="closed">Đã đóng</option>
-                                <option value="cancelled">Đã hủy</option>
-                            </select>
+                                onChange={setStatusFilter}
+                            />
 
                             {hasActiveFilters && (
-                                <button
+                                <Button
+                                    variant="ghost"
                                     onClick={handleResetFilters}
-                                    className="inline-flex h-8 items-center justify-center rounded-md px-2 lg:px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    className="h-8 px-2 lg:px-3"
                                 >
                                     Đặt lại
-                                    <X className="ml-2 h-4 w-4" />
-                                </button>
+                                    <Cross2Icon className="ml-2 h-4 w-4" />
+                                </Button>
                             )}
                         </div>
 
                         <div className="flex items-center space-x-2">
-                             <select
-                                value={limit}
-                                onChange={(e) => setLimit(Number(e.target.value))}
-                                className="flex h-8 w-[110px] items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                            >
-                                <option value={10}>10 / trang</option>
-                                <option value={20}>20 / trang</option>
-                                <option value={50}>50 / trang</option>
-                            </select>
-
-                            <button
+                            <Button
                                 onClick={() => setIsCreateOpen(true)}
-                                className="inline-flex h-8 items-center justify-center rounded-md bg-green-600 px-3 text-sm font-medium text-white shadow hover:bg-green-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-700"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                size="sm"
                             >
-                                <PlusIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+                                <PlusIcon className="mr-2 size-4" aria-hidden="true" />
                                 Mở phiên
-                            </button>
+                            </Button>
                             <CreateSessionDialog
                                 isOpen={isCreateOpen}
                                 onClose={() => setIsCreateOpen(false)}
@@ -245,16 +250,27 @@ export default function OvertimePage() {
                                                 {session._count?.entries || 0} nhân viên
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedSessionId(session.id)
-                                                        setIsDetailsOpen(true)
-                                                    }}
-                                                    className="inline-flex rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                                                    title="Chi tiết"
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </button>
+                                                <div className="flex items-center justify-end gap-1">
+                                                    {session.status === 'open' && (
+                                                        <button
+                                                            onClick={() => handleEditSession(session.id)}
+                                                            className="inline-flex rounded-md p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
+                                                            title="Chỉnh sửa"
+                                                        >
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedSessionId(session.id)
+                                                            setIsDetailsOpen(true)
+                                                        }}
+                                                        className="inline-flex rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                                        title="Chi tiết"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -289,6 +305,12 @@ export default function OvertimePage() {
                     isOpen={isDetailsOpen} 
                     onClose={() => setIsDetailsOpen(false)} 
                     sessionId={selectedSessionId} 
+                />
+
+                <EditSessionDialog 
+                    isOpen={isEditOpen} 
+                    onClose={() => { setIsEditOpen(false); setEditSessionData(null); }} 
+                    selectedSession={editSessionData} 
                 />
             </LayoutBody>
         </Layout>

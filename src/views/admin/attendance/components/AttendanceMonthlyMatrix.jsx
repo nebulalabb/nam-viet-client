@@ -25,15 +25,7 @@ export default function AttendanceMonthlyMatrix({
     }, [attendances])
 
     // Get status symbol and color
-    const getStatusSymbol = (status, hasOT) => {
-        if (hasOT)
-            return {
-                symbol: 'OT',
-                bg: 'bg-purple-100',
-                text: 'text-purple-700',
-                dark: 'dark:bg-purple-900/30 dark:text-purple-400',
-            }
-
+    const getStatusSymbol = (status) => {
         const statusMap = {
             present: {
                 symbol: 'X',
@@ -165,27 +157,34 @@ export default function AttendanceMonthlyMatrix({
                                     const attendance = attendanceMap.get(`${user.id}-${dateStr}`)
                                     const hasOT = attendance && attendance.overtimeHours && attendance.overtimeHours > 0
                                     const status = attendance?.status || 'absent'
-                                    const statusInfo = getStatusSymbol(status, !!hasOT)
+                                    const statusInfo = getStatusSymbol(status)
 
                                     return (
                                         <td
                                             key={day}
                                             className="border-l border-gray-200 px-2 py-3 text-center dark:border-gray-700"
                                         >
-                                            <button
-                                                onClick={() => handleCellClick(user.id, dateStr)}
-                                                className={`inline-flex h-8 w-8 items-center justify-center rounded text-xs font-bold transition-all hover:scale-110 ${attendance
-                                                    ? `${statusInfo.bg} ${statusInfo.text} ${statusInfo.dark}`
-                                                    : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
-                                                    }`}
-                                                title={
-                                                    attendance
-                                                        ? `${attendance.checkInTime || '—'} → ${attendance.checkOutTime || '—'}`
-                                                        : 'Không có dữ liệu'
-                                                }
-                                            >
-                                                {attendance ? statusInfo.symbol : '-'}
-                                            </button>
+                                            <div className="relative inline-flex">
+                                                <button
+                                                    onClick={() => handleCellClick(user.id, dateStr)}
+                                                    className={`inline-flex h-8 w-8 items-center justify-center rounded text-xs font-bold transition-all hover:scale-110 ${attendance
+                                                        ? `${statusInfo.bg} ${statusInfo.text} ${statusInfo.dark}`
+                                                        : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+                                                        }`}
+                                                    title={
+                                                        attendance
+                                                            ? `${attendance.checkInTime || '—'} → ${attendance.checkOutTime || '—'}${hasOT ? ` | OT: ${Number(attendance.overtimeHours).toFixed(1)}h` : ''}`
+                                                            : 'Không có dữ liệu'
+                                                    }
+                                                >
+                                                    {attendance ? statusInfo.symbol : '-'}
+                                                </button>
+                                                {hasOT && (
+                                                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-purple-500 text-[7px] font-bold text-white ring-1 ring-white dark:ring-gray-800">
+                                                        OT
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                     )
                                 })}
