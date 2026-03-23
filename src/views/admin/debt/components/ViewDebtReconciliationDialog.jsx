@@ -5,7 +5,7 @@ import {
     Mail, User, Phone, MapPin,
     RefreshCw, DatabaseZap, Calendar,
     AlertCircle, ShoppingBag, FileText, Receipt,
-    ArrowDownLeft, Scale, RotateCw, X, UserCog,
+    ArrowDownLeft, RotateCw, X, UserCog,
     FileDown, FileSpreadsheet, Printer
 } from 'lucide-react'
 
@@ -220,12 +220,12 @@ export function ViewDebtReconciliationDialog({
                             </div>
 
                             {/* ROW 3: FINANCIAL SUMMARY */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
                                 <StatBox label="Nợ đầu kỳ" value={data.financials?.opening} />
                                 <StatBox label="Tổng mua (+)" value={data.financials?.increase} color="text-blue-600" />
                                 <StatBox label="Trả hàng (-)" value={data.financials?.returnAmount} color="text-indigo-600" />
                                 <StatBox label="Thanh toán (-)" value={data.financials?.payment} color="text-green-600" />
-                                <StatBox label="Điều chỉnh" value={data.financials?.adjustmentAmount} color="text-purple-600" />
+
                                 <StatBox label="Dư nợ cuối kỳ (=)" value={data.financials?.closing} color="text-red-600" isBig bg="bg-red-50" />
                             </div>
 
@@ -238,7 +238,7 @@ export function ViewDebtReconciliationDialog({
                                             <TabItem value="orders" label="Đơn hàng" icon={FileText} count={data.history?.orders?.length || 0} />
                                             <TabItem value="payments" label="Thanh toán" icon={Receipt} count={data.history?.payments?.length || 0} />
                                             <TabItem value="returns" label="Trả hàng" icon={ArrowDownLeft} count={data.history?.returns?.length || 0} />
-                                            <TabItem value="adjustments" label="Điều chỉnh" icon={Scale} count={data.history?.adjustments?.length || 0} />
+
                                         </TabsList>
                                     </div>
 
@@ -258,9 +258,7 @@ export function ViewDebtReconciliationDialog({
                                         <DocumentHistoryTable data={data.history?.returns} type="RETURN" />
                                     </TabsContent>
 
-                                    <TabsContent value="adjustments" className="p-0">
-                                        <DocumentHistoryTable data={data.history?.adjustments} type="ADJUSTMENT" />
-                                    </TabsContent>
+
                                 </Tabs>
                             </div>
                         </div>
@@ -389,7 +387,7 @@ function DocumentHistoryTable({ data, type }) {
                             if (type === 'ORDER') note = "Đơn hàng bán"
                             else if (type === 'PAYMENT') note = "Phiếu thu/chi"
                             else if (type === 'RETURN') note = "Phiếu trả hàng"
-                            else if (type === 'ADJUSTMENT') note = "Phiếu điều chỉnh"
+
                         }
 
                         let amountColor = 'text-gray-900'
@@ -398,10 +396,7 @@ function DocumentHistoryTable({ data, type }) {
                         if (type === 'ORDER') { amountColor = 'text-blue-600'; prefix = '+' }
                         else if (type === 'PAYMENT') { amountColor = 'text-green-600'; prefix = '-' }
                         else if (type === 'RETURN') { amountColor = 'text-indigo-600'; prefix = '-' }
-                        else if (type === 'ADJUSTMENT') {
-                            amountColor = 'text-purple-600'
-                            prefix = item.type === 'decrease' ? '-' : '+'
-                        }
+
 
                         return (
                             <TableRow key={item.id} className="hover:bg-gray-50/50">

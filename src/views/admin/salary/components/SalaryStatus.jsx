@@ -189,6 +189,7 @@ function SalaryLineItem({
 //----------------------------------------------
 
 export function SalaryBreakdown({
+    breakdown,
     basicSalary = 0,
     allowance = 0,
     overtimePay = 0,
@@ -199,71 +200,117 @@ export function SalaryBreakdown({
     totalSalary = 0,
     className = "",
 }) {
-    const additions = Number(basicSalary || 0) + Number(allowance || 0) + Number(overtimePay || 0) + Number(bonus || 0) + Number(commission || 0);
-    const deductions = Number(deduction || 0) + Number(advance || 0);
+    // New detailed UI (prompt-based) when backend returns a `breakdown`.
+    if (breakdown) {
+        const standardWorkDays = Number(breakdown.standardWorkDays || 0);
+        const workDaysActual = Number(breakdown.workDaysActual || 0); // X
+        const lateCount = Number(breakdown.lateCount || 0); // M
+        const permittedLeaveDays = Number(breakdown.permittedLeaveDays || 0); // P
+        const unpermittedDays = Number(breakdown.unpermittedDays || 0); // KP
 
-    return (
-        <div
-            className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${className}`}
-        >
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Chi tiết lương
-            </h3>
+        const latePenaltyPerInstance = Number(breakdown.latePenaltyPerInstance || 0);
+        const latePenaltyAmount = Number(breakdown.latePenaltyAmount || 0);
 
-            {/* Income Items */}
-            <div className="space-y-2 mb-3">
-                <SalaryLineItem
-                    label={SALARY_COMPONENT_LABELS.basicSalary}
-                    amount={basicSalary}
-                    positive
-                />
-                {allowance > 0 && (
-                    <SalaryLineItem
-                        label={SALARY_COMPONENT_LABELS.allowance}
-                        amount={allowance}
-                        positive
-                    />
-                )}
-                {overtimePay > 0 && (
-                    <SalaryLineItem
-                        label={SALARY_COMPONENT_LABELS.overtimePay}
-                        amount={overtimePay}
-                        positive
-                    />
-                )}
-                {bonus > 0 && (
-                    <SalaryLineItem
-                        label={SALARY_COMPONENT_LABELS.bonus}
-                        amount={bonus}
-                        positive
-                    />
-                )}
-                {commission > 0 && (
-                    <SalaryLineItem
-                        label={SALARY_COMPONENT_LABELS.commission}
-                        amount={commission}
-                        positive
-                    />
-                )}
-            </div>
+        const dailySalary = Number(breakdown.dailySalary || 0);
+        const excessLeaveDays = Number(breakdown.excessLeaveDays || 0);
+        const excessLeavePenalty = Number(breakdown.excessLeavePenalty || 0);
 
-            {/* Subtotal Additions */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mb-3">
-                <SalaryLineItem
-                    label="Tổng thu nhập"
-                    amount={additions}
-                    bold
-                    positive
-                />
-            </div>
+        const insuranceRate = Number(breakdown.insuranceRate || 0);
+        const insuranceDeduction = Number(breakdown.insuranceDeduction || 0);
 
-            {/* Deduction Items */}
-            {(deduction > 0 || advance > 0) && (
+        const pitRate = Number(breakdown.pitRate || 0);
+        const pitTax = Number(breakdown.pitTax || 0);
+
+        const timeSalaryBase = Number(breakdown.timeSalaryBase || 0);
+        const earnedNetSalary = Number(breakdown.netSalary ?? totalSalary ?? 0);
+
+        const totalAdditions =
+            timeSalaryBase +
+            Number(allowance || 0) +
+            Number(overtimePay || 0) +
+            Number(bonus || 0) +
+            Number(commission || 0);
+
+        const totalDeductions =
+            latePenaltyAmount +
+            excessLeavePenalty +
+            insuranceDeduction +
+            pitTax +
+            Number(advance || 0);
+
+        return (
+            <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${className}`}>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Chi tiết lương</h3>
+
+                {/* Attendance summary */}
+                <div className="bg-gray-50 dark:bg-gray-800/30 rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
+                    <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
+                        Tóm tắt chấm công
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex justify-between gap-2">
+                            <span className="text-gray-600 dark:text-gray-300">Ngày công chuẩn</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{standardWorkDays}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                            <span className="text-gray-600 dark:text-gray-300">Đi làm thực tế (X)</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{workDaysActual}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                            <span className="text-gray-600 dark:text-gray-300">Đi muộn (M)</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{lateCount}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                            <span className="text-gray-600 dark:text-gray-300">Nghỉ phép (P)</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{permittedLeaveDays}</span>
+                        </div>
+                        <div className="flex justify-between gap-2 col-span-2">
+                            <span className="text-gray-600 dark:text-gray-300">Nghỉ không phép (KP)</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100 text-right">{unpermittedDays}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Income items */}
                 <div className="space-y-2 mb-3">
-                    {deduction > 0 && (
+                    <SalaryLineItem label="Lương thời gian" amount={timeSalaryBase} positive />
+                    {allowance > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.allowance} amount={allowance} positive />}
+                    {overtimePay > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.overtimePay} amount={overtimePay} positive />}
+                    {bonus > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.bonus} amount={bonus} positive />}
+                    {commission > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.commission} amount={commission} positive />}
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mb-3">
+                    <SalaryLineItem label="Tổng thu nhập" amount={totalAdditions} bold positive />
+                </div>
+
+                {/* Deduction items (prompt-based) */}
+                <div className="space-y-2 mb-3">
+                    {latePenaltyAmount > 0 && (
                         <SalaryLineItem
-                            label={SALARY_COMPONENT_LABELS.deduction}
-                            amount={deduction}
+                            label={`Tiền phạt đi muộn: ${lateCount} x ${formatCurrency(latePenaltyPerInstance)}`}
+                            amount={latePenaltyAmount}
+                            negative
+                        />
+                    )}
+                    {excessLeavePenalty > 0 && (
+                        <SalaryLineItem
+                            label={`Tiền phạt nghỉ quá phép: ${excessLeaveDays} x ${formatCurrency(dailySalary * 0.5)}`}
+                            amount={excessLeavePenalty}
+                            negative
+                        />
+                    )}
+                    {insuranceDeduction > 0 && (
+                        <SalaryLineItem
+                            label={`Tiền bảo hiểm: ${(insuranceRate * 100).toFixed(1)}%`}
+                            amount={insuranceDeduction}
+                            negative
+                        />
+                    )}
+                    {pitTax > 0 && (
+                        <SalaryLineItem
+                            label={`Thuế TNCN: ${(pitRate * 100).toFixed(0)}%`}
+                            amount={pitTax}
                             negative
                         />
                     )}
@@ -275,28 +322,55 @@ export function SalaryBreakdown({
                         />
                     )}
                 </div>
-            )}
 
-            {/* Subtotal Deductions */}
-            {deductions > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mb-3">
-                    <SalaryLineItem
-                        label="Tổng khấu trừ"
-                        amount={deductions}
-                        bold
-                        negative
-                    />
+                {totalDeductions > 0 && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mb-3">
+                        <SalaryLineItem label="Tổng khấu trừ" amount={totalDeductions} bold negative />
+                    </div>
+                )}
+
+                <div className="border-t-2 border-gray-300 dark:border-gray-600 pt-3">
+                    <SalaryLineItem label={SALARY_COMPONENT_LABELS.totalSalary} amount={earnedNetSalary} bold large />
+                </div>
+            </div>
+        );
+    }
+
+    // Legacy UI (fallback)
+    const additions =
+        Number(basicSalary || 0) +
+        Number(allowance || 0) +
+        Number(overtimePay || 0) +
+        Number(bonus || 0) +
+        Number(commission || 0);
+    const deductions = Number(deduction || 0) + Number(advance || 0);
+
+    return (
+        <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${className}`}>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Chi tiết lương</h3>
+            <div className="space-y-2 mb-3">
+                <SalaryLineItem label={SALARY_COMPONENT_LABELS.basicSalary} amount={basicSalary} positive />
+                {allowance > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.allowance} amount={allowance} positive />}
+                {overtimePay > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.overtimePay} amount={overtimePay} positive />}
+                {bonus > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.bonus} amount={bonus} positive />}
+                {commission > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.commission} amount={commission} positive />}
+            </div>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mb-3">
+                <SalaryLineItem label="Tổng thu nhập" amount={additions} bold positive />
+            </div>
+            {(deduction > 0 || advance > 0) && (
+                <div className="space-y-2 mb-3">
+                    {deduction > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.deduction} amount={deduction} negative />}
+                    {advance > 0 && <SalaryLineItem label={SALARY_COMPONENT_LABELS.advance} amount={advance} negative />}
                 </div>
             )}
-
-            {/* Total */}
+            {deductions > 0 && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mb-3">
+                    <SalaryLineItem label="Tổng khấu trừ" amount={deductions} bold negative />
+                </div>
+            )}
             <div className="border-t-2 border-gray-300 dark:border-gray-600 pt-3">
-                <SalaryLineItem
-                    label={SALARY_COMPONENT_LABELS.totalSalary}
-                    amount={totalSalary}
-                    bold
-                    large
-                />
+                <SalaryLineItem label={SALARY_COMPONENT_LABELS.totalSalary} amount={totalSalary} bold large />
             </div>
         </div>
     );

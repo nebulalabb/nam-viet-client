@@ -145,12 +145,12 @@ export default function SalaryDetailPage() {
                         </div>
                         
                         <SalaryBreakdown
+                            breakdown={currentSalary.breakdown}
                             basicSalary={Number(currentSalary.basicSalary)}
                             allowance={Number(currentSalary.allowance)}
                             overtimePay={Number(currentSalary.overtimePay)}
                             bonus={Number(currentSalary.bonus)}
                             commission={Number(currentSalary.commission)}
-                            deduction={Number(currentSalary.deduction)}
                             advance={Number(currentSalary.advance)}
                             totalSalary={Number(currentSalary.totalSalary)}
                         />

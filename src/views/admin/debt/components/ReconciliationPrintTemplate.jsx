@@ -36,14 +36,7 @@ export const ReconciliationPrintTemplate = React.forwardRef(({ data, title, year
             decrease: Number(ret.amount),
             note: ret.note || ''
         })),
-        ...(history.adjustments || []).map((adj) => ({
-            date: adj.date,
-            name: `Điều chỉnh (${adj.code})`,
-            unit: '', qty: '', price: 0,
-            increase: adj.type === 'increase' ? Number(adj.amount) : 0,
-            decrease: adj.type !== 'increase' ? Number(adj.amount) : 0,
-            note: adj.reason || ''
-        }))
+
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const totalIncrease = allItems.reduce((sum, item) => sum + item.increase, 0);

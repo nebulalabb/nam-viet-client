@@ -90,10 +90,46 @@ export const exportDebtList = createAsyncThunk(
     }
 )
 
+export const getMonthlyDebt = createAsyncThunk(
+    'debt/getMonthly',
+    async ({ year, type, assignedUserId } = {}, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/smart-debt/monthly', {
+                params: { year, type, assignedUserId }
+            })
+            return response.data?.data || { months: [], summary: {} }
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
+export const getMonthlyDebtObjects = createAsyncThunk(
+    'debt/getMonthlyObjects',
+    async ({ year, month, type, assignedUserId, page, limit, search, address, status } = {}, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/smart-debt/monthly-objects', {
+                params: { year, month, type, assignedUserId, page, limit, search, address, status },
+            })
+            const { data, meta } = response.data
+            return { data, meta }
+        } catch (error) {
+            const message = handleError(error)
+            return rejectWithValue(message)
+        }
+    },
+)
+
 const initialState = {
     debts: [],
     debtDetail: null,
     integrityData: null,
+    monthlyData: null,
+    monthlyLoading: false,
+    monthlyObjectsData: [],
+    monthlyObjectsPagination: null,
+    monthlyObjectsLoading: false,
     pagination: {
         page: 1,
         limit: 20,
@@ -164,6 +200,33 @@ export const debtSlice = createSlice({
             })
             .addCase(checkDataIntegrity.rejected, (state, action) => {
                 console.error("Lỗi khi kiểm tra tính toàn vẹn dữ liệu:", action.payload)
+            })
+
+            // getMonthlyDebt
+            .addCase(getMonthlyDebt.pending, (state) => {
+                state.monthlyLoading = true
+            })
+            .addCase(getMonthlyDebt.fulfilled, (state, action) => {
+                state.monthlyLoading = false
+                state.monthlyData = action.payload
+            })
+            .addCase(getMonthlyDebt.rejected, (state, action) => {
+                state.monthlyLoading = false
+                console.error('Lỗi khi lấy dữ liệu theo tháng:', action.payload)
+            })
+
+            // getMonthlyDebtObjects
+            .addCase(getMonthlyDebtObjects.pending, (state) => {
+                state.monthlyObjectsLoading = true
+            })
+            .addCase(getMonthlyDebtObjects.fulfilled, (state, action) => {
+                state.monthlyObjectsLoading = false
+                state.monthlyObjectsData = action.payload?.data || []
+                state.monthlyObjectsPagination = action.payload?.meta || null
+            })
+            .addCase(getMonthlyDebtObjects.rejected, (state, action) => {
+                state.monthlyObjectsLoading = false
+                console.error('Lỗi khi lấy dữ liệu theo tháng (object list):', action.payload)
             })
     },
 })
