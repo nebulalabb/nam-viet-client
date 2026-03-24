@@ -31,29 +31,8 @@ export default function IntegrityWidget({ year }) {
 
     if (!result) return null
 
-    if (result.discrepanciesCount === 0) {
-        return (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3 mb-6 transition-all shadow-sm">
-                <div className="bg-green-100 p-2 rounded-full">
-                    <CheckCircle className="text-green-600 w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                    <h4 className="font-bold text-green-800 text-sm">Dữ liệu công nợ toàn vẹn</h4>
-                    <p className="text-xs text-green-700 mt-0.5">
-                        Đã kiểm tra <b>{result.totalChecked}</b> hồ sơ năm {year}. Hệ thống vận hành ổn định.
-                    </p>
-                </div>
-                <button
-                    onClick={fetchIntegrity}
-                    disabled={isLoading}
-                    className="text-green-700 hover:bg-green-100 p-2 rounded-full transition-colors"
-                    title="Kiểm tra lại"
-                >
-                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                </button>
-            </div>
-        )
-    }
+    // Nếu toàn vẹn thì không cần thông báo (theo yêu cầu)
+    if (result.discrepanciesCount === 0) return null
 
     return (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 transition-all shadow-md">

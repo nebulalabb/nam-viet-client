@@ -13,7 +13,6 @@ export const exportDebtToExcel = (data, year, type) => {
         "NỢ ĐẦU KỲ",
         "TỔNG MUA (+)",
         "TRẢ HÀNG (-)",
-        "ĐIỀU CHỈNH",
         "THANH TOÁN (-)",
         "DƯ NỢ CUỐI KỲ"
     ]
@@ -28,7 +27,6 @@ export const exportDebtToExcel = (data, year, type) => {
         Number(item.openingBalance || 0),
         Number(item.increasingAmount || 0),
         Number(item.returnAmount || 0),
-        Number(item.adjustmentAmount || 0),
         Number(item.decreasingAmount || 0),
         Number(item.closingBalance || 0)
     ])
@@ -51,7 +49,6 @@ export const exportDebtToExcel = (data, year, type) => {
         { wch: 15 },
         { wch: 20 },
         { wch: 25 },
-        { wch: 15 },
         { wch: 15 },
         { wch: 15 },
         { wch: 15 },

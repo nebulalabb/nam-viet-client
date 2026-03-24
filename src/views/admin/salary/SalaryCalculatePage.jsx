@@ -450,12 +450,12 @@ export default function SalaryCalculatePage() {
                                 </div>
 
                                 <SalaryBreakdown
+                                    breakdown={calculationPreview.breakdown}
                                     basicSalary={calculationPreview.basicSalary}
                                     allowance={calculationPreview.allowance}
                                     overtimePay={calculationPreview.overtimePay}
                                     bonus={calculationPreview.bonus}
                                     commission={calculationPreview.commission}
-                                    deduction={calculationPreview.deduction}
                                     advance={calculationPreview.advance}
                                     totalSalary={calculationPreview.totalSalary}
                                 />

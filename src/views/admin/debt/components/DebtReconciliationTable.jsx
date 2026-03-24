@@ -52,7 +52,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                 <TableHead className="text-right">Đầu kỳ</TableHead>
                                 <TableHead className="text-right text-blue-600">Mua hàng</TableHead>
                                 <TableHead className="text-right text-indigo-600">Trả hàng</TableHead>
-                                <TableHead className="text-right text-purple-600">Điều chỉnh</TableHead>
+
                                 <TableHead className="text-right text-green-600">Thanh toán</TableHead>
                                 <TableHead className="text-right px-4 bg-gray-100/50 border-l border-gray-200">
                                     Nợ cuối kỳ
@@ -77,7 +77,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                 const opening = Number(item.openingBalance) || 0
                                 const increase = Number(item.increasingAmount) || 0
                                 const returnAmt = Number(item.returnAmount) || 0
-                                const adjustment = Number(item.adjustmentAmount) || 0
+
                                 const payment = Number(item.decreasingAmount) || 0
                                 const closing = Number(item.closingBalance) || 0
 
@@ -143,9 +143,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                             {returnAmt > 0 ? `-${formatCurrency(returnAmt)}` : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
-                                        <TableCell className="px-2 py-3 text-right align-top text-purple-600 font-medium font-mono text-xs">
-                                            {adjustment !== 0 ? formatCurrency(adjustment) : <span className="text-gray-300">-</span>}
-                                        </TableCell>
+
 
                                         <TableCell className="px-2 py-3 text-right align-top text-green-600 font-medium font-mono text-xs">
                                             {payment > 0 ? `-${formatCurrency(payment)}` : <span className="text-gray-300">-</span>}
