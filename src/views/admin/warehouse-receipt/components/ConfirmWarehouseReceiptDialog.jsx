@@ -617,6 +617,7 @@ const ConfirmWarehouseReceiptDialog = ({
               type="date"
               className="flex h-9 max-w-[180px] rounded-md border border-input bg-background px-3 py-1.5 text-sm"
               value={actualReceiptDate}
+              onChange={(e) => setActualReceiptDate(e.target.value)}
             />
           </div>
 

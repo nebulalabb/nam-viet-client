@@ -185,9 +185,9 @@ const CustomerDebtPage = () => {
                     </div>
                 </div>
 
-                {activeTab === 'aggregate' && isAdmin && (
+                {/* activeTab === 'aggregate' && isAdmin && (
                     <IntegrityWidget year={filters.year || new Date().getFullYear()} />
-                )}
+                ) */}
 
                 {/* FINANCIAL STRIP — chỉ hiện ở tab Tổng hợp */}
                 {activeTab === 'aggregate' && (

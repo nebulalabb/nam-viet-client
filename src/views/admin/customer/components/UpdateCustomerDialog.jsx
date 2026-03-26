@@ -214,9 +214,17 @@ const UpdateCustomerDialog = ({
                   name="cccd"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel required={true}>CMND/CCCD</FormLabel>
+                      <FormLabel required={true}>CCCD</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập số CMND/CCCD" {...field} value={field.value || ''} />
+                        <Input 
+                          placeholder="Nhập số CCCD" 
+                          {...field} 
+                          value={field.value || ''} 
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 12);
+                            field.onChange(val);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -38,8 +38,8 @@ const createCustomerSchema = z.object({
     .nullable(),
   cccd: z
     .string()
-    .min(1, { message: 'Số CMND/CCCD không được để trống' })
-    .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' }),
+    .length(12, { message: 'CCCD phải có đúng 12 số' })
+    .regex(/^\d+$/, { message: 'CCCD chỉ được chứa các chữ số' }),
   issuedAt: z.string().nullable(),
   issuedBy: z
     .string()
@@ -87,8 +87,8 @@ const updateCustomerSchema = z.object({
     .nullable(),
   cccd: z
     .string()
-    .min(1, { message: 'Số CMND/CCCD không được để trống' })
-    .max(20, { message: 'Số CMND/CCCD không được vượt quá 20 ký tự' }),
+    .length(12, { message: 'CCCD phải có đúng 12 số' })
+    .regex(/^\d+$/, { message: 'CCCD chỉ được chứa các chữ số' }),
   issuedAt: z.string().nullable(),
   issuedBy: z
     .string()

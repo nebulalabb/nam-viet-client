@@ -39,6 +39,8 @@ const DataTableToolbar = ({ table, type = 'PRODUCT', hideCreateProduct = false }
   const loading = useSelector((state) => state.product.loading)
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const selectedRows = table.getSelectedRowModel().rows
+  const categoryColumn = table.getAllColumns().find((c) => c.id === 'categoryId')
+  const productNameColumn = table.getAllColumns().find((c) => c.id === 'productName')
 
   useEffect(() => {
     dispatch(getCategories({ type }))
@@ -61,9 +63,9 @@ const DataTableToolbar = ({ table, type = 'PRODUCT', hideCreateProduct = false }
       <div className="flex w-full items-center justify-between gap-2 p-1">
         <Input
           placeholder="Tìm kiếm..."
-          value={table.getColumn('productName')?.getFilterValue() || ''}
+          value={productNameColumn?.getFilterValue() || ''}
           onChange={(event) =>
-            table.getColumn('productName')?.setFilterValue(event.target.value)
+            productNameColumn?.setFilterValue(event.target.value)
           }
           className="h-8 flex-1 text-xs"
         />
@@ -128,11 +130,11 @@ const DataTableToolbar = ({ table, type = 'PRODUCT', hideCreateProduct = false }
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuGroup>
               {/* Danh mục */}
-              {table.getColumn('categoryId') && (
+              {categoryColumn && (
                 <>
                   <div className="px-2 py-1.5 text-xs font-medium">Danh mục</div>
                   <DataTableFacetedFilter
-                    column={table.getColumn('categoryId')}
+                    column={categoryColumn}
                     title="Chọn danh mục"
                     options={categories.map((category) => ({
                       value: parseInt(category?.id),
@@ -250,16 +252,16 @@ const DataTableToolbar = ({ table, type = 'PRODUCT', hideCreateProduct = false }
       <div className="flex flex-1 items-center space-x-2 min-w-0">
         <Input
           placeholder="Tìm kiếm..."
-          value={table.getColumn('productName')?.getFilterValue() || ''}
+          value={productNameColumn?.getFilterValue() || ''}
           onChange={(event) =>
-            table.getColumn('productName')?.setFilterValue(event.target.value)
+            productNameColumn?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
         <div className="flex gap-x-2 flex-shrink-0">
-          {table.getColumn('categoryId') && (
+          {categoryColumn && (
             <DataTableFacetedFilter
-              column={table.getColumn('categoryId')}
+              column={categoryColumn}
               title="Danh mục"
               options={categories.map((category) => ({
                 value: parseInt(category?.id),

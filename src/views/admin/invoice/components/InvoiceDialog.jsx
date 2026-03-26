@@ -738,8 +738,8 @@ const InvoiceDialog = ({
 
     if (!customerEditData?.cccd?.trim()) {
       errors.cccd = "CCCD là bắt buộc"
-    } else if (customerEditData.cccd.trim().length !== 12) {
-      errors.cccd = "CCCD phải đủ 12 số"
+    } else if (customerEditData.cccd.trim().length !== 9 && customerEditData.cccd.trim().length !== 12) {
+      errors.cccd = "CCCD/CMND phải có 9 hoặc 12 số"
     }
 
     if (!customerEditData?.phone?.trim()) {
