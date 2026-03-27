@@ -64,7 +64,7 @@ const ViewProductDialog = ({ productId, showTrigger = true, contentClassName, ov
     if (!productId) return
     setLoading(true)
     try {
-      const res = await api.get(`/product/${productId}`)
+      const res = await api.get(`/products/${productId}`)
       setProduct(res.data.data)
     } catch (e) {
       console.error('Fetch product error:', e)

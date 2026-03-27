@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
 
 // Cấu hình Base URL của Socket (Thay đổi theo biến môi trường thực tế)
-const SOCKET_URL = import.meta.env.VITE_SERVER_URL_DEVELOPMENT || import.meta.env.VITE_SOCKET_URL || 'http://localhost:8008'
+const SOCKET_URL = import.meta.env.VITE_SERVER_URL_DEVELOPMENT || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_SERVER_URL_PRODUCTION
 
 export const useDashboardSocket = () => {
     const [socket, setSocket] = useState(null)

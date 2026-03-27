@@ -27,6 +27,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@
 import { Button } from '@/components/custom/Button'
 
 import { getDebtDetail, syncSnapBatch, syncFullBatch, clearDebtDetail } from '@/stores/DebtSlice'
+import ViewInvoiceDialog from '@/views/admin/invoice/components/ViewInvoiceDialog'
 
 export function ViewDebtReconciliationDialog({
     isOpen,
@@ -41,6 +42,7 @@ export function ViewDebtReconciliationDialog({
     const debtDetail = useSelector(state => state.debt.debtDetail)
     const isLoading = useSelector(state => state.debt.loading)
     const componentRef = useRef(null)
+    const [viewInvoiceId, setViewInvoiceId] = useState(null)
 
     useEffect(() => {
         if (year) setSelectedYear(year)
@@ -247,11 +249,24 @@ export function ViewDebtReconciliationDialog({
                                     </TabsContent>
 
                                     <TabsContent value="orders" className="p-0">
-                                        <DocumentHistoryTable data={data.history?.orders} type="ORDER" />
+                                        <DocumentHistoryTable 
+                                            data={data.history?.orders} 
+                                            type="ORDER" 
+                                            onCodeClick={(item) => setViewInvoiceId(item.id)}
+                                        />
                                     </TabsContent>
 
                                     <TabsContent value="payments" className="p-0">
-                                        <DocumentHistoryTable data={data.history?.payments} type="PAYMENT" />
+                                        <DocumentHistoryTable 
+                                            data={data.history?.payments} 
+                                            type="PAYMENT" 
+                                            onCodeClick={(item) => {
+                                                // Nếu phiếu thu liên kết với đơn hàng thì mở đơn hàng đó
+                                                if (item.orderId) {
+                                                    setViewInvoiceId(item.orderId)
+                                                }
+                                            }}
+                                        />
                                     </TabsContent>
 
                                     <TabsContent value="returns" className="p-0">
@@ -273,6 +288,22 @@ export function ViewDebtReconciliationDialog({
                         year={selectedYear}
                     />
                 </div>
+
+                {/* ViewInvoiceDialog - mở khi click vào mã chứng từ */}
+                {viewInvoiceId && (
+                    <ViewInvoiceDialog
+                        open={!!viewInvoiceId}
+                        onOpenChange={(open) => {
+                            if (!open) setViewInvoiceId(null)
+                        }}
+                        invoiceId={viewInvoiceId}
+                        showTrigger={false}
+                        onSuccess={() => {
+                            // Refresh debt detail sau khi thay đổi
+                            if (id && type) dispatch(getDebtDetail({ id, type, year: selectedYear }))
+                        }}
+                    />
+                )}
             </DialogContent>
         </Dialog>
     )
@@ -362,7 +393,7 @@ function ProductHistoryTable({ data }) {
     )
 }
 
-function DocumentHistoryTable({ data, type }) {
+function DocumentHistoryTable({ data, type, onCodeClick }) {
     if (!data || data.length === 0) return <EmptyState />
 
     return (
@@ -397,11 +428,22 @@ function DocumentHistoryTable({ data, type }) {
                         else if (type === 'PAYMENT') { amountColor = 'text-green-600'; prefix = '-' }
                         else if (type === 'RETURN') { amountColor = 'text-indigo-600'; prefix = '-' }
 
+                        const isClickable = onCodeClick && (type === 'ORDER' || (type === 'PAYMENT' && item.orderId))
 
                         return (
                             <TableRow key={item.id} className="hover:bg-gray-50/50">
                                 <TableCell className="pl-6 font-medium">
-                                    <span className="text-gray-900">{code}</span>
+                                    {isClickable ? (
+                                        <button
+                                            onClick={() => onCodeClick(item)}
+                                            className="text-blue-600 hover:text-blue-800 hover:underline font-semibold cursor-pointer transition-colors"
+                                            title="Xem chi tiết"
+                                        >
+                                            {code}
+                                        </button>
+                                    ) : (
+                                        <span className="text-gray-900">{code}</span>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-gray-600 text-sm">
                                     {date ? format(new Date(date), "dd/MM/yyyy HH:mm") : "-"}

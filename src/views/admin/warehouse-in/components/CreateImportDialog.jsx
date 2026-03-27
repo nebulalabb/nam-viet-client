@@ -23,6 +23,7 @@ import { getProducts } from '@/stores/ProductSlice'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import api from '@/utils/axios'
+import { getPublicUrl } from '@/utils/file'
 
 const detailSchema = z.object({
     productId: z.coerce.number().int().positive('Chọn sản phẩm'),
@@ -305,7 +306,7 @@ export default function CreateImportDialog({
                                                                     <SelectItem key={p.id} value={String(p.id)}>
                                                                         <div className="flex items-center gap-3 w-full">
                                                                             {p.images?.[0]?.imageUrl ? (
-                                                                                <img src={`http://localhost:8008${p.images[0].imageUrl}`} alt={p.productName} className="w-8 h-8 object-cover rounded border" />
+                                                                                <img src={getPublicUrl(p.images[0].imageUrl)} alt={p.productName} className="w-8 h-8 object-cover rounded border" />
                                                                             ) : (
                                                                                 <div className="w-8 h-8 bg-muted rounded flex items-center justify-center border text-[10px] text-muted-foreground">No img</div>
                                                                             )}

@@ -300,7 +300,7 @@ export default function AgreementPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        isViewInvoiceDialog={false}
+        aria-describedby={undefined}
         className={cn(
           isMobile
             ? "max-w-full w-full h-[100dvh] inset-0 p-0 gap-0 flex flex-col top-0 left-0 right-0 m-0 rounded-none translate-x-0 translate-y-0 z-[10000]"

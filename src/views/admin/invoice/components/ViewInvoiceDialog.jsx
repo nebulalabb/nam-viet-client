@@ -318,12 +318,16 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
       // Selected items details
       const selectedDetails = selectedItems
-        .map(item => ({
-          productId: item.productId || item.id,
-          unitId: item.unitId || item.unit?.id,
-          quantity: Number(item.quantity),
-          notes: reason || `Xuất kho theo đơn bán ${invoice.orderCode}`,
-        }))
+        .map(item => {
+          const detail = {
+            productId: item.productId || item.id,
+            quantity: Number(item.quantity),
+            notes: reason || `Xuất kho theo đơn bán ${invoice.orderCode}`,
+          }
+          const unitId = item.unitId || item.unit?.id
+          if (unitId) detail.unitId = unitId
+          return detail
+        })
 
       if (selectedDetails.length === 0) {
         toast.error('Vui lòng chọn ít nhất một sản phẩm')
@@ -359,9 +363,9 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
   }
 
   const handleCreateReceipt = () => {
-    // Only allow for accepted invoices
-    if (invoice?.orderStatus !== 'preparing') {
-      toast.warning('Chỉ có thể tạo phiếu thu cho đơn hàng đã được duyệt')
+    // Chỉ chặn đơn hàng bị hủy hoặc chờ duyệt
+    if (invoice?.orderStatus === 'cancelled' || invoice?.orderStatus === 'pending') {
+      toast.warning('Không thể tạo phiếu thu cho đơn hàng đã hủy hoặc chưa duyệt')
       return
     }
 
@@ -416,7 +420,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         ) : null}
 
         <DialogContent
-          isViewInvoiceDialog={isViewInvoiceDialog}
+          aria-describedby={undefined}
           className={cn(
             "md:h-screen md:max-w-full md:z-[10001] md:my-0 md:top-0 md:translate-y-0",
             !isDesktop && isViewInvoiceDialog && "fixed inset-0 w-screen h-[100dvh] top-0 left-0 right-0 max-w-none m-0 p-0 rounded-none z-[9999] translate-x-0 translate-y-0 flex flex-col",
@@ -936,7 +940,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Phiếu thu</h3>
-                            {(!['pending', 'delivering', 'completed', 'cancelled'].includes(invoice?.orderStatus) && invoice?.paymentStatus !== 'paid') ? (
+                            {(invoice?.orderStatus !== 'cancelled' && invoice?.orderStatus !== 'pending' && invoice?.paymentStatus !== 'paid') ? (
                               <Button
                                 size="sm"
                                 className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"

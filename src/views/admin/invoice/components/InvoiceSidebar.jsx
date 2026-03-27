@@ -105,11 +105,11 @@ const InvoiceSidebar = ({
 
   const validateIdentityCard = (id) => {
     if (!id) {
-      setIdentityCardError('CCCD là bắt buộc')
+      setIdentityCardError('CCCD/CMND là bắt buộc')
       return
     }
-    if (id.length !== 12) {
-      setIdentityCardError('CCCD phải đủ 12 số')
+    if (id.length !== 9 && id.length !== 12) {
+      setIdentityCardError('CCCD/CMND phải có 9 hoặc 12 số')
     } else {
       setIdentityCardError('')
     }

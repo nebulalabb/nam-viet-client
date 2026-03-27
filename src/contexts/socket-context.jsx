@@ -7,7 +7,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null)
 
   // Use VITE_ environment variables commonly found in Vite apps
-  const SOCKET_URL = import.meta.env.VITE_SERVER_URL_DEVELOPMENT || 'http://localhost:8008'
+  const SOCKET_URL = import.meta.env.VITE_SERVER_URL_DEVELOPMENT || import.meta.env.VITE_SERVER_URL_PRODUCTION
 
   useEffect(() => {
     // DISABLING SOCKET IO TEMPORARILY TO FIX CORS POLLING ERRORS

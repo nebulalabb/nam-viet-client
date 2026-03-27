@@ -1,5 +1,6 @@
 import { DataTableColumnHeader } from '../../product/components/DataTableColumnHeader'
 import { Badge } from '@/components/ui/badge'
+import { getPublicUrl } from '@/utils/file'
 
 export const columns = [
     {
@@ -8,11 +9,12 @@ export const columns = [
         cell: ({ row }) => {
             const images = row.getValue('images')
             const primaryImage = images?.find((img) => img.isPrimary) || images?.[0]
+            const publicImageUrl = primaryImage ? getPublicUrl(primaryImage.imageUrl) : null
             return (
                 <div className="flex justify-center">
-                    {primaryImage ? (
+                    {publicImageUrl ? (
                         <img
-                            src={`http://localhost:8008${primaryImage.imageUrl}`}
+                            src={publicImageUrl}
                             alt={row.getValue('productName')}
                             className="h-10 w-10 rounded-md object-cover border"
                             onError={(e) => {

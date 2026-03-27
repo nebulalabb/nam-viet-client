@@ -16,16 +16,36 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getWarehouseStatistics } from '@/stores/WarehouseSlice'
 import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
+import api from '@/utils/axios'
+import { getPublicUrl } from '@/utils/file'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
 
 const WarehouseDetailDialog = ({ warehouse, open, onOpenChange }) => {
     const dispatch = useDispatch()
     const [showDeleteWarehouseDialog, setShowDeleteWarehouseDialog] = useState(false)
     const [showUpdateWarehouseDialog, setShowUpdateWarehouseDialog] = useState(false)
     const statistics = useSelector((state) => state.warehouse.currentWarehouseStatistics)
+    const [inventory, setInventory] = useState([])
+    const [loadingInventory, setLoadingInventory] = useState(false)
 
     useEffect(() => {
         if (open && warehouse?.id) {
             dispatch(getWarehouseStatistics(warehouse.id))
+            setLoadingInventory(true)
+            api.get('/inventory/warehouse/' + warehouse.id)
+                .then(res => setInventory(res.data?.data || []))
+                .catch(err => console.error(err))
+                .finally(() => setLoadingInventory(false))
+        } else {
+            setInventory([])
         }
     }, [dispatch, open, warehouse?.id])
 
@@ -109,6 +129,54 @@ const WarehouseDetailDialog = ({ warehouse, open, onOpenChange }) => {
                         </div>
                     </div>
                 )}
+
+                <div className="mt-4 border-t pt-4">
+                    <h4 className="font-semibold mb-3">Danh sách sản phẩm trong kho</h4>
+                    <div className="border rounded-md">
+                        <ScrollArea className="h-[250px] w-full">
+                            <Table>
+                                <TableHeader className="sticky top-0 bg-secondary z-10">
+                                    <TableRow>
+                                        <TableHead className="w-[60px] text-center">Ảnh</TableHead>
+                                        <TableHead>Mã SP</TableHead>
+                                        <TableHead>Tên sản phẩm</TableHead>
+                                        <TableHead className="text-right">Tồn tối thiểu</TableHead>
+                                        <TableHead className="text-right">Khả dụng</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {loadingInventory ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">Đang tải danh sách...</TableCell>
+                                        </TableRow>
+                                    ) : inventory.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">Không có sản phẩm nào trong kho</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        inventory.map((item, idx) => (
+                                            <TableRow key={idx}>
+                                                <TableCell className="p-2">
+                                                    <div className="flex justify-center">
+                                                    {item.product?.image ? (
+                                                        <img src={getPublicUrl(item.product.image)} alt={item.product?.code} className="w-8 h-8 rounded border object-cover" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded border bg-muted flex flex-col items-center justify-center text-[10px] text-muted-foreground">No img</div>
+                                                    )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="font-medium whitespace-nowrap">{item.product?.code}</TableCell>
+                                                <TableCell className="max-w-[150px] lg:max-w-[200px] truncate" title={item.product?.productName}>{item.product?.productName}</TableCell>
+                                                <TableCell className="text-right text-muted-foreground">{item.product?.minStockLevel || 0}</TableCell>
+                                                <TableCell className="text-right font-bold text-green-600">{(item.availableQuantity || 0).toLocaleString()}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </ScrollArea>
+                    </div>
+                </div>
 
                 <DialogFooter className="flex flex-col sm:flex-row sm:space-x-0 mt-4 gap-2">
                     <div className="w-full grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
