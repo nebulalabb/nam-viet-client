@@ -97,6 +97,7 @@ const CreateManualWarehouseReceiptDialog = ({
   const [openProductSearch, setOpenProductSearch] = useState(false)
   const [openPartnerPopover, setOpenPartnerPopover] = useState(false)
   const [inventoryMap, setInventoryMap] = useState({}) // productId -> quantity
+  const [openTargetWarehousePopover, setOpenTargetWarehousePopover] = useState(false)
   const isMobile = useMediaQuery('(max-width: 768px)')
 
   const form = useForm({
@@ -115,6 +116,8 @@ const CreateManualWarehouseReceiptDialog = ({
 
   const receiptType = form.watch('receiptType')
   const selectedWarehouseId = form.watch('warehouseId')
+  const businessType = form.watch('businessType')
+  const isTransferType = businessType === 'transfer_in' || businessType === 'transfer_out'
 
   // Filter business types based on receipt type
   const filteredBusinessTypes = useMemo(() => {
@@ -173,6 +176,14 @@ const CreateManualWarehouseReceiptDialog = ({
     // Default business type selection
     form.setValue('businessType', 'other')
   }, [receiptType, form])
+
+  // Filter products for dropdown
+  const displayProducts = useMemo(() => {
+    if (receiptType === 2 && selectedWarehouseId) {
+      return products.filter(p => (inventoryMap[p.id] ?? 0) > 0)
+    }
+    return products
+  }, [products, receiptType, selectedWarehouseId, inventoryMap])
 
   useEffect(() => {
     if (open) {
@@ -265,18 +276,21 @@ const CreateManualWarehouseReceiptDialog = ({
         notes: item.note || undefined,
       }))
 
+      const isTransferTypePayload = data.businessType === 'transfer_in' || data.businessType === 'transfer_out'
       const payload = {
         warehouseId: Number(data.warehouseId),
         reason: data.reason || undefined,
         notes: data.note || undefined,
         referenceType: data.businessType || undefined,
         actualReceiptDate: data.actualReceiptDate,
-        customerId: data.receiptType === 2 && data.partnerId ? Number(data.partnerId) : undefined,
-        supplierId: data.receiptType === 1 && data.partnerId ? Number(data.partnerId) : undefined,
+        customerId: data.receiptType === 2 && !isTransferTypePayload && data.partnerId ? Number(data.partnerId) : undefined,
+        supplierId: data.receiptType === 1 && !isTransferTypePayload && data.partnerId ? Number(data.partnerId) : undefined,
         details,
         // partnerId đi kèm referenceType để backend biết partner (nếu có)
-        ...(data.receiptType === 1 && data.partnerId && { referenceId: Number(data.partnerId) }),
-        ...(data.receiptType === 2 && data.partnerId && { referenceId: Number(data.partnerId) }),
+        // Với transfer, referenceId là kho nhập (nếu là transfer nhập hoặc xuất thì referenceId lưu id kho đích)
+        ...(isTransferTypePayload && data.partnerId && { referenceId: Number(data.partnerId) }),
+        ...(!isTransferTypePayload && data.receiptType === 1 && data.partnerId && { referenceId: Number(data.partnerId) }),
+        ...(!isTransferTypePayload && data.receiptType === 2 && data.partnerId && { referenceId: Number(data.partnerId) }),
         // Pass receiptType cho slice biết dùng /import hay /export
         receiptType: data.receiptType,
       }
@@ -413,7 +427,7 @@ const CreateManualWarehouseReceiptDialog = ({
                   name="warehouseId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Kho</FormLabel>
+                      <FormLabel>{isTransferType ? 'Kho xuất' : 'Kho'}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -432,92 +446,156 @@ const CreateManualWarehouseReceiptDialog = ({
                 />
 
 
-                <FormField
-                  control={form.control}
-                  name="partnerId"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col mt-2">
-                      <FormLabel className="mb-0.5">{receiptType === 1 ? 'Nhà cung cấp' : 'Khách hàng'}</FormLabel>
-                      <Popover open={openPartnerPopover} onOpenChange={setOpenPartnerPopover}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className={cn(
-                                "w-full justify-between font-normal h-9 bg-background",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              <span className="truncate">
-                                {field.value
-                                  ? receiptType === 1
-                                    ? suppliers.find((s) => s.id.toString() === field.value.toString())?.supplierName
-                                    : customers.find((c) => c.id.toString() === field.value.toString())?.customerName
-                                  : `Chọn ${receiptType === 1 ? 'nhà cung cấp' : 'khách hàng'}`}
-                              </span>
-                              <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Tìm kiếm..." className="h-9" />
-                            <CommandEmpty>Không tìm thấy</CommandEmpty>
-                            <CommandGroup>
-                              <CommandList>
-                                {receiptType === 1 ? (
-                                  suppliers.map((s) => (
-                                    <CommandItem
-                                      key={s.id}
-                                      value={`${s.supplierName} ${s.id}`}
-                                      onSelect={() => {
-                                        form.setValue("partnerId", s.id.toString())
-                                        setOpenPartnerPopover(false)
-                                      }}
-                                    >
-                                      {s.supplierName}
-                                      <CheckIcon
-                                        className={cn(
-                                          "ml-auto h-4 w-4",
-                                          s.id.toString() === field.value?.toString()
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                    </CommandItem>
-                                  ))
-                                ) : (
-                                  customers.map((c) => (
-                                    <CommandItem
-                                      key={c.id}
-                                      value={`${c.customerName} ${c.id}`}
-                                      onSelect={() => {
-                                        form.setValue("partnerId", c.id.toString())
-                                        setOpenPartnerPopover(false)
-                                      }}
-                                    >
-                                      {c.customerName}
-                                      <CheckIcon
-                                        className={cn(
-                                          "ml-auto h-4 w-4",
-                                          c.id.toString() === field.value?.toString()
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                    </CommandItem>
-                                  ))
+                {isTransferType ? (
+                  <FormField
+                    control={form.control}
+                    name="partnerId"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col mt-2">
+                        <FormLabel className="mb-0.5">Kho nhập</FormLabel>
+                        <Popover open={openTargetWarehousePopover} onOpenChange={setOpenTargetWarehousePopover}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between font-normal h-9 bg-background",
+                                  !field.value && "text-muted-foreground"
                                 )}
-                              </CommandList>
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                              >
+                                <span className="truncate">
+                                  {field.value
+                                    ? (warehouses || []).find((w) => w.id.toString() === field.value.toString())?.warehouseName
+                                    : 'Chọn kho nhập'}
+                                </span>
+                                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Tìm kho..." className="h-9" />
+                              <CommandEmpty>Không tìm thấy kho</CommandEmpty>
+                              <CommandGroup>
+                                <CommandList>
+                                  {(warehouses || []).filter(w => w.id.toString() !== selectedWarehouseId).map((w) => (
+                                    <CommandItem
+                                      key={w.id}
+                                      value={`${w.warehouseName} ${w.id}`}
+                                      onSelect={() => {
+                                        form.setValue("partnerId", w.id.toString())
+                                        setOpenTargetWarehousePopover(false)
+                                      }}
+                                    >
+                                      {w.warehouseName}
+                                      <CheckIcon
+                                        className={cn(
+                                          "ml-auto h-4 w-4",
+                                          w.id.toString() === field.value?.toString()
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                    </CommandItem>
+                                  ))}
+                                </CommandList>
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="partnerId"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col mt-2">
+                        <FormLabel className="mb-0.5">{receiptType === 1 ? 'Nhà cung cấp' : 'Khách hàng'}</FormLabel>
+                        <Popover open={openPartnerPopover} onOpenChange={setOpenPartnerPopover}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between font-normal h-9 bg-background",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                <span className="truncate">
+                                  {field.value
+                                    ? receiptType === 1
+                                      ? suppliers.find((s) => s.id.toString() === field.value.toString())?.supplierName
+                                      : customers.find((c) => c.id.toString() === field.value.toString())?.customerName
+                                    : `Chọn ${receiptType === 1 ? 'nhà cung cấp' : 'khách hàng'}`}
+                                </span>
+                                <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Tìm kiếm..." className="h-9" />
+                              <CommandEmpty>Không tìm thấy</CommandEmpty>
+                              <CommandGroup>
+                                <CommandList>
+                                  {receiptType === 1 ? (
+                                    suppliers.map((s) => (
+                                      <CommandItem
+                                        key={s.id}
+                                        value={`${s.supplierName} ${s.id}`}
+                                        onSelect={() => {
+                                          form.setValue("partnerId", s.id.toString())
+                                          setOpenPartnerPopover(false)
+                                        }}
+                                      >
+                                        {s.supplierName}
+                                        <CheckIcon
+                                          className={cn(
+                                            "ml-auto h-4 w-4",
+                                            s.id.toString() === field.value?.toString()
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    ))
+                                  ) : (
+                                    customers.map((c) => (
+                                      <CommandItem
+                                        key={c.id}
+                                        value={`${c.customerName} ${c.id}`}
+                                        onSelect={() => {
+                                          form.setValue("partnerId", c.id.toString())
+                                          setOpenPartnerPopover(false)
+                                        }}
+                                      >
+                                        {c.customerName}
+                                        <CheckIcon
+                                          className={cn(
+                                            "ml-auto h-4 w-4",
+                                            c.id.toString() === field.value?.toString()
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    ))
+                                  )}
+                                </CommandList>
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               <FormField
@@ -549,7 +627,9 @@ const CreateManualWarehouseReceiptDialog = ({
                         <CommandList>
                           <CommandEmpty>Không tìm thấy sản phẩm.</CommandEmpty>
                           <CommandGroup heading="Sản phẩm">
-                            {products.map((product) => (
+                            {displayProducts.length === 0 ? (
+                              <div className="p-2 text-center text-sm text-muted-foreground">Không có sản phẩm trong kho này</div>
+                            ) : displayProducts.map((product) => (
                               <CommandItem
                                 key={product.id}
                                 value={(product.productName || product.name || '') + ' ' + (product.productCode || product.code || '')}
@@ -571,7 +651,7 @@ const CreateManualWarehouseReceiptDialog = ({
                                 </div>
                                 <div className="flex flex-col flex-1 min-w-0">
                                   <span className="font-medium text-sm truncate">{product.productName || product.name}</span>
-                                  <span className="text-xs text-muted-foreground">{product.productCode || product.code} · Tồn: {product.productStocks?.[0]?.quantity ?? 0}</span>
+                                  <span className="text-xs text-muted-foreground">{product.productCode || product.code} · Tồn: {(selectedWarehouseId ? inventoryMap[product.id] : product.productStocks?.[0]?.quantity) ?? 0}</span>
                                 </div>
                                 <Check
                                   className={cn(
