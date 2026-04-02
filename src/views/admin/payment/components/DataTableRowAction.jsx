@@ -7,25 +7,55 @@ import {
   DropdownMenuItem,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { IconEdit, IconTrash } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DeletePaymentDialog } from './DeletePaymentDialog'
 import PaymentFormDialog from './PaymentDialog'
-import { Pencil } from 'lucide-react'
+import { Pencil, Eye, Printer, Trash2 } from 'lucide-react'
 import Can from '@/utils/can'
+import ViewPaymentDialog from './ViewPaymentDialog'
+import PrintPaymentView from './PrintPaymentView'
+import { useSelector } from 'react-redux'
 
 const DataTableRowActions = ({ row }) => {
   const [showDeletePaymentDialog, setShowDeletePaymentDialog] = useState(false)
   const [showUpdatePaymentDialog, setShowUpdatePaymentDialog] = useState(false)
+  const [showViewPaymentDialog, setShowViewPaymentDialog] = useState(false)
+  const [printData, setPrintData] = useState(null)
+
+  const payment = row.original
+  const setting = useSelector((state) => state.setting.setting)
+
+  const handlePrintPayment = () => {
+    setPrintData(payment)
+    setTimeout(() => setPrintData(null), 100)
+  }
 
   return (
     <>
+      {showViewPaymentDialog && (
+        <ViewPaymentDialog
+          open={showViewPaymentDialog}
+          onOpenChange={setShowViewPaymentDialog}
+          paymentId={payment.id}
+          showTrigger={false}
+        />
+      )}
+
+      {printData && (
+        <PrintPaymentView
+          payment={printData}
+          setting={setting}
+        />
+      )}
+
       {showDeletePaymentDialog && (
         <DeletePaymentDialog
           open={showDeletePaymentDialog}
           onOpenChange={setShowDeletePaymentDialog}
-          payment={row.original}
+          payment={payment}
           showTrigger={false}
         />
       )}
@@ -51,32 +81,43 @@ const DataTableRowActions = ({ row }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          {/* Placeholder View/Edit actions can remain if needed, or remove if unused effectively */}
+          <DropdownMenuItem
+            onClick={() => setShowViewPaymentDialog(true)}
+            className="text-blue-600 focus:text-blue-600"
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            Xem
+          </DropdownMenuItem>
 
-          {row.original.status === 'draft' && (
+          <DropdownMenuItem
+            onClick={handlePrintPayment}
+            className="text-orange-600 focus:text-orange-600"
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            In phiếu
+          </DropdownMenuItem>
+
+          {(payment.status === 'draft') && (
             <Can permission="PAYMENT_UPDATE">
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={() => setShowUpdatePaymentDialog(true)}
                 className="text-amber-500 focus:text-amber-600 hover:text-amber-600 focus:bg-amber-50"
               >
+                <Pencil className="mr-2 h-4 w-4" />
                 Sửa
-                <DropdownMenuShortcut>
-                  <IconEdit className="h-4 w-4" />
-                </DropdownMenuShortcut>
               </DropdownMenuItem>
             </Can>
           )}
 
-          {(row.original.status === 'draft' || row.original.status === 'cancelled') && (
+          {(payment.status === 'draft' || payment.status === 'cancelled') && (
             <Can permission="PAYMENT_DELETE">
               <DropdownMenuItem
                 onSelect={() => setShowDeletePaymentDialog(true)}
                 className="text-destructive focus:text-destructive"
               >
+                <Trash2 className="mr-2 h-4 w-4" />
                 Xóa
-                <DropdownMenuShortcut>
-                  <IconTrash className="h-4 w-4" />
-                </DropdownMenuShortcut>
               </DropdownMenuItem>
             </Can>
           )}

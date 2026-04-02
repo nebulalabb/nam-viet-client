@@ -56,6 +56,8 @@ const DataTableRowActions = ({ row, table }) => {
   const [showImportWarehouseDialog, setShowImportWarehouseDialog] = useState(false)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   const [showPrintOrder, setShowPrintOrder] = useState(false)
+  const [printPurchaseOrder, setPrintPurchaseOrder] = useState(null)
+  const [isPrinting, setIsPrinting] = useState(false)
   const [fullPurchaseOrder, setFullPurchaseOrder] = useState(null)
   const [isOpeningPayment, setIsOpeningPayment] = useState(false)
 
@@ -136,6 +138,20 @@ const DataTableRowActions = ({ row, table }) => {
     }
   }
 
+  const handlePrintOrder = async () => {
+    try {
+      setIsPrinting(true)
+      const poDetails = await dispatch(getPurchaseOrderDetail(purchaseOrder.id)).unwrap()
+      setPrintPurchaseOrder(poDetails)
+      setShowPrintOrder(true)
+    } catch (error) {
+      console.error('Fetch PO detail for print error:', error)
+      toast.error('Không thể lấy thông tin chi tiết đơn hàng để in')
+    } finally {
+      setIsPrinting(false)
+    }
+  }
+
   const canEdit = purchaseOrder?.status === 'pending'
   const canDelete = ['pending', 'cancelled', 'canceled'].includes(purchaseOrder?.status)
   const canCancel = !['pending', 'cancelled', 'completed'].includes(purchaseOrder?.status)
@@ -200,8 +216,8 @@ const DataTableRowActions = ({ row, table }) => {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={() => setShowPrintOrder(true)} className="text-purple-600">
-            In đơn hàng
+          <DropdownMenuItem onClick={handlePrintOrder} disabled={isPrinting} className="text-purple-600">
+            {isPrinting ? 'Đang tải...' : 'In đơn hàng'}
             <DropdownMenuShortcut>
               <IconFileTypePdf className="h-4 w-4" />
             </DropdownMenuShortcut>
@@ -356,11 +372,11 @@ const DataTableRowActions = ({ row, table }) => {
         />
       )}
 
-      {showPrintOrder && (
+      {showPrintOrder && printPurchaseOrder && (
         <PrintPurchaseOrderView
-          purchaseOrder={purchaseOrder}
+          purchaseOrder={printPurchaseOrder}
           setting={setting}
-          onAfterPrint={() => setShowPrintOrder(false)}
+          onAfterPrint={() => { setShowPrintOrder(false); setPrintPurchaseOrder(null) }}
         />
       )}
     </>

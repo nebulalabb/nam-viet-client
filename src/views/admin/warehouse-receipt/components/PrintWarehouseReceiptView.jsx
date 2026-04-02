@@ -60,13 +60,16 @@ const PrintableContent = React.forwardRef(({ setting, receipt }, ref) => {
       <div className="flex items-start mb-4">
         {/* Logo */}
         <div className="w-24 h-24 mr-4 flex items-center justify-center flex-shrink-0">
-          <img src={setting?.logo ? getPublicUrl(setting.logo) : "/logo.png"} alt="Logo" className="max-w-full max-h-full object-contain" onError={(e) => { e.target.style.display = 'none' }} />
+          <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} alt="Logo" className="max-w-full max-h-full object-contain" />
         </div>
         
         <div className="flex-1">
           <h1 className="text-xl font-bold uppercase mb-1 text-red-600">{setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}</h1>
           <p className="mb-0.5 leading-tight text-green-700 font-semibold text-[13px]">{setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}</p>
-          <p className="mb-0.5 leading-tight text-blue-700 font-semibold text-[13px]">Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}</p>
+          <p className="mb-0.5 leading-tight text-blue-700 font-semibold text-[13px]">
+            Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'} 
+            {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
+          </p>
           {setting?.bankAccount1 ? <p className="mb-0.5 leading-tight text-blue-700 font-semibold text-[13px]">{setting.bankAccount1}</p> : <p className="mb-0.5 leading-tight text-blue-700 font-semibold text-[13px]">TK Lê Trung Thành: 9 75 76 77 88 - NH ACB CN Đồng Tháp</p>}
           {setting?.bankAccount2 ? <p className="mb-0 leading-tight text-blue-700 font-semibold text-[13px]">{setting.bankAccount2}</p> : <p className="mb-0 leading-tight text-blue-700 font-semibold text-[13px]">TK Lê Trung Thành: 09 75 76 77 88 - NH SACOMBANK CN Đồng Tháp.</p>}
         </div>

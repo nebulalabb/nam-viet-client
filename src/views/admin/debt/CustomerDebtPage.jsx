@@ -195,10 +195,10 @@ const CustomerDebtPage = () => {
                     <IntegrityWidget year={filters.year || new Date().getFullYear()} />
                 ) */}
 
-                {/* FINANCIAL STRIP — hiển thị ở tab Tổng hợp */}
-                {activeTab === 'aggregate' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        {/* Khối 1: Cả năm */}
+                {/* FINANCIAL STRIP — Luôn hiển thị, phân quyền bên trong */}
+                <div className={`grid grid-cols-1 ${isAdmin && activeTab === 'aggregate' ? 'md:grid-cols-2' : ''} gap-4 mb-3`}>
+                    {/* Khối 1: Cả năm — CHỈ ADMIN \u0026 ở tab Tổng hợp */}
+                    {isAdmin && activeTab === 'aggregate' && (
                         <div className="rounded-xl border border-blue-200 bg-white shadow-sm overflow-hidden relative">
                             <div className="bg-blue-50 text-blue-800 text-xs font-bold px-4 py-2 border-b border-blue-100 flex justify-between items-center">
                                 <span>TỔNG HỢP NĂM {filters.year || new Date().getFullYear()}</span>
@@ -212,23 +212,24 @@ const CustomerDebtPage = () => {
                                 <StripCell label={closingLabel} value={finalSummary.closing} color="text-red-600" highlight />
                             </div>
                         </div>
+                    )}
 
-                        {/* Khối 2: Tháng hiện tại */}
-                        <div className="rounded-xl border border-green-200 bg-white shadow-sm overflow-hidden relative">
-                            <div className="bg-green-50 text-green-800 text-xs font-bold px-4 py-2 border-b border-green-100 flex justify-between items-center">
-                                <span>TỔNG HỢP THÁNG {monthNow}/{filters.year || new Date().getFullYear()}</span>
-                                <span className="bg-green-100 px-2 py-0.5 rounded-full text-[10px]">hiện tại</span>
-                            </div>
-                            <div className="grid grid-cols-5 divide-x divide-green-50 py-2">
-                                <StripCell label="NỢ ĐẦU KỲ" value={monthlySummary.opening} />
-                                <StripCell label="TỔNG MUA" value={monthlySummary.increase} color="text-blue-600" />
-                                <StripCell label="TRẢ HÀNG" value={monthlySummary.returnAmount} color="text-indigo-600" />
-                                <StripCell label="THANH TOÁN" value={monthlySummary.payment} color="text-green-600" />
-                                <StripCell label={closingLabel} value={monthlySummary.closing} color="text-red-600" highlight />
-                            </div>
+                    {/* Khối 2: Tháng hiện tại — tất cả đều thấy (hiển thị ở cả 2 tab) */}
+                    <div className="rounded-xl border border-green-200 bg-white shadow-sm overflow-hidden relative">
+                        <div className="bg-green-50 text-green-800 text-xs font-bold px-4 py-2 border-b border-green-100 flex justify-between items-center">
+                            <span>TỔNG HỢP THÁNG {monthNow}/{filters.year || new Date().getFullYear()}</span>
+                            <span className="bg-green-100 px-2 py-0.5 rounded-full text-[10px]">hiện tại</span>
+                        </div>
+                        <div className="grid grid-cols-5 divide-x divide-green-50 py-2">
+                            <StripCell label="NỢ ĐẦU KỲ" value={monthlySummary.opening} />
+                            <StripCell label="TỔNG MUA" value={monthlySummary.increase} color="text-blue-600" />
+                            <StripCell label="TRẢ HÀNG" value={monthlySummary.returnAmount} color="text-indigo-600" />
+                            <StripCell label="THANH TOÁN" value={monthlySummary.payment} color="text-green-600" />
+                            <StripCell label={closingLabel} value={monthlySummary.closing} color="text-red-600" highlight />
                         </div>
                     </div>
-                )}
+                </div>
+
 
                 {/* TAB TOGGLE */}
                 <div className="flex gap-1 mb-2 bg-gray-100 p-1 rounded-lg w-fit">

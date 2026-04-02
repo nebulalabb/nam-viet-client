@@ -45,6 +45,8 @@ import { vi } from 'date-fns/locale'
 import MoneyInput from '@/components/custom/MoneyInput'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
+import api from '@/utils/axios'
+import QuickCreateStaffDialog from './QuickCreateStaffDialog'
 
 const CreateCustomerDialog = ({
   open,
@@ -76,6 +78,7 @@ const CreateCustomerDialog = ({
   })
 
   const [openIdentityDatePicker, setOpenIdentityDatePicker] = useState(false)
+  const [openQuickStaff, setOpenQuickStaff] = useState(false)
 
   const loading = useSelector((state) => state.customer.loading)
   const users = useSelector((state) => state.user?.users || [])
@@ -84,6 +87,15 @@ const CreateCustomerDialog = ({
 
   useEffect(() => {
     dispatch(getUsers({ limit: 100, status: 'active' }))
+    // Auto-generate customer code KH-XXXX
+    api.get('/customers?limit=1&page=1').then((res) => {
+      const total = res.data?.pagination?.total || res.data?.data?.totalCount || 0
+      const nextNum = (Number(total) + 1).toString().padStart(4, '0')
+      form.setValue('customerCode', `KH-${nextNum}`, { shouldValidate: false })
+    }).catch(() => {
+      const ts = Date.now().toString().slice(-4)
+      form.setValue('customerCode', `KH-${ts}`, { shouldValidate: false })
+    })
   }, [dispatch])
 
   const onSubmit = async (data) => {
@@ -102,6 +114,7 @@ const CreateCustomerDialog = ({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange} {...props}>
       {showTrigger && (
         <DialogTrigger asChild>
@@ -131,7 +144,10 @@ const CreateCustomerDialog = ({
                     <FormItem className="mb-2 space-y-1">
                       <FormLabel required={true}>Mã khách hàng</FormLabel>
                       <FormControl>
-                        <Input placeholder="Nhập mã khách hàng" {...field} />
+                        <div className="relative">
+                          <Input placeholder="Mã tự động" {...field} readOnly className="bg-muted/40 font-mono" />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">Tự động</span>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -342,7 +358,18 @@ const CreateCustomerDialog = ({
                   name="assignedUserId"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Nhân viên phụ trách</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Nhân viên phụ trách</FormLabel>
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          size="sm" 
+                          className="h-auto p-0 text-primary text-xs"
+                          onClick={() => setOpenQuickStaff(true)}
+                        >
+                          + Thêm nhân viên
+                        </Button>
+                      </div>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value?.toString()}
@@ -484,6 +511,15 @@ const CreateCustomerDialog = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    
+    <QuickCreateStaffDialog 
+      open={openQuickStaff} 
+      onOpenChange={setOpenQuickStaff} 
+      onSuccess={() => {
+        dispatch(getUsers({ limit: 100, status: 'active' }))
+      }} 
+    />
+    </>
   )
 }
 

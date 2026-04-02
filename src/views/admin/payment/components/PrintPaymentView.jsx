@@ -54,13 +54,16 @@ const PrintableContent = React.forwardRef(
         <div className="flex items-center mb-6 pl-8 pr-4">
           {/* Logo */}
           <div className="w-[120px] h-[120px] flex items-center justify-center flex-shrink-0">
-            <img src={setting?.logo ? getPublicUrl(setting.logo) : "/logo.png"} alt="Logo" className="max-w-full max-h-full object-contain" onError={(e) => { e.target.style.display = 'none' }} />
+            <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} alt="Logo" className="max-w-full max-h-full object-contain" />
           </div>
           
           <div className="flex-1 text-center -ml-4">
             <h1 className="text-3xl font-bold uppercase text-[#e2362b] tracking-wider mb-2" style={{ textShadow: '0 0 1px rgba(226,54,43,0.3)' }}>{setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}</h1>
             <p className="text-[#1ab85c] font-bold text-lg mb-0.5">Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}</p>
-            <p className="text-[#8c52d4] font-bold text-lg">Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}</p>
+            <p className="text-[#8c52d4] font-bold text-lg">
+               Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
+               {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
+            </p>
           </div>
         </div>
 

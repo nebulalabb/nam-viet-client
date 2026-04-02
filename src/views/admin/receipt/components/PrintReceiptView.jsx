@@ -43,11 +43,7 @@ const PrintableContent = React.forwardRef(
         <div className="flex justify-between items-start">
           {/* Logo */}
           <div className="w-[140px] flex flex-col items-center mt-2">
-            {setting?.logo ? (
-              <img src={getPublicUrl(setting.logo)} className="w-[100px] h-[100px] object-contain" alt="Logo" />
-            ) : (
-              <div className="flex w-[100px] h-[100px] border items-center justify-center font-bold text-gray-400">LOGO</div>
-            )}
+            <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} className="w-[100px] h-[100px] object-contain" alt="Logo" />
             <div className="text-[#D64A38] font-bold text-sm mt-1 tracking-widest uppercase">NAM VIỆT</div>
           </div>
 
@@ -55,7 +51,10 @@ const PrintableContent = React.forwardRef(
           <div className="flex-1 text-center mt-6">
             <h1 className="text-[#D64A38] font-bold text-[22px] tracking-wide mb-1">{setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}</h1>
             <p className="text-[#089c65] text-[15px] font-semibold leading-relaxed">Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}</p>
-            <p className="text-[#804297] text-[15px] font-semibold leading-relaxed">Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}</p>
+            <p className="text-[#804297] text-[15px] font-semibold leading-relaxed">
+              Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
+              {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
+            </p>
             
             <h2 className="mt-8 text-[32px] font-bold uppercase tracking-wider text-[#2CA5C9]">
               PHIẾU THU

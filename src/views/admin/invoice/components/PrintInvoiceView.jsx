@@ -73,15 +73,20 @@ const PrintableContent = React.forwardRef(({ setting, invoice }, ref) => {
 
       {/* Brand Header */}
       <div className="flex items-start mb-6">
-        {/* Mock Logo Space */}
+        {/* Company Logo */}
         <div className="w-24 h-24 mr-4 flex items-center justify-center flex-shrink-0">
-          <img src="/logo.png" alt="Logo" className="max-w-full max-h-full object-contain" onError={(e) => { e.target.style.display = 'none' }} />
+          <img 
+            src={setting?.logo ? (setting.logo.startsWith('http') ? setting.logo : window.location.origin + setting.logo) : window.location.origin + "/images/logo/logo-nobackground.png"} 
+            alt="Nam Việt Logo" 
+            className="max-w-full max-h-full object-contain" 
+          />
         </div>
         
         <div className="flex-1">
           <h1 className="text-xl font-bold uppercase mb-1">{setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}</h1>
           <p className="mb-1 leading-tight">{setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}</p>
           <p className="mb-1 leading-tight">Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}</p>
+          {setting?.taxCode && <p className="mb-1 leading-tight">MST: {setting.taxCode}</p>}
           {setting?.bankAccount1 ? <p className="mb-0 leading-tight">{setting.bankAccount1}</p> : <p className="mb-1 leading-tight">TK Lê Trung Thành: 9 75 76 77 88 - NH ACB CN Đồng Tháp</p>}
           {setting?.bankAccount2 ? <p className="mb-0 leading-tight">{setting.bankAccount2}</p> : <p className="mb-0 leading-tight">TK Lê Trung Thành: 09 75 76 77 88 - NH SACOMBANK CN Đồng Tháp.</p>}
         </div>
@@ -135,7 +140,10 @@ const PrintableContent = React.forwardRef(({ setting, invoice }, ref) => {
           {items.map((item, index) => (
             <tr key={`item-${index}`}>
               <td className="border border-black p-1 text-center">{index + 1}</td>
-              <td className="border border-black p-1 px-2">{item.product?.productName || item.productName || 'Sản phẩm không xác định'}</td>
+              <td className="border border-black p-1 px-2">
+                {item.product?.productName || item.productName || 'Sản phẩm không xác định'}
+                {item.gift && ' (Quà tặng)'}
+              </td>
               <td className="border border-black p-1 text-center">{item.unitName || item.product?.unit || item.unit?.name || ''}</td>
               <td className="border border-black p-1 text-center">{item.quantity}</td>
               <td className="border border-black p-1 text-right pr-2">{moneyFormat(item.price || item.unitPrice)}</td>
