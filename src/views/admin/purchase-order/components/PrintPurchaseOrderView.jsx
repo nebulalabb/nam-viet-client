@@ -27,14 +27,21 @@ const PrintPurchaseOrderView = ({ purchaseOrder, setting, onAfterPrint }) => {
   )
 }
 
+import { getPublicUrl } from '@/utils/file'
+
 const PrintableContent = React.forwardRef(
   ({ setting, purchaseOrder }, ref) => (
     <div ref={ref} className="mx-auto max-w-3xl bg-white p-6">
-      <div className="mb-6">
-        <h1 className="mb-1 text-lg font-bold">{setting?.brandName || 'TÊN CÔNG TY'}</h1>
-        <p className="mb-1 text-sm">Địa chỉ: {setting?.address}</p>
-        <p className="mb-1 text-sm">Điện thoại: {setting?.phone}</p>
-        <p className="text-sm">Email: {setting?.email}</p>
+      <div className="mb-6 flex items-start">
+        <div className="w-24 h-24 mr-4 flex items-center justify-center flex-shrink-0">
+          <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} alt="Logo" className="max-w-full max-h-full object-contain" />
+        </div>
+        <div className="flex-1">
+          <h1 className="mb-1 text-lg font-bold">{setting?.brandName || 'TÊN CÔNG TY'}</h1>
+          <p className="mb-1 text-sm flex gap-2"><span>Địa chỉ: {setting?.address}</span></p>
+          <p className="mb-1 text-sm flex gap-2"><span>Điện thoại: {setting?.phone}</span> {setting?.taxCode && <span>MST: {setting.taxCode}</span>}</p>
+          <p className="text-sm">Email: {setting?.email}</p>
+        </div>
       </div>
 
       <h2 className="mb-4 text-center text-xl font-bold uppercase">
@@ -42,15 +49,17 @@ const PrintableContent = React.forwardRef(
       </h2>
 
       <p className="mb-4 text-center text-sm">
-        Số: {purchaseOrder?.code} - Ngày: {dateFormat(purchaseOrder?.createdAt, true)}
+        Số: {purchaseOrder?.poCode || purchaseOrder?.code} - Ngày: {dateFormat(purchaseOrder?.orderDate || purchaseOrder?.createdAt, true)}
       </p>
 
       <div className="mb-6">
-        <p className="mb-1 font-bold">Nhà cung cấp: {purchaseOrder?.supplier?.name}</p>
+        <p className="mb-1 font-bold">Nhà cung cấp: {purchaseOrder?.supplier?.supplierName || purchaseOrder?.supplier?.name}</p>
         <p className="mb-1">
           Địa chỉ: {purchaseOrder?.supplier?.address || '—'}
         </p>
         <p>Điện thoại: {purchaseOrder?.supplier?.phone || '—'}</p>
+        {purchaseOrder?.supplier?.taxCode && <p>MST: {purchaseOrder.supplier.taxCode}</p>}
+        {purchaseOrder?.notes && <p className="mt-1 text-sm italic">Ghi chú: {purchaseOrder.notes}</p>}
       </div>
 
       <table className="mb-6 w-full border-collapse">
@@ -65,17 +74,17 @@ const PrintableContent = React.forwardRef(
           </tr>
         </thead>
         <tbody>
-          {purchaseOrder.items?.map((item, index) => (
+          {purchaseOrder.details?.map((item, index) => (
             <tr className="border" key={`po-item-${index}`}>
               <td className="border p-2 text-center text-sm">{index + 1}</td>
               <td className="border p-2 text-sm">
-                {item.productName}
-                {item.note && <div className="text-xs text-gray-500 italic">({item.note})</div>}
+                {item.product?.productName}
+                {item.notes && <div className="text-xs text-gray-500 italic">({item.notes})</div>}
               </td>
               <td className="border p-2 text-center text-sm">{item.unitName || 'Cái'}</td>
               <td className="border p-2 text-center text-sm">{item.quantity}</td>
-              <td className="border p-2 text-right text-sm">{moneyFormat(item.unitPrice)}</td>
-              <td className="border p-2 text-right text-sm">{moneyFormat(item.totalAmount)}</td>
+              <td className="border p-2 text-right text-sm">{moneyFormat(item.price)}</td>
+              <td className="border p-2 text-right text-sm">{moneyFormat(item.total)}</td>
             </tr>
           ))}
         </tbody>
@@ -84,28 +93,37 @@ const PrintableContent = React.forwardRef(
       <div className="mb-6 flex w-full justify-end">
         <table className="w-64 text-sm">
           <tbody>
-            {purchaseOrder?.discount > 0 && (
+            {(purchaseOrder?.discountAmount ?? purchaseOrder?.discount ?? 0) > 0 && (
               <tr>
-                <td className="py-1">Giảm giá:</td>
-                <td className="py-1 text-right">
-                  {moneyFormat(purchaseOrder?.discount)}
+                <td className="py-1 text-red-600">Giảm giá:</td>
+                <td className="py-1 text-right text-red-600">
+                  -{moneyFormat(purchaseOrder?.discountAmount ?? purchaseOrder?.discount ?? 0)}
                 </td>
               </tr>
             )}
 
-            {purchaseOrder?.taxAmount > 0 && (
+            {(purchaseOrder?.taxAmount ?? 0) > 0 && (
               <tr>
-                <td className="py-1">Thuế:</td>
+                <td className="py-1 text-blue-600">Tiền thuế:</td>
+                <td className="py-1 text-right text-blue-600">
+                  +{moneyFormat(purchaseOrder?.taxAmount ?? 0)}
+                </td>
+              </tr>
+            )}
+
+            {(purchaseOrder?.otherCosts ?? 0) > 0 && (
+              <tr>
+                <td className="py-1">Chi phí khác:</td>
                 <td className="py-1 text-right">
-                  {moneyFormat(purchaseOrder?.taxAmount)}
+                  {moneyFormat(purchaseOrder?.otherCosts ?? 0)}
                 </td>
               </tr>
             )}
 
             <tr className="font-bold text-base">
               <td className="py-1">Tổng tiền:</td>
-              <td className="py-1 text-right">
-                {moneyFormat(purchaseOrder?.totalAmount)}
+              <td className="py-1 text-right font-bold text-primary">
+                {moneyFormat(purchaseOrder?.totalCurrentAmount ?? purchaseOrder?.totalAmount ?? 0)}
               </td>
             </tr>
           </tbody>
@@ -117,7 +135,7 @@ const PrintableContent = React.forwardRef(
       </p>
 
       <div className="mt-4 text-sm">
-        <strong>Ghi chú:</strong> {purchaseOrder?.note || 'Không có ghi chú'}
+        <strong>Ghi chú:</strong> {purchaseOrder?.notes || purchaseOrder?.note || 'Không có ghi chú'}
       </div>
 
       <div className="mt-8 flex justify-between text-center text-sm">
@@ -125,7 +143,7 @@ const PrintableContent = React.forwardRef(
           <p className="font-bold">Người lập phiếu</p>
           <p className="italic">(Ký, họ tên)</p>
           <div className="h-20"></div>
-          <p className="font-bold">{purchaseOrder?.user?.fullName}</p>
+          <p className="font-bold">{purchaseOrder?.creator?.fullName || purchaseOrder?.user?.fullName || purchaseOrder?.createdByUser?.fullName}</p>
         </div>
         <div className="w-1/3">
           <p className="font-bold">Nhà cung cấp</p>

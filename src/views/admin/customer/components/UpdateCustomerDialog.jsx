@@ -59,6 +59,7 @@ const UpdateCustomerDialog = ({
   const form = useForm({
     resolver: zodResolver(updateCustomerSchema),
     defaultValues: {
+      customerCode: customer.customerCode || '',
       customerName: customer.customerName || customer.name || '',
       phone: customer.phone || '',
       email: customer.email || '',
@@ -125,6 +126,23 @@ const UpdateCustomerDialog = ({
           <Form {...form}>
             <form id="update-customer" onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="customerCode"
+                  render={({ field }) => (
+                    <FormItem className="mb-2 space-y-1">
+                      <FormLabel>Mã khách hàng</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input placeholder="Mã khách hàng" {...field} readOnly className="bg-muted/40 font-mono" />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">Cố định</span>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="customerName"

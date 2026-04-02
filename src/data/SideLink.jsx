@@ -33,7 +33,9 @@ import {
   PieChart,
   Archive,
   FileJson,
-  Settings
+  Settings,
+  Wallet,
+  Scale,
 } from 'lucide-react'
 
 export const sideLinks = [
@@ -83,7 +85,7 @@ export const sideLinks = [
   {
     title: 'Đơn mua',
     icon: <CircleDollarSign size={20} strokeWidth={1.5} />,
-    permission: ['GET_PURCHASE_ORDER', 'GET_PURCHASE_ORDER_USER', 'GET_PAYMENT'],
+    permission: ['GET_PURCHASE_ORDER', 'GET_PURCHASE_ORDER_USER'],
     sub: [
       {
         title: 'Đơn mua',
@@ -97,18 +99,6 @@ export const sideLinks = [
         icon: <UserCheck size={18} strokeWidth={1.5} />,
         permission: 'GET_PURCHASE_ORDER_USER',
       },
-      {
-        title: 'Phiếu chi',
-        href: '/payment',
-        icon: <CreditCard size={18} strokeWidth={1.5} />,
-        permission: 'GET_PAYMENT',
-      },
-      {
-        title: 'Phiếu chi của tôi',
-        href: '/payment-user',
-        icon: <CreditCard size={18} strokeWidth={1.5} />,
-        permission: 'GET_PAYMENT_USER',
-      },
     ],
   },
   {
@@ -121,6 +111,37 @@ export const sideLinks = [
         href: '/warranty',
         icon: <Shield size={18} strokeWidth={1.5} />,
         permission: 'GET_WARRANTY',
+      },
+    ],
+  },
+  {
+    title: 'Tài chính',
+    icon: <Wallet size={20} strokeWidth={1.5} />,
+    permission: ['GET_RECEIPT', 'GET_PAYMENT', 'GET_DEBT'],
+    sub: [
+      {
+        title: 'Phiếu thu',
+        href: '/receipt',
+        icon: <Receipt size={18} strokeWidth={1.5} />,
+        permission: 'GET_RECEIPT',
+      },
+      {
+        title: 'Phiếu chi',
+        href: '/payment',
+        icon: <CreditCard size={18} strokeWidth={1.5} />,
+        permission: 'GET_PAYMENT',
+      },
+      {
+        title: 'Công nợ',
+        href: '/customer-debt',
+        icon: <DatabaseBackup size={18} strokeWidth={1.5} />,
+        permission: 'GET_DEBT',
+      },
+      {
+        title: 'Đối chiếu công nợ',
+        href: '/debt-reconciliation',
+        icon: <Scale size={18} strokeWidth={1.5} />,
+        permission: 'GET_DEBT',
       },
     ],
   },
@@ -158,19 +179,19 @@ export const sideLinks = [
   {
     title: 'Khuyến mãi',
     icon: <Gift size={20} strokeWidth={1.5} />,
-    permission: 'GET_PROMOTION',
+    permission: 'DISABLED_FEATURE', // Tạm tắt tính năng khuyến mãi
     sub: [
       {
         title: 'DS Khuyến mãi',
         href: '/promotion',
         icon: <Gift size={18} strokeWidth={1.5} />,
-        permission: 'GET_PROMOTION',
+        permission: 'DISABLED_FEATURE',
       },
       {
         title: 'KM đang hoạt động',
         href: '/active-promotions',
         icon: <Sparkles size={18} strokeWidth={1.5} />,
-        permission: 'GET_PROMOTION',
+        permission: 'DISABLED_FEATURE',
       }
     ]
   },

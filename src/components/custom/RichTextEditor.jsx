@@ -2,17 +2,11 @@ import React, { useEffect, useMemo } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { Extension } from '@tiptap/core'
 
-import * as StarterKitPkg from '@tiptap/starter-kit'
-import * as TextStylePkg from '@tiptap/extension-text-style'
-import * as ColorPkg from '@tiptap/extension-color'
-import * as UnderlinePkg from '@tiptap/extension-underline'
-import * as HighlightPkg from '@tiptap/extension-highlight'
-
-const StarterKit = StarterKitPkg.default ?? StarterKitPkg.StarterKit
-const TextStyle = TextStylePkg.default ?? TextStylePkg.TextStyle
-const Color = ColorPkg.default ?? ColorPkg.Color
-const Underline = UnderlinePkg.default ?? UnderlinePkg.Underline
-const Highlight = HighlightPkg.default ?? HighlightPkg.Highlight
+import { StarterKit } from '@tiptap/starter-kit'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
+import { Underline } from '@tiptap/extension-underline'
+import { Highlight } from '@tiptap/extension-highlight'
 
 // === FontSize extension ===
 const FontSize = Extension.create({

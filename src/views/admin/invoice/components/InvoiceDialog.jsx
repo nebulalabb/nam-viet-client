@@ -134,6 +134,9 @@ const InvoiceDialog = ({
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
 
   const [selectedProducts, setSelectedProducts] = useState([])
+  const [giftProducts, setGiftProducts] = useState([])
+  const [giftQuantities, setGiftQuantities] = useState({})
+  const [cartActiveTab, setCartActiveTab] = useState('cart')
 
   // ===== UNIT CONVERSION STATES ======
   // unitId khách chọn theo từng sản phẩm
@@ -209,6 +212,9 @@ const InvoiceDialog = ({
   useEffect(() => {
     if (open) return
     setSelectedProducts([])
+    setGiftProducts([])
+    setGiftQuantities({})
+    setCartActiveTab('cart')
     setSelectedUnitIds({})
     setBaseUnitPrices({})
     setPriceOverrides({})
@@ -332,6 +338,18 @@ const InvoiceDialog = ({
 
         // Set all states
         setSelectedProducts(prods)
+        
+        // Populate standard cart, ignoring gifts in this legacy map (extendable later if need edit gift on invoice load)
+        const giftProds = (data.invoiceItems || []).filter(i => i.gift).map(item => item.product).filter(Boolean)
+        const giftQs = {}
+        ;(data.invoiceItems || []).filter(i => i.gift).forEach(i => giftQs[i.productId] = Number(i.quantity || 1))
+        
+        // Ensure setSelectedProducts only contains non-gift prods in main cart
+        const mainProds = (data.invoiceItems || []).filter(i => !i.gift).map(item => item.product).filter(Boolean)
+        setSelectedProducts(mainProds)
+        setGiftProducts(giftProds)
+        setGiftQuantities(giftQs)
+
         setQuantities(qty)
         setDiscounts(dis)
         setNotes(nt)
@@ -492,6 +510,22 @@ const InvoiceDialog = ({
 
   // ====== PRODUCT SELECTION HANDLERS ======
   const handleAddProduct = (product) => {
+    if (cartActiveTab === 'gift') {
+      const isAlreadySelected = giftProducts.some(p => p.id === product.id)
+      if (isAlreadySelected) {
+        setGiftProducts(giftProducts.filter(p => p.id !== product.id))
+        setGiftQuantities(prev => {
+          const next = { ...prev }
+          delete next[product.id]
+          return next
+        })
+      } else {
+        setGiftProducts([...giftProducts, product])
+        setGiftQuantities(prev => ({ ...prev, [product.id]: 1 }))
+      }
+      return
+    }
+
     const isAlreadySelected = selectedProducts.some(p => p.id === product.id)
 
     if (isAlreadySelected) {
@@ -827,6 +861,40 @@ const InvoiceDialog = ({
       }
     })
 
+    const giftItems = giftProducts.map((product) => {
+      const unitId =
+        selectedUnitIds[product.id] ||
+        getBaseUnitId(product) ||
+        product?.prices?.[0]?.unitId
+      const unitName = getUnitNameById(product, unitId)
+      const qtyUnit = giftQuantities[product.id] || 1
+
+      return {
+        productId: product.id,
+        productName: product.name,
+        productType: product.type,
+        unitId,
+        unitName,
+        quantity: qtyUnit,
+        baseQuantity: qtyUnit,
+        conversionFactor: 1,
+        price: 0,
+        taxRate: 0,
+        taxIds: [],
+        taxAmount: 0,
+        discountRate: 0,
+        discountAmount: 0,
+        total: 0,
+        periodMonths: 0,
+        warrantyCost: 0,
+        applyWarranty: false,
+        gift: true,
+        notes: "Quà tặng"
+      }
+    })
+
+    const allItems = [...items, ...giftItems]
+
     const dataToSend = {
       userId: authUserWithRoleHasPermissions.id,
       customerId: data.customerId || null,
@@ -835,7 +903,7 @@ const InvoiceDialog = ({
       taxAmount: calculateTotalTax(),
       amount: handleCalculateSubTotalInvoice(),
       discountAmount: calculateTotalDiscount(),
-      items,
+      items: allItems,
       isPickupOrder: data.isPickupOrder,
       recipientName: data.recipientName || undefined,
       recipientPhone: data.recipientPhone || undefined,
@@ -1536,7 +1604,7 @@ const InvoiceDialog = ({
                       <ProductGrid
                         products={filteredProducts}
                         onAddProduct={handleAddProduct}
-                        selectedProductIds={selectedProducts.map(p => p.id)}
+                        selectedProductIds={cartActiveTab === 'gift' ? giftProducts.map(p => p.id) : selectedProducts.map(p => p.id)}
                         loading={false}
                       />
                     </div>
@@ -1586,6 +1654,21 @@ const InvoiceDialog = ({
                         cartPromotions={cartPromotions}
                         cartPromosLoading={cartPromosLoading}
                         onSelectPromotion={handleSelectPromotion}
+                        giftProducts={giftProducts}
+                        giftQuantities={giftQuantities}
+                        onRemoveGiftProduct={(id) => {
+                          setGiftProducts(giftProducts.filter(p => p.id !== id))
+                          setGiftQuantities(prev => {
+                            const next = { ...prev }
+                            delete next[id]
+                            return next
+                          })
+                        }}
+                        onGiftQuantityChange={(id, value) => {
+                          setGiftQuantities(prev => ({ ...prev, [id]: Number(value) }))
+                        }}
+                        activeTab={cartActiveTab}
+                        onActiveTabChange={setCartActiveTab}
                       />
                     </div>
 
@@ -1828,7 +1911,7 @@ const InvoiceDialog = ({
                     <ProductGrid
                       products={filteredProducts}
                       onAddProduct={handleAddProduct}
-                      selectedProductIds={selectedProducts.map(p => p.id)}
+                      selectedProductIds={cartActiveTab === 'gift' ? giftProducts.map(p => p.id) : selectedProducts.map(p => p.id)}
                       loading={false}
                     />
                   </div>
@@ -1871,6 +1954,21 @@ const InvoiceDialog = ({
                   cartPromotions={cartPromotions}
                   cartPromosLoading={cartPromosLoading}
                   onSelectPromotion={handleSelectPromotion}
+                  giftProducts={giftProducts}
+                  giftQuantities={giftQuantities}
+                  onRemoveGiftProduct={(id) => {
+                    setGiftProducts(giftProducts.filter(p => p.id !== id))
+                    setGiftQuantities(prev => {
+                      const next = { ...prev }
+                      delete next[id]
+                      return next
+                    })
+                  }}
+                  onGiftQuantityChange={(id, value) => {
+                    setGiftQuantities(prev => ({ ...prev, [id]: Number(value) }))
+                  }}
+                  activeTab={cartActiveTab}
+                  onActiveTabChange={setCartActiveTab}
                 />
 
                 {/* COLUMN 4: Invoice Sidebar */}

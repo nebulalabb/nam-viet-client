@@ -74,6 +74,8 @@ const MobilePurchaseOrderCard = ({
 
   // Print states
   const [showPrintOrder, setShowPrintOrder] = useState(false)
+  const [printPurchaseOrder, setPrintPurchaseOrder] = useState(null)
+  const [isPrinting, setIsPrinting] = useState(false)
 
   const [fullPurchaseOrder, setFullPurchaseOrder] = useState(null)
   const [isOpeningPayment, setIsOpeningPayment] = useState(false)
@@ -185,6 +187,20 @@ const MobilePurchaseOrderCard = ({
     }
   }
 
+  const handlePrintOrder = async () => {
+    try {
+      setIsPrinting(true)
+      const poDetails = await dispatch(getPurchaseOrderDetail(purchaseOrder.id)).unwrap()
+      setPrintPurchaseOrder(poDetails)
+      setShowPrintOrder(true)
+    } catch (error) {
+      console.error('Fetch PO detail for print error:', error)
+      toast.error('Không thể lấy thông tin chi tiết đơn hàng để in')
+    } finally {
+      setIsPrinting(false)
+    }
+  }
+
   const canEdit = purchaseOrder?.status === 'draft'
   const canDelete = purchaseOrder?.status === 'draft'
   const canCancel = !['draft', 'cancelled', 'completed'].includes(purchaseOrder?.status)
@@ -284,11 +300,11 @@ const MobilePurchaseOrderCard = ({
       )}
 
 
-      {showPrintOrder && (
+      {showPrintOrder && printPurchaseOrder && (
         <PrintPurchaseOrderView
-          purchaseOrder={purchaseOrder}
+          purchaseOrder={printPurchaseOrder}
           setting={setting}
-          onAfterPrint={() => setShowPrintOrder(false)}
+          onAfterPrint={() => { setShowPrintOrder(false); setPrintPurchaseOrder(null) }}
         />
       )}
 
@@ -336,9 +352,9 @@ const MobilePurchaseOrderCard = ({
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => setShowPrintOrder(true)} className="text-purple-600">
+              <DropdownMenuItem onClick={handlePrintOrder} disabled={isPrinting} className="text-purple-600">
                 <IconFileTypePdf className="mr-2 h-4 w-4" />
-                In đơn hàng
+                {isPrinting ? 'Đang tải...' : 'In đơn hàng'}
               </DropdownMenuItem>
 
 
