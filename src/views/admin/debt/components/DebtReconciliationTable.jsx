@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, User, Eye } from 'lucide-react'
+import { MapPin, User, Eye, ShieldAlert, SkipForward, ShieldOff } from 'lucide-react'
 import { formatCurrency } from '@/utils/number-format'
 import DebtPagination from './DebtPagination'
 
@@ -12,7 +12,7 @@ import {
     TableHead,
 } from '@/components/ui/table'
 
-export default function DebtReconciliationTable({ data, isLoading, onView, pagination, pageCount, rowCount, onPaginationChange }) {
+export default function DebtReconciliationTable({ data, isLoading, onView, pagination, pageCount, rowCount, onPaginationChange, onToggleBlacklist, onExtendDebt }) {
     // 1. Loading State
     if (isLoading) {
         return (
@@ -65,7 +65,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                             {data.map((item) => {
                                 const {
                                     name, code, type, objId, periodName,
-                                    assignedUser, location
+                                    assignedUser, location, isWarning, isBlacklisted
                                 } = item
 
                                 const isCustomer = type === 'customer'
@@ -86,7 +86,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                 const absClosing = Math.abs(closing)
 
                                 return (
-                                    <TableRow key={`${type}-${objId}`}>
+                                    <TableRow key={`${type}-${objId}`} className={`${isWarning ? 'bg-yellow-50 hover:bg-yellow-100' : ''}`}>
                                         <TableCell className="px-4 py-3 align-top">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border ${typeColor}`}>
@@ -95,6 +95,12 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                                 <div className="font-semibold text-sm text-gray-900 truncate max-w-[160px]" title={name}>
                                                     {name}
                                                 </div>
+                                                {isWarning && (
+                                                    <span className="text-[9px] px-1 py-0.5 rounded font-bold bg-yellow-200 text-yellow-800 border border-yellow-300 whitespace-nowrap" title="Nợ quá 1 năm không thanh toán">⚠ Nợ lâu</span>
+                                                )}
+                                                {isBlacklisted && (
+                                                    <span className="text-[9px] px-1 py-0.5 rounded font-bold bg-gray-800 text-white whitespace-nowrap">● DS Đen</span>
+                                                )}
                                             </div>
                                             <div className="text-xs text-gray-500 font-mono ml-9">{code}</div>
                                         </TableCell>
@@ -181,6 +187,34 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
 
                                         <TableCell className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                {type === 'customer' && isWarning && onExtendDebt && (
+                                                    <button
+                                                        onClick={() => onExtendDebt(objId)}
+                                                        className="rounded p-1 text-green-600 hover:bg-green-100 flex items-center"
+                                                        title="Gia hạn thêm 1 năm"
+                                                    >
+                                                        <SkipForward className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                {type === 'customer' && !isBlacklisted && onToggleBlacklist && (
+                                                    <button
+                                                        onClick={() => onToggleBlacklist(objId)}
+                                                        className="rounded p-1 text-red-600 hover:bg-red-100 flex items-center"
+                                                        title="Đưa vào danh sách đen"
+                                                    >
+                                                        <ShieldAlert className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                {type === 'customer' && isBlacklisted && onToggleBlacklist && (
+                                                    <button
+                                                        onClick={() => onToggleBlacklist(objId)}
+                                                        className="rounded p-1 text-blue-600 hover:bg-blue-100 flex items-center"
+                                                        title="Gỡ khỏi danh sách đen"
+                                                    >
+                                                        <ShieldOff className="h-4 w-4" />
+                                                    </button>
+                                                )}
+
                                                 <button
                                                     onClick={() => onView(objId, type, periodName)}
                                                     className="rounded p-1 text-gray-600 hover:bg-gray-100"

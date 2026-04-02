@@ -141,7 +141,7 @@ const UpdateEmployeeDialog = ({
                                     <FormItem className="mb-2 space-y-1">
                                         <FormLabel required={true}>Email</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Nhập địa chỉ email" {...field} disabled />
+                                            <Input placeholder="Nhập địa chỉ email" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

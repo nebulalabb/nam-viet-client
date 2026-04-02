@@ -1,7 +1,7 @@
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { useDispatch, useSelector } from 'react-redux'
 import { useEffect, useState } from 'react'
-import { getDebts, getMonthlyDebtObjects, exportDebtList, syncFullBatch, syncSnapBatch } from '@/stores/DebtSlice'
+import { getDebts, getMonthlyDebtObjects, exportDebtList, syncFullBatch, syncSnapBatch, toggleBlacklist, extendDebt } from '@/stores/DebtSlice'
 import DebtReconciliationTable from './components/DebtReconciliationTable'
 import { ViewDebtReconciliationDialog } from './components/ViewDebtReconciliationDialog'
 import { ConfirmSyncDialog } from './components/ConfirmSyncDialog'
@@ -60,6 +60,34 @@ const CustomerDebtPage = () => {
         setIsViewOpen(true)
     }
 
+    const handleToggleBlacklist = async (id) => {
+        if (window.confirm('Bạn có chắc chắn muốn thay đổi trạng thái danh sách đen của khách hàng này?')) {
+            try {
+                await dispatch(toggleBlacklist({ id, type: 'customer' })).unwrap();
+                dispatch(getDebts({
+                    ...filters,
+                    search: searchTerm,
+                    address: addressTerm,
+                    blacklist: activeTab === 'blacklist' ? 'true' : 'false'
+                }))
+            } catch (err) {}
+        }
+    }
+
+    const handleExtendDebt = async (id) => {
+        if (window.confirm('Gia hạn kiểm tra nợ thêm 1 năm cho khách hàng này?')) {
+            try {
+                await dispatch(extendDebt({ id, type: 'customer' })).unwrap();
+                dispatch(getDebts({
+                    ...filters,
+                    search: searchTerm,
+                    address: addressTerm,
+                    blacklist: activeTab === 'blacklist' ? 'true' : 'false'
+                }))
+            } catch (err) {}
+        }
+    }
+
     // Sync activeTab khi isAdmin thay đổi
     useEffect(() => {
         if (!isAdmin && activeTab === 'aggregate') {
@@ -67,15 +95,16 @@ const CustomerDebtPage = () => {
         }
     }, [isAdmin])
 
-    // Effect fetch cho tab Tổng hợp
+    // Effect fetch cho tab Tổng hợp & Blacklist
     useEffect(() => {
-        if (activeTab !== 'aggregate') return
-        document.title = 'Tổng hợp công nợ'
+        if (activeTab !== 'aggregate' && activeTab !== 'blacklist') return
+        document.title = activeTab === 'blacklist' ? 'Danh sách đen' : 'Tổng hợp công nợ'
         const timer = setTimeout(() => {
             dispatch(getDebts({
                 ...filters,
                 search: searchTerm,
-                address: addressTerm
+                address: addressTerm,
+                blacklist: activeTab === 'blacklist' ? 'true' : 'false'
             }))
         }, 500)
         return () => clearTimeout(timer)
@@ -138,7 +167,7 @@ const CustomerDebtPage = () => {
                 <div className="mb-2 flex items-center justify-between space-y-2">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">
-                            {activeTab === 'aggregate' ? 'Tổng hợp công nợ' : 'Công nợ theo tháng'}
+                            {activeTab === 'aggregate' ? 'Tổng hợp công nợ' : activeTab === 'blacklist' ? 'Danh sách đen' : 'Công nợ theo tháng'}
                         </h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -214,6 +243,23 @@ const CustomerDebtPage = () => {
                         </div>
                     )}
 
+                    {/* Khối Tổng Hợp Danh Sách Đen */}
+                    {isAdmin && activeTab === 'blacklist' && (
+                        <div className="rounded-xl border border-gray-800 bg-gray-900 shadow-sm overflow-hidden relative text-white">
+                            <div className="bg-gray-800 text-gray-200 text-xs font-bold px-4 py-2 border-b border-gray-700 flex justify-between items-center">
+                                <span>TỔNG HỢP CÔNG NỢ ĐEN</span>
+                                <span className="bg-gray-700 px-2 py-0.5 rounded-full text-[10px]">Treo/Khó đòi</span>
+                            </div>
+                            <div className="grid grid-cols-5 divide-x divide-gray-700 py-2">
+                                <StripCell label="NỢ ĐẦU KỲ" value={finalSummary.opening} color="text-gray-300" />
+                                <StripCell label="TỔNG MUA" value={finalSummary.increase} color="text-gray-300" />
+                                <StripCell label="TRẢ HÀNG" value={finalSummary.returnAmount} color="text-gray-300" />
+                                <StripCell label="THANH TOÁN" value={finalSummary.payment} color="text-gray-300" />
+                                <StripCell label="CÔNG NỢ ĐEN" value={finalSummary.closing} color="text-red-400" highlight />
+                            </div>
+                        </div>
+                    )}
+
                     {/* Khối 2: Tháng hiện tại — tất cả đều thấy (hiển thị ở cả 2 tab) */}
                     <div className="rounded-xl border border-green-200 bg-white shadow-sm overflow-hidden relative">
                         <div className="bg-green-50 text-green-800 text-xs font-bold px-4 py-2 border-b border-green-100 flex justify-between items-center">
@@ -253,10 +299,21 @@ const CustomerDebtPage = () => {
                     >
                         Theo tháng
                     </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => { setActiveTab('blacklist'); updateFilter('type', 'customer') }}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${activeTab === 'blacklist'
+                                ? 'bg-gray-800 text-white shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            Danh sách đen
+                        </button>
+                    )}
                 </div>
 
-                {/* FILTER BAR — Tổng hợp */}
-                {activeTab === 'aggregate' && (
+                {/* FILTER BAR — Tổng hợp & Blacklist */}
+                {(activeTab === 'aggregate' || activeTab === 'blacklist') && (
                     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="w-full md:w-[180px] relative">
@@ -367,7 +424,7 @@ const CustomerDebtPage = () => {
 
                 {/* MAIN CONTENT */}
                 <div className="-mx-4 flex-1 overflow-auto px-4 py-1 flex flex-col space-y-4">
-                    {activeTab === 'aggregate' ? (
+                    {activeTab === 'aggregate' || activeTab === 'blacklist' ? (
                         <DebtReconciliationTable
                             data={debts}
                             isLoading={loading}
@@ -376,6 +433,8 @@ const CustomerDebtPage = () => {
                             pageCount={serverPagination?.totalPages || 1}
                             rowCount={serverPagination?.total || 0}
                             onPaginationChange={(newPagination) => setFilters(prev => ({ ...prev, page: newPagination.page, limit: newPagination.limit }))}
+                            onToggleBlacklist={isAdmin ? handleToggleBlacklist : null}
+                            onExtendDebt={isAdmin ? handleExtendDebt : null}
                         />
                     ) : (
                         <DebtReconciliationTable

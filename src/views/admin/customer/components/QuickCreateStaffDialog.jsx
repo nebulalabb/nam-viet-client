@@ -74,8 +74,6 @@ const QuickCreateStaffDialog = ({ open, onOpenChange, onSuccess }) => {
       const payload = {
         fullName: values.fullName,
         employeeCode: empCode,
-        email: `${empCode.toLowerCase()}@nv.local`,
-        password: `Aa@123${ts}`, // Dummy password passing validation
         phone: values.phone || undefined,
         roleId: parseInt(values.roleId),
         status: 'active'

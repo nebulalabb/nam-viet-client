@@ -10,7 +10,7 @@ export const createUserSchema = z.object({
         .string()
         .min(2, { message: 'Họ và tên phải có ít nhất 2 ký tự' })
         .max(200, { message: 'Họ và tên không được vượt quá 200 ký tự' }),
-    email: z.string().email({ message: 'Email không hợp lệ' }),
+    email: z.string().email({ message: 'Email không hợp lệ' }).optional().or(z.literal('')),
     phone: z
         .string()
         .regex(/^[0-9+\-\s()]+$/, { message: 'Định dạng số điện thoại không hợp lệ' })
@@ -23,7 +23,9 @@ export const createUserSchema = z.object({
         .regex(/[A-Z]/, { message: 'Mật khẩu phải chứa ít nhất một chữ cái viết hoa' })
         .regex(/[a-z]/, { message: 'Mật khẩu phải chứa ít nhất một chữ cái thường' })
         .regex(/[0-9]/, { message: 'Mật khẩu phải chứa ít nhất một số' })
-        .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, { message: 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt' }),
+        .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, { message: 'Mật khẩu phải chứa ít nhất một ký tự đặc biệt' })
+        .optional()
+        .or(z.literal('')),
     roleId: z.coerce.number().min(1, { message: 'Vui lòng chọn chức vụ' }),
     status: z.string().default('active'),
 })

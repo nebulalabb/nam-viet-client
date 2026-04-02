@@ -51,6 +51,7 @@ const CreateEmployeeDialog = ({
         },
     })
 
+    const [grantAccount, setGrantAccount] = useState(false)
     const [roles, setRoles] = useState([])
     const loading = useSelector((state) => state.user.loading)
     const dispatch = useDispatch()
@@ -71,7 +72,19 @@ const CreateEmployeeDialog = ({
 
     const onSubmit = async (data) => {
         try {
-            await dispatch(createUser(data)).unwrap()
+            if (grantAccount && (!data.email || !data.password)) {
+                if (!data.email) form.setError('email', { type: 'manual', message: 'Vui lòng nhập Email' });
+                if (!data.password) form.setError('password', { type: 'manual', message: 'Vui lòng nhập Mật khẩu' });
+                return;
+            }
+
+            const payload = {
+                ...data,
+                email: grantAccount ? data.email : undefined,
+                password: grantAccount ? data.password : undefined,
+            }
+
+            await dispatch(createUser(payload)).unwrap()
             form.reset()
             onOpenChange?.(false)
         } catch (error) {
@@ -129,19 +142,36 @@ const CreateEmployeeDialog = ({
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem className="mb-2 space-y-1">
-                                        <FormLabel required={true}>Email</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Nhập địa chỉ email" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="col-span-1 md:col-span-2 my-2">
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="grantEmployeeAccount"
+                                        className="h-4 w-4 rounded border-gray-300"
+                                        checked={grantAccount}
+                                        onChange={(e) => setGrantAccount(e.target.checked)}
+                                    />
+                                    <label htmlFor="grantEmployeeAccount" className="text-sm font-medium">
+                                        Cấp tài khoản đăng nhập (Email & Mật khẩu)
+                                    </label>
+                                </div>
+                            </div>
+
+                            {grantAccount && (
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-2 space-y-1">
+                                            <FormLabel required={true}>Email</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Nhập địa chỉ email" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
                             <FormField
                                 control={form.control}
@@ -157,19 +187,21 @@ const CreateEmployeeDialog = ({
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem className="mb-2 space-y-1">
-                                        <FormLabel required={true}>Mật khẩu</FormLabel>
-                                        <FormControl>
-                                            <Input type="password" placeholder="Mật khẩu" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {grantAccount && (
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-2 space-y-1">
+                                            <FormLabel required={true}>Mật khẩu</FormLabel>
+                                            <FormControl>
+                                                <Input type="password" placeholder="Mật khẩu" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
                             <FormField
                                 control={form.control}

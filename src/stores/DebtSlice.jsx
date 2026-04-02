@@ -17,6 +17,34 @@ export const getDebts = createAsyncThunk(
     },
 )
 
+export const toggleBlacklist = createAsyncThunk(
+    'debt/toggleBlacklist',
+    async ({ id, type = 'customer' }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/smart-debt/${id}/blacklist`, { type })
+            toast.success(response.data?.message || 'Đã cập nhật danh sách đen')
+            return response.data?.data || response.data
+        } catch (error) {
+            toast.error('Lỗi khi cập nhật danh sách đen')
+            return rejectWithValue(handleError(error))
+        }
+    }
+)
+
+export const extendDebt = createAsyncThunk(
+    'debt/extendDebt',
+    async ({ id, type = 'customer' }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`/smart-debt/${id}/extend-debt`, { type })
+            toast.success(response.data?.message || 'Đã gia hạn kiểm tra nợ')
+            return response.data?.data || response.data
+        } catch (error) {
+            toast.error('Lỗi khi gia hạn kiểm tra nợ')
+            return rejectWithValue(handleError(error))
+        }
+    }
+)
+
 export const getDebtDetail = createAsyncThunk(
     'debt/getDetail',
     async ({ id, type, year }, { rejectWithValue }) => {

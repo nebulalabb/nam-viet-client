@@ -156,12 +156,12 @@ export const sideLinks = [
         icon: <Users size={18} strokeWidth={1.5} />,
         permission: ['GET_CUSTOMER', 'GET_CUSTOMER_USER'],
       },
-      {
-        title: 'Công nợ',
-        href: '/customer-debt',
-        icon: <DatabaseBackup size={18} strokeWidth={1.5} />,
-        permission: 'GET_DEBT',
-      },
+      // {
+      //   title: 'Công nợ',
+      //   href: '/customer-debt',
+      //   icon: <DatabaseBackup size={18} strokeWidth={1.5} />,
+      //   permission: 'GET_DEBT',
+      // },
       {
         title: 'Phiếu hỗ trợ (nếu có)',
         href: '/ticket',
@@ -291,6 +291,12 @@ export const sideLinks = [
         icon: <BellRing size={18} strokeWidth={1.5} />,
         permission: 'GET_STOCK',
       },
+      {
+        title: 'Báo cáo tồn kho',
+        href: '/inventory-report',
+        icon: <Archive size={18} strokeWidth={1.5} />,
+        permission: 'GET_INVENTORY_REPORT',
+      },
     ],
   },
   {
@@ -335,12 +341,7 @@ export const sideLinks = [
         icon: <CircleDollarSign size={18} strokeWidth={1.5} />,
         permission: 'GET_REVENUE_REPORT',
       },
-      {
-        title: 'Báo cáo tồn kho',
-        href: '/inventory-report',
-        icon: <Archive size={18} strokeWidth={1.5} />,
-        permission: 'GET_INVENTORY_REPORT',
-      },
+
       {
         title: 'Bán hàng',
         href: '/sales-report',

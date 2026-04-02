@@ -10,8 +10,8 @@ const passwordSchema = z
 
 const createUserFormSchema = z.object({
   fullName: z.string().min(2, { message: 'Họ và tên phải có ít nhất 2 ký tự' }),
-  email: z.string().email({ message: 'Email không hợp lệ' }),
-  password: passwordSchema,
+  email: z.string().email({ message: 'Email không hợp lệ' }).optional().or(z.literal('')),
+  password: passwordSchema.optional().or(z.literal('')),
   employeeCode: z
     .string()
     .min(3, { message: 'Mã nhân viên phải có ít nhất 3 ký tự' })

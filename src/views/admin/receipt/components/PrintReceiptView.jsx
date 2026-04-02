@@ -44,7 +44,6 @@ const PrintableContent = React.forwardRef(
           {/* Logo */}
           <div className="w-[140px] flex flex-col items-center mt-2">
             <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} className="w-[100px] h-[100px] object-contain" alt="Logo" />
-            <div className="text-[#D64A38] font-bold text-sm mt-1 tracking-widest uppercase">NAM VIỆT</div>
           </div>
 
           {/* Company Info */}
