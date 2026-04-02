@@ -77,7 +77,7 @@ const DataTableRowActions = ({ row, table }) => {
           productId: item.productId || item.id,
           unitId: item.unitId || item.unit?.id,
           quantity: Number(item.quantity),
-          notes: item.notes || reason || `Xuất kho theo đơn bán ${invoice.orderCode}`,
+          notes: item.notes || '',
           salesContractId: invoice.salesContractId,
           salesContractItemId: item.salesContractItemId
         }))
@@ -92,8 +92,8 @@ const DataTableRowActions = ({ row, table }) => {
         businessType: 'sale_out',
 
         actualReceiptDate: actualReceiptDate || null,
-        reason: reason || `Xuất kho cho đơn bán ${invoice.orderCode}`,
-        notes: notes || invoice.notes || 'Xuất kho từ hóa đơn',
+        reason: reason || '',
+        notes: notes || '',
         warehouseId: parseInt(warehouseId),
         customerId: invoice.customerId,
         salesContractId: invoice.salesContractId,
@@ -125,6 +125,10 @@ const DataTableRowActions = ({ row, table }) => {
     const invoiceId = invoice?.id
     try {
       const data = await dispatch(getInvoiceDetail(invoiceId)).unwrap()
+      if (!data?.warehouseReceipts || data.warehouseReceipts.length === 0) {
+        toast.warning('Chỉ được in hóa đơn khi đã có phiếu xuất kho')
+        return
+      }
       setPrintInvoice(data)
       setTimeout(() => setPrintInvoice(null), 0)
     } catch (error) {

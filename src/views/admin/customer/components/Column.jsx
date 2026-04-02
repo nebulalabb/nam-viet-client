@@ -181,13 +181,14 @@ export const columns = [
       // Use the backend-provided flag for overLimit check
       const isOverLimit = row.original?.isOverLimit
 
+      const hasCredit = currentDebt < 0
+
       return (
         <div className="flex flex-col gap-1 w-36">
           <span
-            className={`font-medium ${isOverLimit ? 'text-destructive' : 'text-primary'
-              }`}
+            className={`font-medium ${hasCredit ? 'text-green-600' : isOverLimit ? 'text-destructive' : 'text-primary'}`}
           >
-            {formatCurrency(currentDebt)}
+            {hasCredit ? formatCurrency(Math.abs(currentDebt)) : formatCurrency(currentDebt)}
           </span>
           <span className="text-xs text-muted-foreground border-t pt-1 border-dashed">
             Hạn mức: {formatCurrency(creditLimit)}

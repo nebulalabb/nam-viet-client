@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useDispatch } from 'react-redux'
 import { logout } from '@/stores/AuthSlice'
+import { clearNotifications } from '@/stores/NotificationSlice'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 
@@ -18,6 +19,9 @@ const LogoutAlertDialog = ({ isOpen, onOpenChange }) => {
   const signOut = async () => {
     try {
       await dispatch(logout()).unwrap()
+      dispatch(clearNotifications())
+      // Xóa trạng thái đã đọc khi đăng xuất
+      localStorage.removeItem('nam_viet_notifications')
       navigate('/')
     } catch (error) {
       console.log('Submit error: ', error)

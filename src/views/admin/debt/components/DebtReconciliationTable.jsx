@@ -146,18 +146,18 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
 
 
                                         <TableCell className="px-2 py-3 text-right align-top text-green-600 font-medium font-mono text-xs">
-                                            {payment > 0 ? `-${formatCurrency(payment)}` : <span className="text-gray-300">-</span>}
+                                            {payment > 0 ? formatCurrency(payment) : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
                                         <TableCell className={`px-4 py-3 text-right align-top border-l ${isDebt ? 'bg-red-50/30 border-red-100' :
-                                            isOverpaid ? 'bg-teal-50/30 border-teal-100' :
+                                            isOverpaid ? 'bg-green-50/30 border-green-100' :
                                                 'bg-gray-50/30 border-gray-100'
                                             }`}>
                                             <span className={`text-sm font-bold font-mono ${isDebt ? 'text-red-600' :
-                                                isOverpaid ? 'text-teal-600' :
+                                                isOverpaid ? 'text-green-600' :
                                                     'text-gray-400'
                                                 }`}>
-                                                {formatCurrency(absClosing)}
+                                                {isOverpaid ? `+${formatCurrency(absClosing)}` : formatCurrency(absClosing)}
                                             </span>
                                         </TableCell>
 
@@ -168,7 +168,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                                 </span>
                                             )}
                                             {isOverpaid && (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700 border border-teal-200">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
                                                     TRẢ TRƯỚC
                                                 </span>
                                             )}

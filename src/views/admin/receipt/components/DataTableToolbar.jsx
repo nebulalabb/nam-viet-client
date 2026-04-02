@@ -18,6 +18,9 @@ import { BellIcon, QrCode } from 'lucide-react'
 import { useDispatch } from 'react-redux'
 import { getReceiptQRCode, deleteMultipleReceipts } from '@/stores/ReceiptSlice'
 import { toast } from 'sonner'
+import Can from '@/utils/can'
+import { PlusIcon } from 'lucide-react'
+import ReceiptDialog from './ReceiptDialog'
 import {
   Dialog,
   DialogContent,
@@ -40,6 +43,7 @@ const DataTableToolbar = ({ table, isMyReceipt = false }) => {
   const [openQrDialog, setOpenQrDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [qrCodeData, setQrCodeData] = useState(null)
   const [qrLoading, setQrLoading] = useState(false)
   const dispatch = useDispatch()
@@ -102,11 +106,22 @@ const DataTableToolbar = ({ table, isMyReceipt = false }) => {
     return (
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Tìm kiếm theo mã phiếu thu..."
+          placeholder="Tìm kiếm..."
           value={table.getState().globalFilter || ''}
           onChange={(e) => table.setGlobalFilter(e.target.value)}
           className="h-8 flex-1 text-sm"
         />
+
+        <Can permission="CREATE_RECEIPT">
+          <Button
+            className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
+            size="sm"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <PlusIcon className="mr-1 h-3 w-3" />
+            Thêm
+          </Button>
+        </Can>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -165,6 +180,14 @@ const DataTableToolbar = ({ table, isMyReceipt = false }) => {
             isMyReceipt={isMyReceipt}
           />
         )}
+
+        {showCreateDialog && (
+          <ReceiptDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            showTrigger={false}
+          />
+        )}
       </div>
     )
   }
@@ -174,9 +197,9 @@ const DataTableToolbar = ({ table, isMyReceipt = false }) => {
       <div className="flex flex-1 items-center space-x-2">
         <Input
           placeholder="Tìm kiếm theo mã phiếu thu..."
-          value={table.getColumn('code')?.getFilterValue() || ''}
+          value={table.getColumn('receiptCode')?.getFilterValue() || ''}
           onChange={(event) =>
-            table.getColumn('code')?.setFilterValue(event.target.value)
+            table.getColumn('receiptCode')?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
@@ -235,8 +258,20 @@ const DataTableToolbar = ({ table, isMyReceipt = false }) => {
           onClick={() => setShowExportDialog(true)}
         >
           <IconFileTypeXls className="mr-2 size-4" aria-hidden="true" />
-          Xuất Excel
+          Xuất file
         </Button>
+
+        <Can permission="CREATE_RECEIPT">
+          <Button
+            className="bg-green-600 hover:bg-green-700 text-white h-8"
+            size="sm"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <PlusIcon className="mr-2 size-4" aria-hidden="true" />
+            Thêm mới
+          </Button>
+        </Can>
+
 
         {showExportDialog && (
           <ExportReceiptDialog
@@ -244,6 +279,14 @@ const DataTableToolbar = ({ table, isMyReceipt = false }) => {
             onOpenChange={setShowExportDialog}
             showTrigger={false}
             isMyReceipt={isMyReceipt}
+          />
+        )}
+
+        {showCreateDialog && (
+          <ReceiptDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            showTrigger={false}
           />
         )}
       </div>

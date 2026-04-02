@@ -30,6 +30,7 @@ import { DeleteWarehouseReceiptDialog } from './DeleteWarehouseReceiptDialog'
 import ExportWarehouseReceiptPreview from './ExportWarehouseReceiptPreview'
 import MobileWarehouseReceiptActions from './MobileWarehouseReceiptActions'
 import UpdateWarehouseReceiptDialog from './UpdateWarehouseReceiptDialog'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import ViewInvoiceDialog from '../../invoice/components/ViewInvoiceDialog'
 import InvoiceDialog from '../../invoice/components/InvoiceDialog'
@@ -78,6 +79,7 @@ const ViewWarehouseReceiptDialog = ({
   const [showViewProductDialog, setShowViewProductDialog] = useState(false)
   const setting = useSelector((state) => state.setting.setting)
   const [details, setDetails] = useState([])
+  const [receiptNotes, setReceiptNotes] = useState('')
 
   const [showCustomerDialog, setShowCustomerDialog] = useState(false)
   const [showSupplierDialog, setShowSupplierDialog] = useState(false)
@@ -117,11 +119,12 @@ const ViewWarehouseReceiptDialog = ({
         getWarehouseReceiptById(receiptId)
       ).unwrap()
       setReceipt(data)
-      // Parse quantities to avoid '1.0000' strings and ensure numbers for initial state
+      setReceiptNotes(data?.notes || '')
       const parsedDetails = (data?.details || []).map(d => ({
         ...d,
-        qtyDocument: parseFloat(d.qtyDocument) || 0,
-        qtyActual: parseFloat(d.qtyActual) || 0
+        quantity: parseFloat(d.quantity) || 0,
+        qtyDocument: parseFloat(d.quantity) || 0,
+        qtyActual: parseFloat(d.quantity) || 0
       }))
       setDetails(parsedDetails)
     } catch (error) {
@@ -133,12 +136,14 @@ const ViewWarehouseReceiptDialog = ({
 
   const handleDetailChange = (index, field, value) => {
     const newDetails = [...details]
-    // Keep as string during typing to allow decimals
     newDetails[index] = { ...newDetails[index], [field]: value }
 
-    // If changing qtyDocument, sync to qtyActual
+    // Sync quantities
     if (field === 'qtyDocument') {
       newDetails[index].qtyActual = value
+      newDetails[index].quantity = parseFloat(value) || 0
+    } else if (field === 'qtyActual') {
+      newDetails[index].quantity = parseFloat(value) || 0
     }
 
     setDetails(newDetails)
@@ -147,19 +152,14 @@ const ViewWarehouseReceiptDialog = ({
   const handleSaveChanges = async () => {
     try {
       // Construct payload for update
-      // Ensure details are numbers
-      const cleanDetails = details.map(d => ({
-        ...d,
-        qtyDocument: parseFloat(d.qtyDocument) || 0,
-        qtyActual: parseFloat(d.qtyActual) || 0
-      }))
-
       const payload = {
+        notes: receiptNotes,
         details: details.map((d) => ({
           productId: d.productId,
           unitId: d.unitId,
-          qtyDocument: parseFloat(d.qtyDocument) || 0, // Ensure numbers
-          qtyActual: parseFloat(d.qtyActual) || 0, // Ensure numbers
+          quantity: parseFloat(d.qtyActual) || parseFloat(d.quantity) || 0,
+          notes: d.notes,
+          batchNumber: d.batchNumber,
         }))
       }
 
@@ -172,6 +172,29 @@ const ViewWarehouseReceiptDialog = ({
       toast.error('Cập nhật thất bại')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSaveNotes = async () => {
+    try {
+      const payload = {
+        notes: receiptNotes,
+        details: details.map((d) => ({
+          id: d.id,
+          productId: d.productId,
+          unitId: d.unitId,
+          quantity: parseFloat(d.qtyActual) || parseFloat(d.quantity) || 0,
+          notes: d.notes,
+          batchNumber: d.batchNumber,
+        }))
+      }
+      await dispatch(updateWarehouseReceipt({ id: receipt.id, data: payload })).unwrap()
+      toast.success('Lưu ghi chú thành công')
+      fetchData()
+      onSuccess?.()
+    } catch (error) {
+      console.error(error)
+      toast.error('Lưu ghi chú thất bại')
     }
   }
 
@@ -188,7 +211,12 @@ const ViewWarehouseReceiptDialog = ({
 
   const handlePrintWarehouseReceipt = () => {
     if (!receipt) return
-    setPrintData(receipt)
+    const currentPrintData = {
+      ...receipt,
+      notes: receiptNotes, // Sử dụng ghi chú local
+      details: details // Thay thế details bằng local state đang chỉnh sửa
+    }
+    setPrintData(currentPrintData)
     setTimeout(() => setPrintData(null), 100)
   }
 
@@ -335,12 +363,26 @@ const ViewWarehouseReceiptDialog = ({
                       <span className="text-sm text-muted-foreground">Lý do:</span>
                       <p className="font-medium">{receipt?.reason || 'Không có'}</p>
                     </div>
-                    {receipt?.note && (
-                      <div className="sm:col-span-2">
-                        <span className="text-sm text-muted-foreground">Ghi chú:</span>
-                        <p className="font-medium">{receipt?.note}</p>
-                      </div>
-                    )}
+                    <div className="sm:col-span-2">
+                      <span className="text-sm text-muted-foreground">Ghi chú:</span>
+                      {receipt?.status === 'draft' ? (
+                        <Textarea
+                          className="mt-1 text-sm"
+                          placeholder="Nhập ghi chú cho phiếu kho..."
+                          value={receiptNotes}
+                          onChange={(e) => setReceiptNotes(e.target.value)}
+                          rows={2}
+                        />
+                      ) : (
+                        <Textarea
+                          className="mt-1 text-sm"
+                          placeholder="Nhập ghi chú cho phiếu kho..."
+                          value={receiptNotes}
+                          onChange={(e) => setReceiptNotes(e.target.value)}
+                          rows={2}
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Product Details List */}
@@ -373,9 +415,9 @@ const ViewWarehouseReceiptDialog = ({
                                       setSelectedProductId(detail.productId)
                                       setShowViewProductDialog(true)
                                     }}
-                                  >{detail.productName}</div>
+                                  >{detail.product?.productName || detail.productName || 'Sản phẩm không xác định'}</div>
                                   <div className="text-sm text-muted-foreground break-words">
-                                    Mã: {detail.productCode}
+                                    Mã: {detail.product?.code || detail.productCode || detail.productId}
                                   </div>
                                 </div>
                               </div>
@@ -404,6 +446,15 @@ const ViewWarehouseReceiptDialog = ({
                                         onFocus={(e) => e.target.select()}
                                       />
                                     </div>
+                                    <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto mt-1">
+                                      <label className="text-xs text-muted-foreground">Ghi chú:</label>
+                                      <input
+                                        type="text"
+                                        className="w-32 h-8 rounded-md border text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                                        value={detail.notes || ''}
+                                        onChange={(e) => handleDetailChange(index, 'notes', e.target.value)}
+                                      />
+                                    </div>
                                     {(detail.product?.currentStock !== undefined && detail.product?.currentStock !== null) && (
                                       <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto">
                                         <label className="text-xs text-muted-foreground">SL Tồn:</label>
@@ -420,10 +471,10 @@ const ViewWarehouseReceiptDialog = ({
                                   <>
                                     <div className="flex flex-col items-end gap-1 text-sm">
                                       <div className="flex items-center justify-end gap-2">
-                                        <span className="text-muted-foreground">CT: {parseFloat(detail.qtyDocument || 0).toLocaleString('vi-VN')}</span>
+                                        <span className="text-muted-foreground">CT: {parseFloat(detail.qtyDocument || detail.quantity || 0).toLocaleString('vi-VN')}</span>
                                         <span className="text-muted-foreground">|</span>
                                         <Badge variant="outline">
-                                          TT: {parseFloat(detail.qtyActual).toLocaleString('vi-VN')} {detail.unitName}
+                                          TT: {parseFloat(detail.qtyActual || detail.quantity || 0).toLocaleString('vi-VN')} {detail.unitName || detail.product?.unit?.name || ''}
                                         </Badge>
                                       </div>
                                       {(detail.product?.currentStock !== undefined && detail.product?.currentStock !== null) && (
@@ -431,6 +482,16 @@ const ViewWarehouseReceiptDialog = ({
                                           Tồn: {parseFloat(detail.product.currentStock).toLocaleString('vi-VN')}
                                         </div>
                                       )}
+                                      <div className="flex items-center justify-between md:justify-end gap-2 w-full mt-1">
+                                        <label className="text-xs text-muted-foreground whitespace-nowrap">Ghi chú SP:</label>
+                                        <input
+                                          type="text"
+                                          className="flex-1 md:w-48 h-8 rounded-md border text-xs px-2 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                                          value={detail.notes || ''}
+                                          onChange={(e) => handleDetailChange(index, 'notes', e.target.value)}
+                                          placeholder="Ghi chú cho sản phẩm này..."
+                                        />
+                                      </div>
                                     </div>
                                   </>
                                 )}
@@ -479,8 +540,8 @@ const ViewWarehouseReceiptDialog = ({
                     <div className="flex items-center gap-4">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${partner.name}`}
-                          alt={partner.name}
+                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${partner.name || partner.customerName || '?'}`}
+                          alt={partner.name || partner.customerName || 'Partner'}
                         />
                         <AvatarFallback>P</AvatarFallback>
                       </Avatar>
@@ -495,9 +556,9 @@ const ViewWarehouseReceiptDialog = ({
                             }
                           }}
                         >
-                          {partner.name}
+                          {partner.name || partner.customerName || 'Chưa cập nhật tên'}
                         </div>
-                        <div className="text-xs text-muted-foreground">{partner.code}</div>
+                        <div className="text-xs text-muted-foreground">{partner.code || partner.customerCode || ''}</div>
                       </div>
                     </div>
 
@@ -547,18 +608,18 @@ const ViewWarehouseReceiptDialog = ({
                   <h2 className="py-2 text-lg font-semibold">Người tạo phiếu</h2>
                 </div>
 
-                {receipt?.createdByUser && (
+                {(receipt?.creator || receipt?.createdByUser) && (
                   <div className="space-y-6">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${receipt.createdByUser.fullName}`}
-                          alt={receipt.createdByUser.fullName}
+                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${receipt.creator?.fullName || receipt.createdByUser?.fullName || '?'}`}
+                          alt={receipt.creator?.fullName || receipt.createdByUser?.fullName || 'Creator'}
                         />
                         <AvatarFallback>U</AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{receipt.createdByUser.fullName}</div>
+                        <div className="font-medium">{receipt.creator?.fullName || receipt.createdByUser?.fullName}</div>
                         <div className="text-xs text-muted-foreground">
                           {dateFormat(receipt.createdAt, true)}
                         </div>
@@ -566,16 +627,16 @@ const ViewWarehouseReceiptDialog = ({
                     </div>
 
                     <div className="mt-4 space-y-2 text-sm">
-                      {receipt.createdByUser.phone && (
+                      {(receipt.creator?.phone || receipt.createdByUser?.phone) && (
                         <div className="flex cursor-pointer items-center text-primary hover:text-secondary-foreground">
                           <MobileIcon className="mr-2 h-4 w-4" />
-                          <a href={`tel:${receipt.createdByUser.phone}`}>{receipt.createdByUser.phone}</a>
+                          <a href={`tel:${receipt.creator?.phone || receipt.createdByUser?.phone}`}>{receipt.creator?.phone || receipt.createdByUser?.phone}</a>
                         </div>
                       )}
-                      {receipt.createdByUser.email && (
+                      {(receipt.creator?.email || receipt.createdByUser?.email) && (
                         <div className="flex items-center text-muted-foreground">
                           <Mail className="mr-2 h-4 w-4" />
-                          <a href={`mailto:${receipt.createdByUser.email}`}>{receipt.createdByUser.email}</a>
+                          <a href={`mailto:${receipt.creator?.email || receipt.createdByUser?.email}`}>{receipt.creator?.email || receipt.createdByUser?.email}</a>
                         </div>
                       )}
                     </div>
@@ -605,6 +666,18 @@ const ViewWarehouseReceiptDialog = ({
                   Lưu
                 </Button>
               </Can>
+            )}
+            {receipt?.status !== 'draft' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 text-green-600 border-green-200 hover:bg-green-50"
+                onClick={handleSaveNotes}
+                disabled={loading}
+              >
+                <Save className="h-4 w-4" />
+                Lưu ghi chú
+              </Button>
             )}
             <Button
               size="sm"

@@ -42,7 +42,7 @@ export const TopProductsTable = ({ products = [], onOpenDialog }) => {
                             </tr>
                         ) : (
                             products.map((product, idx) => (
-                                <tr key={product.id} className="border-b last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedProduct(product)}>
+                                <tr key={product.id || product.product_id || `product-${idx}`} className="border-b last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedProduct(product)}>
                                     <td className="px-4 py-3 font-medium text-muted-foreground">{idx + 1}</td>
                                     <td className="px-4 py-3 font-medium">
                                         <span className="line-clamp-1">{product.name || product.product_name}</span>

@@ -875,7 +875,7 @@ const InvoiceSidebar = ({
           {isUpdate ? 'Cập nhật đơn bán' : 'Tạo đơn bán'}
         </Button>
 
-        {/* Print Buttons */}
+        {/* Print Buttons Disabled by Business Logic (Chỉ in khi có phiếu xuất kho)
         <div className="space-y-2 flex flex-col">
           <Button
             type="button"
@@ -886,7 +886,7 @@ const InvoiceSidebar = ({
             <IconFileTypePdf className="h-4 w-4 mr-2" />
             {isUpdate ? 'Cập nhật Và In Hóa Đơn' : 'Tạo Và In Hóa Đơn'}
           </Button>
-          {/* <Button
+          <Button
             type="button"
             className="w-full"
             onClick={form.handleSubmit((data) => onSubmit(data, { printAgreement: true }))}
@@ -894,8 +894,9 @@ const InvoiceSidebar = ({
           >
             <IconFileTypePdf className="h-4 w-4 mr-2" />
             {isUpdate ? 'Cập nhật Và In Thỏa Thuận' : 'Tạo Và In Thỏa Thuận'}
-          </Button> */}
+          </Button>
         </div>
+        */}
       </div>
     </div>
   )

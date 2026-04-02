@@ -76,7 +76,20 @@ export const getWarehouseReceiptById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await api.get(`/stock-transactions/${id}`)
-      return response.data.data
+      const tx = response.data.data
+      
+      const receiptTypeMap = { import: 1, export: 2, transfer: 3, disposal: 4, stocktake: 5 }
+      return {
+        ...tx,
+        code: tx.transactionCode,
+        receiptType: receiptTypeMap[tx.transactionType] ?? 1,
+        status: tx.isPosted ? 'posted' : 'draft',
+        receiptDate: tx.createdAt,
+        updatedAt: tx.updatedAt ?? tx.createdAt,
+        totalAmount: tx.totalValue ?? 0,
+        totalQuantity: tx.details?.reduce((sum, d) => sum + Number(d.quantity ?? 0), 0) ?? 0,
+        reason: tx.reason ?? null,
+      }
     } catch (error) {
       const message = handleError(error)
       return rejectWithValue(message)

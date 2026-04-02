@@ -19,7 +19,9 @@ import {
 import { EllipsisVertical } from 'lucide-react'
 import { IconFileTypeXls } from '@tabler/icons-react'
 import ExportPaymentDialog from './ExportPaymentDialog'
-
+import Can from '@/utils/can'
+import { PlusIcon } from 'lucide-react'
+import PaymentDialog from './PaymentDialog'
 
 export function DataTableToolbar({ table, isMyPayment = false }) {
   const isFiltered = table.getState().columnFilters.length > 0
@@ -27,6 +29,7 @@ export function DataTableToolbar({ table, isMyPayment = false }) {
   const [selectedPayments, setSelectedPayments] = useState([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   const selectedRows = table.getSelectedRowModel().rows
   const dispatch = useDispatch()
@@ -62,11 +65,22 @@ export function DataTableToolbar({ table, isMyPayment = false }) {
     return (
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Tìm kiếm theo mã phiếu chi..."
+          placeholder="Tìm kiếm..."
           value={table.getState().globalFilter || ''}
           onChange={(e) => table.setGlobalFilter(e.target.value)}
           className="h-8 flex-1 text-sm"
         />
+
+        <Can permission="CREATE_PAYMENT">
+          <Button
+            className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white"
+            size="sm"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <PlusIcon className="mr-1 h-3 w-3" />
+            Thêm
+          </Button>
+        </Can>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -93,6 +107,14 @@ export function DataTableToolbar({ table, isMyPayment = false }) {
             isMyPayment={isMyPayment}
           />
         )}
+
+        {showCreateDialog && (
+          <PaymentDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            showTrigger={false}
+          />
+        )}
       </div>
     )
   }
@@ -102,9 +124,9 @@ export function DataTableToolbar({ table, isMyPayment = false }) {
       <div className="flex flex-1 items-center space-x-2">
         <Input
           placeholder="Tìm kiếm theo mã phiếu chi..."
-          value={table.getColumn('code')?.getFilterValue() || ''}
+          value={table.getColumn('voucherCode')?.getFilterValue() || ''}
           onChange={(event) =>
-            table.getColumn('code')?.setFilterValue(event.target.value)
+            table.getColumn('voucherCode')?.setFilterValue(event.target.value)
           }
           className="h-8 flex-1 lg:flex-none lg:w-[250px]"
         />
@@ -144,12 +166,31 @@ export function DataTableToolbar({ table, isMyPayment = false }) {
           Xuất file
         </Button>
 
+        <Can permission="CREATE_PAYMENT">
+          <Button
+            className="bg-green-600 hover:bg-green-700 text-white h-8"
+            size="sm"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <PlusIcon className="mr-2 size-4" aria-hidden="true" />
+            Thêm mới
+          </Button>
+        </Can>
+
         {showExportDialog && (
           <ExportPaymentDialog
             open={showExportDialog}
             onOpenChange={setShowExportDialog}
             showTrigger={false}
             isMyPayment={isMyPayment}
+          />
+        )}
+
+        {showCreateDialog && (
+          <PaymentDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            showTrigger={false}
           />
         )}
 

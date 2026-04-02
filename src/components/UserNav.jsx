@@ -16,12 +16,11 @@ import LogoutAlertDialog from './LogoutAlertDialog'
 import { useDispatch, useSelector } from 'react-redux'
 import UserProfileDialog from './UserProfileDialog'
 import ChangePasswordDialog from './ChangePasswordDialog'
-import { Key, LogOut, UserCircle, Moon, Sun, Monitor, Bell } from 'lucide-react'
+import { Key, LogOut, UserCircle, Moon, Sun, Monitor, Bell, AlertTriangle, Check } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 import { DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from '@/components/ui/dropdown-menu'
 
-import { Link, useNavigate } from 'react-router-dom'
-import { dateFormat } from '@/utils/date-format'
+import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 import {
   Dialog,
@@ -44,42 +43,16 @@ const UserNav = () => {
 
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
-  const notifications = []
+  const notifications = useSelector(
+    (state) => state.notification.notifications,
+  )
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => n.unread).length,
     [notifications],
   )
 
-  const todayList = useMemo(
-    () => notifications.filter((n) => n.isToday),
-    [notifications],
-  )
-  const earlierList = useMemo(
-    () => notifications.filter((n) => !n.isToday),
-    [notifications],
-  )
 
-  const handleClickItem = (e, noti) => {
-    if (noti.isToday && noti.unread) {
-      e.preventDefault()
-      navigate('/expiry')
-    }
-  }
-
-  const getNotificationTextClass = (noti, isToday) => {
-    const isExpired = noti.name === 'Đã hết hạn sử dụng'
-
-    if (isToday) {
-      if (isExpired && noti.unread) return 'text-red-500 font-semibold'
-      if (isExpired && !noti.unread) return 'text-red-400'
-      if (!isExpired && !noti.unread) return 'text-gray-500'
-      return 'text-gray-900'
-    } else {
-      if (isExpired) return 'text-red-400'
-      return 'text-gray-500'
-    }
-  }
 
   return (
     <>
@@ -213,81 +186,53 @@ const UserNav = () => {
             <DialogTitle>Thông báo</DialogTitle>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto px-2 pb-4">
-            <div className="flex items-center justify-between px-2 pb-2 text-sm font-semibold">
-              <span>Danh sách</span>
-              <span className="text-xs font-normal text-muted-foreground">
-                Chưa đọc: <b>{unreadCount}</b>
-              </span>
-            </div>
-
-            {todayList.length > 0 && (
-              <>
-                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                  Hôm nay
-                </div>
-                <div className="space-y-1">
-                  {todayList.map((noti) => (
-                    <Link
-                      key={noti.id}
-                      to="/expiry"
-                      onClick={(e) => {
-                        handleClickItem(e, noti)
-                        setShowMobileNotifications(false)
-                      }}
-                      className="flex w-full flex-col rounded-md p-3 transition hover:bg-accent"
+            {notifications.length > 0 ? (
+              <div className="space-y-1">
+                {notifications.map((noti) => (
+                  <div
+                    key={noti.key}
+                    onClick={() => {
+                      if (noti.link) navigate(noti.link)
+                      setShowMobileNotifications(false)
+                    }}
+                    className={clsx(
+                      'flex items-start gap-2 rounded-md p-3 transition cursor-pointer hover:bg-accent',
+                      noti.unread ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'opacity-70',
+                    )}
+                  >
+                    <div
+                      className={clsx(
+                        'mt-0.5 shrink-0 rounded-full p-1.5',
+                        noti.type === 'warning'
+                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400'
+                          : 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+                      )}
                     >
-                      <span
-                        className={clsx(
-                          'text-sm',
-                          getNotificationTextClass(noti, true),
-                        )}
-                      >
-                        {noti.content}
+                      {noti.type === 'warning' ? (
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                      ) : (
+                        <Bell className="h-3.5 w-3.5" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className={clsx('text-sm font-medium', noti.unread ? 'text-foreground' : 'text-muted-foreground')}>
+                        {noti.title}
                       </span>
-                      <span className="w-full text-end text-xs text-muted-foreground">
-                        {dateFormat(noti.createdAt)}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-                <div className="my-2 h-px bg-muted" />
-              </>
-            )}
-
-            {earlierList.length > 0 ? (
-              <>
-                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">
-                  Trước đó
-                </div>
-                <div className="space-y-1">
-                  {earlierList.map((noti) => (
-                    <Link
-                      key={noti.id}
-                      to="/expiry"
-                      onClick={() => setShowMobileNotifications(false)}
-                      className="flex w-full flex-col rounded-md p-3 transition hover:bg-accent"
-                    >
-                      <span
-                        className={clsx(
-                          'text-sm',
-                          getNotificationTextClass(noti, false),
-                        )}
-                      >
-                        {noti.content}
-                      </span>
-                      <span className="w-full text-end text-xs text-muted-foreground">
-                        {dateFormat(noti.createdAt)}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {noti.message}
+                      </p>
+                    </div>
+                    {noti.unread && (
+                      <span className="shrink-0 mt-1 h-2 w-2 rounded-full bg-blue-500" />
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
-              notifications.length === 0 && (
-                <div className="py-4 text-center text-sm text-muted-foreground">
-                  Không có thông báo
-                </div>
-              )
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <Check className="h-8 w-8 mb-2 opacity-30" />
+                <p className="text-sm">Không có thông báo</p>
+              </div>
             )}
           </div>
         </DialogContent>

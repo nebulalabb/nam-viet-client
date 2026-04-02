@@ -44,8 +44,8 @@ export const LowStockTable = ({ products = [], onOpenDialog }) => {
                                 </td>
                             </tr>
                         ) : (
-                            products.map((product) => (
-                                <tr key={product.id} className="border-b last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedProduct(product)}>
+                            products.map((product, idx) => (
+                                <tr key={product.id || product.product_id || product.sku || `low-stock-${idx}`} className="border-b last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedProduct(product)}>
                                     <td className="px-4 py-3 font-medium">
                                         <span className="line-clamp-1">{product.name || product.product_name}</span>
                                     </td>

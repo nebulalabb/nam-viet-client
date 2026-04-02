@@ -9,7 +9,7 @@ import {
   DialogTrigger,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { IdCardIcon, MobileIcon, PlusIcon } from '@radix-ui/react-icons'
+import { IdCardIcon, MobileIcon, PlusIcon, CaretSortIcon } from '@radix-ui/react-icons'
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/table'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Mail, MapPin } from 'lucide-react'
+import { Mail, MapPin, User, RefreshCcw, CheckIcon } from 'lucide-react'
 import {
   Form,
   FormControl,
@@ -56,6 +56,21 @@ import { getSetting } from '@/stores/SettingSlice'
 import { cn } from '@/lib/utils'
 import { getPublicUrl } from '@/utils/file'
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { getCustomers } from '@/stores/CustomerSlice'
+import { toast } from 'sonner'
 import { useMediaQuery } from '@/hooks/UseMediaQuery'
 import PaymentQRCodeDialog from '../../receipt/components/PaymentQRCodeDialog'
 
@@ -82,6 +97,9 @@ const ReceiptDialog = ({
   const [showQrDialog, setShowQrDialog] = useState(false)
   const [createdReceiptId, setCreatedReceiptId] = useState(null)
   const setting = useSelector((state) => state.setting.setting)
+  const customers = useSelector((state) => state.customer.customers)
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [openCustomerPopover, setOpenCustomerPopover] = useState(false)
 
   const effectiveReceiptId = receiptId || propReceipt?.id
   const isEditMode = !!effectiveReceiptId
@@ -92,6 +110,7 @@ const ReceiptDialog = ({
   const invoiceItems = invoiceData?.details || invoiceData?.invoiceItems || []
   const customer = invoiceData?.customer
   const banks = setting?.banks || []
+  const isStandaloneMode = !invoiceId && !receipt?.invoiceId && !effectiveReceiptId
 
   const totalAmountFromInvoice = parseFloat(invoiceData?.totalAmount || invoiceData?.amount || 0)
   const totalTaxAmount = parseFloat(invoiceData?.taxAmount || 0)
@@ -164,6 +183,12 @@ const ReceiptDialog = ({
   }, [dispatch])
 
   useEffect(() => {
+    if (open && isStandaloneMode) {
+      dispatch(getCustomers())
+    }
+  }, [open, dispatch, isStandaloneMode])
+
+  useEffect(() => {
     if (open && effectiveReceiptId) {
       dispatch(getReceiptById(effectiveReceiptId))
         .unwrap()
@@ -175,6 +200,8 @@ const ReceiptDialog = ({
         })
     } else if (!open) {
       setFetchedReceipt(null)
+      setSelectedCustomer(null)
+      setOpenCustomerPopover(false)
     }
   }, [open, effectiveReceiptId, dispatch])
 
@@ -218,7 +245,9 @@ const ReceiptDialog = ({
 
   const onSubmit = async (data) => {
     const amountToReceive = parseFloat(data.totalAmount) || 0
-    if (amountToReceive > maxAllowableAmount) {
+
+    // Only validate amount limit when linked to an invoice
+    if (!isStandaloneMode && amountToReceive > maxAllowableAmount) {
       form.setError('totalAmount', {
         type: 'manual',
         message: `Số tiền thu không được vượt quá số nợ còn lại (${moneyFormat(maxAllowableAmount)})`,
@@ -226,18 +255,28 @@ const ReceiptDialog = ({
       return
     }
 
+    // Validate customer selection in standalone mode
+    if (isStandaloneMode && !selectedCustomer) {
+      toast.error('Vui lòng chọn khách hàng')
+      return
+    }
+
+    const customerId = isStandaloneMode
+      ? selectedCustomer?.id
+      : parseInt(invoiceData?.customerId || customer?.id || receipt?.customerId)
+
     // Build payload matching backend requirements
     const dataToSend = {
-      receiptType: 'sales',
-      customerId: parseInt(invoiceData?.customerId || customer?.id || receipt?.customerId),
-      orderId: invoiceId || receipt?.orderId || receipt?.invoiceId || invoiceData?.id,
+      receiptType: isStandaloneMode ? 'debt_collection' : 'sales',
+      customerId: parseInt(customerId),
+      orderId: isStandaloneMode ? undefined : (invoiceId || receipt?.orderId || receipt?.invoiceId || invoiceData?.id),
       amount: parseInt(data.totalAmount) || 0,
       paymentMethod: data.paymentMethod,
       bankName: data.paymentMethod === 'transfer' && data.bankAccount
         ? JSON.stringify(data.bankAccount)
         : null,
       receiptDate: data.receiptDate || new Date().toISOString(),
-      notes: data.note || 'Thu tiền bán hàng',
+      notes: data.note || (isStandaloneMode ? 'Thu tiền công nợ' : 'Thu tiền bán hàng'),
       transactionReference: data.paymentNote || null,
     }
 
@@ -286,6 +325,7 @@ const ReceiptDialog = ({
   const navigateAway = () => {
     if (onSuccess) {
       form.reset()
+      setSelectedCustomer(null)
       onSuccess()
       return
     }
@@ -360,6 +400,7 @@ const ReceiptDialog = ({
                         </h2>
 
                         <div className="space-y-6">
+                          {(!isStandaloneMode && invoiceData && invoiceItems.length > 0) && (
                           <div className={cn("overflow-x-auto rounded-lg border", isMobile && "border-0 overflow-visible")}>
                             {!isMobile ? (
                               <Table className="min-w-full">
@@ -558,6 +599,7 @@ const ReceiptDialog = ({
                               </div>
                             )}
                           </div>
+                          )}
                           <div className="grid gap-4 md:grid-cols-[2fr,1fr]">
                             <FormField
                               control={form.control}
@@ -801,60 +843,199 @@ const ReceiptDialog = ({
                         </div>
 
                         <div className="space-y-6">
-                          <div className="flex items-center gap-4">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage
-                                src={`https://ui-avatars.com/api/?bold=true&background=random&name=${customer?.customerName}`}
-                                alt={customer?.customerName}
-                              />
-                              <AvatarFallback>AD</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{customer?.customerName}</div>
-                            </div>
-                          </div>
+                          {isStandaloneMode ? (
+                            /* Standalone mode: Customer selection dropdown */
+                            <>
+                              {selectedCustomer ? (
+                                <div className="border rounded-lg p-3 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarImage
+                                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${selectedCustomer?.customerName || selectedCustomer?.name}`}
+                                        alt={selectedCustomer?.customerName || selectedCustomer?.name}
+                                      />
+                                      <AvatarFallback>
+                                        <User className="h-4 w-4" />
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm truncate">
+                                        {selectedCustomer?.customerName || selectedCustomer?.name}
+                                      </div>
+                                      {(selectedCustomer?.customerCode || selectedCustomer?.code) && (
+                                        <div className="text-xs text-muted-foreground">
+                                          {selectedCustomer?.customerCode || selectedCustomer?.code}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={() => setSelectedCustomer(null)}
+                                    >
+                                      <RefreshCcw className="h-4 w-4" />
+                                    </Button>
+                                  </div>
 
-                          <div>
-                            <div className="mb-2 flex items-center justify-between">
-                              <div className="font-medium">
-                                Thông tin khách hàng
-                              </div>
-                            </div>
+                                  <Separator />
 
-                            <div className="mt-4 space-y-2 text-sm">
-                              <div className="flex cursor-pointer items-center text-primary hover:text-secondary-foreground">
-                                <div className="mr-2 h-4 w-4 ">
-                                  <MobileIcon className="h-4 w-4" />
+                                  <div className="space-y-1.5 text-xs">
+                                    {selectedCustomer?.phone && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <MobileIcon className="h-3 w-3" />
+                                        <a href={`tel:${selectedCustomer?.phone}`} className="hover:text-primary">
+                                          {selectedCustomer?.phone}
+                                        </a>
+                                      </div>
+                                    )}
+                                    {selectedCustomer?.email && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Mail className="h-3 w-3" />
+                                        <a href={`mailto:${selectedCustomer?.email}`} className="hover:text-primary truncate">
+                                          {selectedCustomer?.email}
+                                        </a>
+                                      </div>
+                                    )}
+                                    {selectedCustomer?.address && (
+                                      <div className="flex items-start gap-2 text-muted-foreground">
+                                        <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+                                        <span className="line-clamp-2">{selectedCustomer?.address}</span>
+                                      </div>
+                                    )}
+                                    {(selectedCustomer?.cccd || selectedCustomer?.identityCard) && (
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <IdCardIcon className="h-3 w-3" />
+                                        <span>CCCD: {selectedCustomer?.cccd || selectedCustomer?.identityCard}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Show current debt info */}
+                                  {selectedCustomer?.currentDebt !== undefined && (
+                                    <>
+                                      <Separator />
+                                      <div className="flex justify-between items-center text-xs">
+                                        <span className="text-muted-foreground">Công nợ hiện tại:</span>
+                                        <span className={cn(
+                                          "font-bold",
+                                          Number(selectedCustomer.currentDebt) > 0 ? "text-destructive" : Number(selectedCustomer.currentDebt) < 0 ? "text-green-600" : "text-muted-foreground"
+                                        )}>
+                                          {Number(selectedCustomer.currentDebt) < 0
+                                            ? `+${moneyFormat(Math.abs(selectedCustomer.currentDebt))} (trả trước)`
+                                            : moneyFormat(selectedCustomer.currentDebt)
+                                          }
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
-                                <a href={`tel:${customer?.phone}`}>
-                                  {customer?.phone || 'Chưa cập nhật'}
-                                </a>
+                              ) : (
+                                <Popover open={openCustomerPopover} onOpenChange={setOpenCustomerPopover}>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="w-full justify-between font-normal"
+                                    >
+                                      Chọn khách hàng
+                                      <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" style={{ zIndex: 100020 }}>
+                                    <Command>
+                                      <CommandInput placeholder="Tìm kiếm theo tên, SĐT, CCCD..." className="h-9" />
+                                      <CommandEmpty>Không tìm thấy khách hàng</CommandEmpty>
+                                      <CommandGroup>
+                                        <CommandList>
+                                          {customers.map((cust) => (
+                                            <CommandItem
+                                              value={`${cust.customerName || cust.name || ''} ${cust.phone || ''} ${cust.cccd || ''}`}
+                                              key={cust.id}
+                                              onSelect={() => {
+                                                setSelectedCustomer(cust)
+                                                setOpenCustomerPopover(false)
+                                              }}
+                                            >
+                                              <div className="flex flex-col">
+                                                <span className="font-medium">{cust.customerName || cust.name}</span>
+                                                <span className="text-xs text-muted-foreground">{cust.phone} · {cust.customerCode || cust.code}</span>
+                                              </div>
+                                              <CheckIcon
+                                                className={cn(
+                                                  'ml-auto h-4 w-4',
+                                                  selectedCustomer?.id === cust.id ? 'opacity-100' : 'opacity-0'
+                                                )}
+                                              />
+                                            </CommandItem>
+                                          ))}
+                                        </CommandList>
+                                      </CommandGroup>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </>
+                          ) : (
+                            /* Invoice-based customer display */
+                            <>
+                              <div className="flex items-center gap-4">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage
+                                    src={`https://ui-avatars.com/api/?bold=true&background=random&name=${customer?.customerName}`}
+                                    alt={customer?.customerName}
+                                  />
+                                  <AvatarFallback>AD</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-medium">{customer?.customerName}</div>
+                                </div>
                               </div>
 
-                              <div className="flex items-center text-muted-foreground">
-                                <div className="mr-2 h-4 w-4 ">
-                                  <IdCardIcon className="h-4 w-4" />
+                              <div>
+                                <div className="mb-2 flex items-center justify-between">
+                                  <div className="font-medium">
+                                    Thông tin khách hàng
+                                  </div>
                                 </div>
-                                {customer?.cccd || 'Chưa cập nhật'}
-                              </div>
 
-                              <div className="flex items-center text-muted-foreground">
-                                <div className="mr-2 h-4 w-4 ">
-                                  <Mail className="h-4 w-4" />
-                                </div>
-                                <a href={`mailto:${customer?.email}`}>
-                                  {customer?.email || 'Chưa cập nhật'}
-                                </a>
-                              </div>
+                                <div className="mt-4 space-y-2 text-sm">
+                                  <div className="flex cursor-pointer items-center text-primary hover:text-secondary-foreground">
+                                    <div className="mr-2 h-4 w-4 ">
+                                      <MobileIcon className="h-4 w-4" />
+                                    </div>
+                                    <a href={`tel:${customer?.phone}`}>
+                                      {customer?.phone || 'Chưa cập nhật'}
+                                    </a>
+                                  </div>
 
-                              <div className="flex items-center text-primary hover:text-secondary-foreground">
-                                <div className="mr-2 h-4 w-4 ">
-                                  <MapPin className="h-4 w-4" />
+                                  <div className="flex items-center text-muted-foreground">
+                                    <div className="mr-2 h-4 w-4 ">
+                                      <IdCardIcon className="h-4 w-4" />
+                                    </div>
+                                    {customer?.cccd || 'Chưa cập nhật'}
+                                  </div>
+
+                                  <div className="flex items-center text-muted-foreground">
+                                    <div className="mr-2 h-4 w-4 ">
+                                      <Mail className="h-4 w-4" />
+                                    </div>
+                                    <a href={`mailto:${customer?.email}`}>
+                                      {customer?.email || 'Chưa cập nhật'}
+                                    </a>
+                                  </div>
+
+                                  <div className="flex items-center text-primary hover:text-secondary-foreground">
+                                    <div className="mr-2 h-4 w-4 ">
+                                      <MapPin className="h-4 w-4" />
+                                    </div>
+                                    {customer?.address || 'Chưa cập nhật'}
+                                  </div>
                                 </div>
-                                {customer?.address || 'Chưa cập nhật'}
                               </div>
-                            </div>
-                          </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -7,15 +7,23 @@ export const columns = [
         accessorKey: 'images',
         header: () => <div className="text-center">Hình ảnh</div>,
         cell: ({ row }) => {
+            // Primary source: the `image` field (single string) from the product
+            const imageUrl = row.original.image || row.original.document
+            const publicImageUrl = imageUrl ? getPublicUrl(imageUrl) : null
+
+            // Fallback: try from `images` array
             const images = row.getValue('images')
             const primaryImage = images?.find((img) => img.isPrimary) || images?.[0]
-            const publicImageUrl = primaryImage ? getPublicUrl(primaryImage.imageUrl) : null
+            const fallbackUrl = primaryImage ? getPublicUrl(primaryImage.imageUrl) : null
+
+            const finalUrl = publicImageUrl || fallbackUrl
+
             return (
                 <div className="flex justify-center">
-                    {publicImageUrl ? (
+                    {finalUrl ? (
                         <img
-                            src={publicImageUrl}
-                            alt={row.getValue('productName')}
+                            src={finalUrl}
+                            alt={row.original.productName}
                             className="h-10 w-10 rounded-md object-cover border"
                             onError={(e) => {
                                 e.target.src = '/placeholder.png'

@@ -83,8 +83,6 @@ const CustomerDebtPage = () => {
 
     // Effect fetch cho tab Theo tháng (giống Tổng hợp nhưng tính theo tháng hiện tại)
     useEffect(() => {
-        if (activeTab !== 'monthly') return
-        document.title = 'Công nợ theo tháng'
         const monthNow = new Date().getMonth() + 1
         dispatch(getMonthlyDebtObjects({
             year: filters.year || new Date().getFullYear(),
@@ -92,10 +90,12 @@ const CustomerDebtPage = () => {
             type: filters.type,
             // Phân quyền theo người phụ trách
             assignedUserId: !isAdmin ? authUser?.id : undefined,
-            page: filters.page,
-            limit: filters.limit,
+            page: activeTab === 'monthly' ? filters.page : 1,
+            limit: activeTab === 'monthly' ? filters.limit : 1,
+            search: searchTerm,
+            address: addressTerm
         }))
-    }, [dispatch, filters.year, filters.type, filters.page, filters.limit, activeTab, isAdmin, authUser?.id])
+    }, [dispatch, filters.year, filters.type, activeTab === 'monthly' ? filters.page : 1, activeTab === 'monthly' ? filters.limit : 1, isAdmin, authUser?.id, searchTerm, addressTerm])
 
     const handleResetFilters = () => {
         setSearchTerm("")
@@ -119,10 +119,16 @@ const CustomerDebtPage = () => {
         opening: 0, increase: 0, returnAmount: 0, payment: 0, closing: 0
     }
 
+    const monthlySummary = monthlyObjectsPagination?.summary || {
+        opening: 0, increase: 0, returnAmount: 0, payment: 0, closing: 0
+    }
+
     const closingLabel =
         filters.type === 'supplier'
             ? 'NỢ CẦN TRẢ'
             : (!filters.type ? 'NỢ CẦN THU / NỢ CẦN TRẢ' : 'NỢ CẦN THU')
+    
+    const monthNow = new Date().getMonth() + 1;
 
     return (
         <Layout>
@@ -189,15 +195,37 @@ const CustomerDebtPage = () => {
                     <IntegrityWidget year={filters.year || new Date().getFullYear()} />
                 ) */}
 
-                {/* FINANCIAL STRIP — chỉ hiện ở tab Tổng hợp */}
+                {/* FINANCIAL STRIP — hiển thị ở tab Tổng hợp */}
                 {activeTab === 'aggregate' && (
-                    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden mb-2">
-                        <div className="grid grid-cols-5 divide-x divide-gray-200">
-                            <StripCell label="NỢ ĐẦU KỲ" value={finalSummary.opening} />
-                            <StripCell label="TỔNG MUA" value={finalSummary.increase} color="text-blue-600" />
-                            <StripCell label="TRẢ HÀNG" value={finalSummary.returnAmount} color="text-indigo-600" />
-                            <StripCell label="THANH TOÁN" value={finalSummary.payment} color="text-green-600" />
-                            <StripCell label={closingLabel} value={finalSummary.closing} color="text-red-600" highlight />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        {/* Khối 1: Cả năm */}
+                        <div className="rounded-xl border border-blue-200 bg-white shadow-sm overflow-hidden relative">
+                            <div className="bg-blue-50 text-blue-800 text-xs font-bold px-4 py-2 border-b border-blue-100 flex justify-between items-center">
+                                <span>TỔNG HỢP NĂM {filters.year || new Date().getFullYear()}</span>
+                                <span className="bg-blue-100 px-2 py-0.5 rounded-full text-[10px]">Toàn kỳ</span>
+                            </div>
+                            <div className="grid grid-cols-5 divide-x divide-blue-50 py-2">
+                                <StripCell label="NỢ ĐẦU KỲ" value={finalSummary.opening} />
+                                <StripCell label="TỔNG MUA" value={finalSummary.increase} color="text-blue-600" />
+                                <StripCell label="TRẢ HÀNG" value={finalSummary.returnAmount} color="text-indigo-600" />
+                                <StripCell label="THANH TOÁN" value={finalSummary.payment} color="text-green-600" />
+                                <StripCell label={closingLabel} value={finalSummary.closing} color="text-red-600" highlight />
+                            </div>
+                        </div>
+
+                        {/* Khối 2: Tháng hiện tại */}
+                        <div className="rounded-xl border border-green-200 bg-white shadow-sm overflow-hidden relative">
+                            <div className="bg-green-50 text-green-800 text-xs font-bold px-4 py-2 border-b border-green-100 flex justify-between items-center">
+                                <span>TỔNG HỢP THÁNG {monthNow}/{filters.year || new Date().getFullYear()}</span>
+                                <span className="bg-green-100 px-2 py-0.5 rounded-full text-[10px]">hiện tại</span>
+                            </div>
+                            <div className="grid grid-cols-5 divide-x divide-green-50 py-2">
+                                <StripCell label="NỢ ĐẦU KỲ" value={monthlySummary.opening} />
+                                <StripCell label="TỔNG MUA" value={monthlySummary.increase} color="text-blue-600" />
+                                <StripCell label="TRẢ HÀNG" value={monthlySummary.returnAmount} color="text-indigo-600" />
+                                <StripCell label="THANH TOÁN" value={monthlySummary.payment} color="text-green-600" />
+                                <StripCell label={closingLabel} value={monthlySummary.closing} color="text-red-600" highlight />
+                            </div>
                         </div>
                     </div>
                 )}
@@ -386,11 +414,11 @@ const CustomerDebtPage = () => {
 
 function StripCell({ label, value, color = "text-gray-800", highlight = false }) {
     return (
-        <div className={`px-6 py-3 text-center ${highlight ? 'bg-gray-50' : ''}`}>
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">
+        <div className={`px-1 md:px-2 lg:px-4 py-2 text-center flex flex-col justify-center ${highlight ? 'bg-gray-50/80' : ''}`}>
+            <p className="text-[9px] md:text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                 {label}
             </p>
-            <p className={`text-lg font-bold ${color}`}>
+            <p className={`text-xs sm:text-sm md:text-base font-bold ${color}`}>
                 {formatCurrency(value)}
             </p>
         </div>

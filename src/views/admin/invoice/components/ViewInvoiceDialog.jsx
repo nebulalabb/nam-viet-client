@@ -322,7 +322,7 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
           const detail = {
             productId: item.productId || item.id,
             quantity: Number(item.quantity),
-            notes: reason || `Xuất kho theo đơn bán ${invoice.orderCode}`,
+            notes: '',
           }
           const unitId = item.unitId || item.unit?.id
           if (unitId) detail.unitId = unitId
@@ -338,8 +338,8 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         receiptType: 2,
         businessType: 'sale_out',
         actualReceiptDate: actualReceiptDate || null,
-        reason: reason || `Xuất kho cho đơn bán ${invoice.orderCode}`,
-        notes: notes || invoice.notes || 'Xuất kho từ hóa đơn',
+        reason: reason || '',
+        notes: notes || '',
         warehouseId: Number(warehouseId),
         customerId: invoice.customerId,
         referenceType: 'invoice',
@@ -828,10 +828,27 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                           <Separator className="my-3" />
 
                           {/* Payment Status & Info */}
+                          {(() => {
+                            const customerDebt = Number(invoice?.customer?.currentDebt || 0)
+                            const hasPrepaidCredit = customerDebt < 0
+                            const postedReceipts = invoice?.paymentReceipts?.filter(r => r.isPosted) || []
+                            const totalPaidPosted = postedReceipts.reduce((sum, r) => sum + Number(r.amount || 0), 0)
+                            const invoiceTotal = Number(invoice?.totalAmount || 0)
+                            const unpaidThisInvoice = invoiceTotal - totalPaidPosted
+                            const oldDebt = customerDebt - unpaidThisInvoice
+                            const prepaidCredit = oldDebt < 0 ? Math.abs(oldDebt) : 0
+                            const displayOldDebt = oldDebt > 0 ? oldDebt : 0
+                            const effectiveTotalPaid = totalPaidPosted + prepaidCredit
+                            const totalDebt = displayOldDebt + invoiceTotal - effectiveTotalPaid
+                            return (
                           <div className="space-y-3">
                             <div className="flex justify-between">
                               <strong>Trạng thái thanh toán:</strong>
-                              {invoice?.paymentStatus && (
+                              {hasPrepaidCredit ? (
+                                <span className="font-medium text-green-600">
+                                  Đã trả trước
+                                </span>
+                              ) : invoice?.paymentStatus && (
                                 <span
                                   className={`font-medium ${invoice.paymentStatus === 'paid'
                                     ? 'text-green-600'
@@ -858,7 +875,22 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               </div>
                             )}
 
-                            {invoice?.remainingAmount > 0 && (
+                            {hasPrepaidCredit ? (
+                              <>
+                                <div className="flex justify-between">
+                                  <strong>Nợ cũ (trả trước):</strong>
+                                  <span className="font-medium text-green-600">
+                                    {moneyFormat(Math.abs(oldDebt))}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between border-t pt-2">
+                                  <strong>Tổng công nợ:</strong>
+                                  <span className={`font-bold ${totalDebt < 0 ? 'text-green-600' : totalDebt > 0 ? 'text-red-600' : ''}`}>
+                                    {totalDebt < 0 ? `+${moneyFormat(Math.abs(totalDebt))}` : moneyFormat(totalDebt)}
+                                  </span>
+                                </div>
+                              </>
+                            ) : invoice?.remainingAmount > 0 && (
                               <div className="flex justify-between">
                                 <strong>Còn lại:</strong>
                                 <span className="font-medium text-red-600">
@@ -880,6 +912,8 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               </div>
                             )}
                           </div>
+                            )
+                          })()}
                         </div>
 
                         {/* Notes Section - Order 2 on mobile, Order 1 on desktop */}
@@ -1827,15 +1861,17 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                   </Button>
                 )}
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={cn("gap-2 text-blue-600 border-blue-200 hover:bg-blue-50", !isDesktop && "w-full")}
-                  onClick={handlePrintInvoice}
-                >
-                  <Printer className="h-4 w-4" />
-                  In Hóa Đơn
-                </Button>
+                {invoice?.warehouseReceipts && invoice.warehouseReceipts.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={cn("gap-2 text-blue-600 border-blue-200 hover:bg-blue-50", !isDesktop && "w-full")}
+                    onClick={handlePrintInvoice}
+                  >
+                    <Printer className="h-4 w-4" />
+                    In Hóa Đơn
+                  </Button>
+                )}
 
                 {invoice.orderStatus === 'pending' && (
                   <Button

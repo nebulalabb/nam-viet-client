@@ -190,14 +190,14 @@ const ConfirmWarehouseReceiptDialog = ({
       
       const initialDetailNotes = {}
       activeInvoice.details.forEach(item => {
-        initialDetailNotes[item.id] = `Xuất kho theo đơn bán ${activeInvoice.orderCode || activeInvoice.code}`
+        initialDetailNotes[item.id] = ''
       })
       setDetailNotes(initialDetailNotes)
       
       // Default reason and notes
       if (invoice) {
-        setReason(`Xuất kho cho đơn bán ${invoice.orderCode || invoice.code}`)
-        setNotes(invoice.notes || 'Xuất kho từ hóa đơn')
+        setReason('')
+        setNotes('')
       }
     }
   }, [activeInvoice])
@@ -220,7 +220,7 @@ const ConfirmWarehouseReceiptDialog = ({
         return {
           ...item,
           quantity: Number(exportQuantities[item.id] || 0),
-          notes: detailNotes[item.id] || reason || `Xuất kho theo đơn bán ${activeInvoice.orderCode || activeInvoice.code}`
+          notes: detailNotes[item.id] || ''
         }
       })
 

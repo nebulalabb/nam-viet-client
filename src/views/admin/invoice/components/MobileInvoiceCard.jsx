@@ -201,7 +201,7 @@ const MobileInvoiceCard = ({
           productId: item.productId || item.id,
           unitId: item.unitId || item.unit?.id,
           quantity: Number(item.quantity),
-          notes: reason || `Xuất kho theo đơn bán ${invoice.orderCode}`,
+          notes: '',
           salesContractId: invoice.salesContractId,
           salesContractItemId: item.salesContractItemId
         }))
@@ -290,6 +290,12 @@ const MobileInvoiceCard = ({
       const data = getAdminInvoice
         ? await getInvoiceDetail(invoiceId)
         : await getInvoiceDetailByUser(invoiceId)
+        
+      if (!data?.warehouseReceipts || data.warehouseReceipts.length === 0) {
+        toast.warning('Chỉ được in hóa đơn khi đã có phiếu xuất kho')
+        return
+      }
+
       setPrintInvoice(data)
     } catch (error) {
       console.log('Print invoice error: ', error)

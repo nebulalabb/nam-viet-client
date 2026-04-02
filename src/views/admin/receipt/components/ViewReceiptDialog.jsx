@@ -515,7 +515,7 @@ const ViewReceiptDialog = ({
                     </div>
                     <div className="flex items-center justify-between">
                       <strong>Ngày thanh toán:</strong>
-                      <span>{dateFormat(receipt?.paymentDate, true)}</span>
+                      <span>{dateFormat(receipt?.receiptDate || receipt?.createdAt, true)}</span>
                     </div>
 
                     {receipt?.paymentMethod === 'transfer' && receipt?.bankName && (
