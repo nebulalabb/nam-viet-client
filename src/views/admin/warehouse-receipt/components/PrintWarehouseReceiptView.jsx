@@ -4,7 +4,7 @@ import { getPublicUrl } from '@/utils/file'
 import React, { useEffect, useRef } from 'react'
 import { useReactToPrint } from 'react-to-print'
 
-const PrintWarehouseReceiptView = ({ receipt, setting, onAfterPrint }) => {
+const PrintWarehouseReceiptView = ({ receipt, setting, onAfterPrint, isTransferType, displayTransferWarehouse, isTransferIn, isTransferOut }) => {
   const contentRef = useRef(null)
 
   const documentTitle = receipt?.code
@@ -29,12 +29,16 @@ const PrintWarehouseReceiptView = ({ receipt, setting, onAfterPrint }) => {
         ref={contentRef}
         setting={setting}
         receipt={receipt}
+        isTransferType={isTransferType}
+        displayTransferWarehouse={displayTransferWarehouse}
+        isTransferIn={isTransferIn}
+        isTransferOut={isTransferOut}
       />
     </div>
   )
 }
 
-const PrintableContent = React.forwardRef(({ setting, receipt }, ref) => {
+const PrintableContent = React.forwardRef(({ setting, receipt, isTransferType, displayTransferWarehouse, isTransferIn, isTransferOut }, ref) => {
   const isImport = receipt?.receiptType === 1
 
   // Date formatting
@@ -83,16 +87,16 @@ const PrintableContent = React.forwardRef(({ setting, receipt }, ref) => {
       {/* Partner Info */}
       <div className="mb-4">
         <div className="flex text-fuchsia-600 font-semibold">
-          <span className="w-40">{isImport ? 'Nhà cung cấp:' : 'Cty/Hộ kinh doanh:'}</span>
-          <span className="uppercase">{receipt?.partnerName || receipt?.supplier?.name || receipt?.customer?.customerName || ''}</span>
+          <span className="w-40">{isTransferIn ? 'Kho xuất:' : isTransferOut ? 'Kho nhận:' : isImport ? 'Nhà cung cấp:' : 'Cty/Hộ kinh doanh:'}</span>
+          <span className="uppercase">{isTransferType ? displayTransferWarehouse?.warehouseName : receipt?.partnerName || receipt?.supplier?.name || receipt?.customer?.customerName || ''}</span>
         </div>
         <div className="flex mt-1 text-green-600 font-semibold">
           <span className="w-40">Địa chỉ:</span>
-          <span>{receipt?.supplier?.address || receipt?.customer?.address || ''}</span>
+          <span>{isTransferType ? displayTransferWarehouse?.address : receipt?.supplier?.address || receipt?.customer?.address || ''}</span>
         </div>
         <div className="flex mt-1 text-blue-600 font-semibold">
           <span className="w-40">Điện thoại:</span>
-          <span>{receipt?.supplier?.phone || receipt?.customer?.phone || ''}</span>
+          <span>{isTransferType ? displayTransferWarehouse?.phone : receipt?.supplier?.phone || receipt?.customer?.phone || ''}</span>
         </div>
       </div>
 
