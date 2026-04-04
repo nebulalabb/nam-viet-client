@@ -197,10 +197,20 @@ const ViewProductDialog = ({ productId, showTrigger = true, contentClassName, ov
           contentClassName
         )}
         overlayClassName={overlayClassName}
+        onInteractOutside={(e) => {
+          // Prevent Radix from closing this dialog when interacting with child dialogs
+          e.preventDefault();
+        }}
+        onPointerDownOutside={(e) => {
+          const target = e.target;
+          if (target.closest('[role="dialog"]') || target.closest('[data-radix-popper-content-wrapper]')) {
+            e.preventDefault();
+          }
+        }}
       >
         <DialogHeader className={cn(isMobile && "px-4 pt-4")}>
           <DialogTitle>
-            Chi tiết sản phẩm: {loading ? 'Đang tải...' : product?.name || '—'}
+            Chi tiết sản phẩm: {loading ? 'Đang tải...' : product?.productName || product?.name || '—'}
           </DialogTitle>
           <DialogDescription>
             Mã sản phẩm: <strong>{product?.code || '—'}</strong>
@@ -241,7 +251,7 @@ const ViewProductDialog = ({ productId, showTrigger = true, contentClassName, ov
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Tên</span>
-                          <span className="font-medium">{product.name}</span>
+                          <span className="font-medium">{product?.productName || product?.name}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Mã</span>
@@ -647,8 +657,8 @@ const ViewProductDialog = ({ productId, showTrigger = true, contentClassName, ov
                           <Avatar className="h-10 w-10">
                             <AvatarImage
                               src={
-                                product.createdByUser?.fullName
-                                  ? `https://ui-avatars.com/api/?name=${product.createdByUser.fullName}`
+                                product.creator?.fullName
+                                  ? `https://ui-avatars.com/api/?name=${product.creator.fullName}`
                                   : undefined
                               }
                             />
@@ -656,28 +666,28 @@ const ViewProductDialog = ({ productId, showTrigger = true, contentClassName, ov
                           </Avatar>
                           <div className="flex-1 text-sm space-y-1">
                             <div className="font-medium">
-                              {product.createdByUser?.fullName || '—'}
+                              {product.creator?.fullName || '—'}
                             </div>
-                            {product.createdByUser?.code && (
+                            {product.creator?.code && (
                               <div className="text-muted-foreground">
-                                Mã: {product.createdByUser.code}
+                                Mã: {product.creator.code}
                               </div>
                             )}
-                            {product.createdByUser?.email && (
+                            {product.creator?.email && (
                               <div className="text-muted-foreground">
-                                📧 {product.createdByUser.email}
+                                📧 {product.creator.email}
                               </div>
                             )}
-                            {product.createdByUser?.phone && (
+                            {product.creator?.phone && (
                               <div className="text-muted-foreground">
-                                📞 {product.createdByUser.phone}
+                                📞 {product.creator.phone}
                               </div>
                             )}
                           </div>
                         </div>
                       </div>
 
-                      {product.updatedByUser && (
+                      {product.updater && (
                         <div>
                           <div className="mb-2 flex items-center gap-2 font-semibold">
                             <User className="h-4 w-4" />
@@ -687,8 +697,8 @@ const ViewProductDialog = ({ productId, showTrigger = true, contentClassName, ov
                             <Avatar className="h-10 w-10">
                               <AvatarImage
                                 src={
-                                  product.updatedByUser?.fullName
-                                    ? `https://ui-avatars.com/api/?name=${product.updatedByUser.fullName}`
+                                  product.updater?.fullName
+                                    ? `https://ui-avatars.com/api/?name=${product.updater.fullName}`
                                     : undefined
                                 }
                               />
@@ -696,21 +706,21 @@ const ViewProductDialog = ({ productId, showTrigger = true, contentClassName, ov
                             </Avatar>
                             <div className="flex-1 text-sm space-y-1">
                               <div className="font-medium">
-                                {product.updatedByUser?.fullName || '—'}
+                                {product.updater?.fullName || '—'}
                               </div>
-                              {product.updatedByUser?.code && (
+                              {product.updater?.code && (
                                 <div className="text-muted-foreground">
-                                  Mã: {product.updatedByUser.code}
+                                  Mã: {product.updater.code}
                                 </div>
                               )}
-                              {product.updatedByUser?.email && (
+                              {product.updater?.email && (
                                 <div className="text-muted-foreground">
-                                  📧 {product.updatedByUser.email}
+                                  📧 {product.updater.email}
                                 </div>
                               )}
-                              {product.updatedByUser?.phone && (
+                              {product.updater?.phone && (
                                 <div className="text-muted-foreground">
-                                  📞 {product.updatedByUser.phone}
+                                  📞 {product.updater.phone}
                                 </div>
                               )}
                             </div>

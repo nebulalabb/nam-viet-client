@@ -12,7 +12,9 @@ import EmployeePage from '../views/admin/employee/EmployeePage'
 import PromotionPage from '../views/admin/promotion/PromotionPage'
 import ActivePromotionPage from '../views/admin/promotion/ActivePromotionPage'
 import SupplierPage from '../views/admin/supplier/SupplierPage'
+import PartnerPage from '../views/admin/partner/PartnerPage'
 import CustomerDebtPage from '@/views/admin/debt/CustomerDebtPage'
+import PartnerDebtPage from '@/views/admin/debt/PartnerDebtPage'
 import CategoryPage from '../views/admin/category/CategoryPage'
 import WarehousePage from '../views/admin/warehouse/WarehousePage'
 import UserPage from '../views/admin/user/UserPage' // Giữ nguyên UserPage cho trang User
@@ -190,6 +192,11 @@ const routes = [
     layout: AdminLayout,
   },
   {
+    path: '/partner-debt',
+    element: PartnerDebtPage,
+    layout: AdminLayout,
+  },
+  {
     path: '/invoice',
     element: InvoicePage,
     layout: AdminLayout,
@@ -313,6 +320,11 @@ const routes = [
   {
     path: '/supplier',
     element: SupplierPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/partner',
+    element: PartnerPage,
     layout: AdminLayout,
   },
   {

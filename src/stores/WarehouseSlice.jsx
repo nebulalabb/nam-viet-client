@@ -89,9 +89,21 @@ export const getWarehouseStatistics = createAsyncThunk(
 
 export const deleteMultipleWarehouses = createAsyncThunk(
     'warehouse/deleteMultipleWarehouses',
+    async ({ ids, force = false }, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/warehouses/bulk-delete', { ids, force })
+            return response.data
+        } catch (error) {
+            return rejectWithValue(handleError(error))
+        }
+    }
+)
+
+export const checkWarehousesInventory = createAsyncThunk(
+    'warehouse/checkWarehousesInventory',
     async (ids, { rejectWithValue }) => {
         try {
-            const response = await api.post('/warehouses/bulk-delete', { ids })
+            const response = await api.post('/warehouses/check-inventory', { ids })
             return response.data
         } catch (error) {
             return rejectWithValue(handleError(error))

@@ -613,8 +613,8 @@ const ViewWarehouseReceiptDialog = ({
                     <div className="flex items-center gap-4">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${partner.name || partner.customerName || '?'}`}
-                          alt={partner.name || partner.customerName || 'Partner'}
+                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${partner.supplierName || partner.name || partner.customerName || '?'}`}
+                          alt={partner.supplierName || partner.name || partner.customerName || 'Partner'}
                         />
                         <AvatarFallback>P</AvatarFallback>
                       </Avatar>
@@ -629,9 +629,9 @@ const ViewWarehouseReceiptDialog = ({
                             }
                           }}
                         >
-                          {partner.name || partner.customerName || 'Chưa cập nhật tên'}
+                          {partner.supplierName || partner.name || partner.customerName || 'Chưa cập nhật tên'}
                         </div>
-                        <div className="text-xs text-muted-foreground">{partner.code || partner.customerCode || ''}</div>
+                        <div className="text-xs text-muted-foreground">{partner.supplierCode || partner.code || partner.customerCode || ''}</div>
                       </div>
                     </div>
 

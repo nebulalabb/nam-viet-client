@@ -106,7 +106,9 @@ const ViewPaymentDialog = ({
   const selectedStatusObj = paymentStatus.find((s) => s.value === payment?.status)
 
   let items = []
-  if (purchaseOrder?.items?.length > 0) {
+  if (purchaseOrder?.details?.length > 0) {
+    items = purchaseOrder.details
+  } else if (purchaseOrder?.items?.length > 0) {
     items = purchaseOrder.items
   } else if (payment?.products?.length > 0) {
     items = payment.products
@@ -167,7 +169,6 @@ const ViewPaymentDialog = ({
   const handlePrintPayment = () => {
     if (!payment) return
     setPrintData(payment)
-    setTimeout(() => setPrintData(null), 100)
   }
 
   // Helper to determine display name for receiver type
@@ -175,16 +176,36 @@ const ViewPaymentDialog = ({
     if (payment?.receiverType === 'customer') return 'Khách hàng'
     if (payment?.receiverType === 'supplier') return 'Nhà cung cấp'
     if (payment?.receiverType === 'employee') return 'Nhân viên'
+    if (payment?.supplier || purchaseOrder?.supplier) return 'Nhà cung cấp'
     return 'Người nhận'
   }
 
-  // Helper to get receiver data
+  // Helper to get receiver data - normalize supplier fields
   const getReceiverData = () => {
     if (payment?.receiver) return payment.receiver
-    if (purchaseOrder?.supplier) return purchaseOrder.supplier
-    // Add other cases if needed
+    // Normalize supplier fields (supplierName -> name, supplierCode -> code)
+    const supplier = payment?.supplier || purchaseOrder?.supplier
+    if (supplier) {
+      return {
+        ...supplier,
+        name: supplier.supplierName || supplier.name,
+        code: supplier.supplierCode || supplier.code,
+      }
+    }
     return {}
   }
+
+  // Helper to get display fields from item (handles PurchaseOrderDetail structure)
+  const getItemDisplay = (item) => ({
+    productId: item.productId || item.product?.id,
+    productName: item.productName || item.product?.productName || item.name || '—',
+    productCode: item.productCode || item.product?.code || item.code || '—',
+    image: item.image || item.product?.image,
+    quantity: item.quantity,
+    unitName: item.unitName || item.product?.unit?.unitName || item.unit || '—',
+    price: item.unitPrice || item.price || 0,
+    total: item.totalAmount || item.total || 0,
+  })
 
   const receiverData = getReceiverData()
   const receiverLabel = getReceiverLabel()
@@ -273,16 +294,18 @@ const ViewPaymentDialog = ({
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {items.map((item, index) => (
+                            {items.map((item, index) => {
+                              const d = getItemDisplay(item)
+                              return (
                               <TableRow key={item.id || index}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border">
-                                      {item.product?.image ? (
+                                      {d.image ? (
                                         <img
-                                          src={getPublicUrl(item.product.image)}
-                                          alt={item.productName || item.name}
+                                          src={getPublicUrl(d.image)}
+                                          alt={d.productName}
                                           className="h-full w-full object-cover"
                                         />
                                       ) : (
@@ -295,49 +318,45 @@ const ViewPaymentDialog = ({
                                       <div
                                         className="font-medium cursor-pointer text-primary hover:underline hover:text-blue-600"
                                         onClick={() => {
-                                          setSelectedProductId(item.productId || item.product?.id)
+                                          setSelectedProductId(d.productId)
                                           setShowViewProductDialog(true)
                                         }}
                                       >
-                                        {item.productName || item.name}
+                                        {d.productName}
                                       </div>
-                                      <div className="text-xs text-muted-foreground">{item.productCode || item.code}</div>
+                                      <div className="text-xs text-muted-foreground">{d.productCode}</div>
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell>{item.quantity}</TableCell>
+                                <TableCell>{d.quantity}</TableCell>
                                 <TableCell>
-                                  {item.unitName || item.unit || '—'}
+                                  {d.unitName}
                                 </TableCell>
                                 <TableCell>
-                                  {moneyFormat(item.unitPrice || item.price)}
-                                </TableCell>
-                                {/* <TableCell className="text-end">
-                                  {moneyFormat(item.taxAmount || 0)}
+                                  {moneyFormat(d.price)}
                                 </TableCell>
                                 <TableCell className="text-end">
-                                  {moneyFormat(item.discountAmount || item.discount || 0)}
-                                </TableCell> */}
-                                <TableCell className="text-end">
-                                  {moneyFormat(item.totalAmount || item.total)}
+                                  {moneyFormat(d.total)}
                                 </TableCell>
                               </TableRow>
-                            ))}
+                            )})}
                           </TableBody>
                         </Table>
                       ) : (
                         <div className="space-y-4">
-                          {items.map((item, index) => (
+                          {items.map((item, index) => {
+                            const d = getItemDisplay(item)
+                            return (
                             <div
                               key={item.id || index}
                               className="rounded-lg border p-3 shadow-sm bg-card text-card-foreground"
                             >
                               <div className="flex items-start gap-3 mb-3">
                                 <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-muted/50">
-                                  {item.product?.image ? (
+                                  {d.image ? (
                                     <img
-                                      src={getPublicUrl(item.product.image)}
-                                      alt={item.productName || item.name}
+                                      src={getPublicUrl(d.image)}
+                                      alt={d.productName}
                                       className="h-full w-full object-cover"
                                     />
                                   ) : (
@@ -349,14 +368,14 @@ const ViewPaymentDialog = ({
                                 <div className="flex-1 min-w-0">
                                   <div className="font-medium text-sm leading-tight line-clamp-2 cursor-pointer text-primary hover:underline hover:text-blue-600"
                                     onClick={() => {
-                                      setSelectedProductId(item.productId || item.product?.id)
+                                      setSelectedProductId(d.productId)
                                       setShowViewProductDialog(true)
                                     }}
                                   >
-                                    {item.productName || item.name}
+                                    {d.productName}
                                   </div>
                                   <div className="text-[10px] font-bold text-muted-foreground mt-1">
-                                    {item.productCode || item.code}
+                                    {d.productCode}
                                   </div>
                                 </div>
                               </div>
@@ -366,19 +385,19 @@ const ViewPaymentDialog = ({
                               <div className="grid grid-cols-2 gap-2 text-sm">
                                 <div className="flex flex-col">
                                   <span className="text-muted-foreground text-xs">Số lượng</span>
-                                  <span className="font-medium">{Number(item.quantity || 0)} {item.unitName || item.unit}</span>
+                                  <span className="font-medium">{Number(d.quantity || 0)} {d.unitName}</span>
                                 </div>
                                 <div className="flex flex-col text-right">
                                   <span className="text-muted-foreground text-xs">Đơn giá</span>
-                                  <span className="font-medium">{moneyFormat(item.unitPrice || item.price)}</span>
+                                  <span className="font-medium">{moneyFormat(d.price)}</span>
                                 </div>
                               </div>
                               <div className="mt-2 flex justify-between items-end bg-secondary/30 p-2 rounded">
                                 <span className="font-semibold text-sm">Thành tiền</span>
-                                <span className="font-bold text-primary">{moneyFormat(item.totalAmount || item.total)}</span>
+                                <span className="font-bold text-primary">{moneyFormat(d.total)}</span>
                               </div>
                             </div>
-                          ))}
+                          )})}
                         </div>
                       )}
                     </div>
@@ -580,14 +599,14 @@ const ViewPaymentDialog = ({
                   <div className="flex items-center gap-4">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${payment?.createdByUser?.fullName}`}
-                        alt={payment?.createdByUser?.fullName}
+                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${payment?.creator?.fullName}`}
+                        alt={payment?.creator?.fullName}
                       />
                       <AvatarFallback>User</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">
-                        {payment?.createdByUser?.fullName || payment?.createdBy}
+                        {payment?.creator?.fullName || payment?.createdBy}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {dateFormat(payment?.createdAt, true)}
@@ -605,8 +624,8 @@ const ViewPaymentDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <MobileIcon className="h-4 w-4" />
                         </div>
-                        <a href={`tel:${payment?.createdByUser?.phone}`}>
-                          {payment?.createdByUser?.phone || 'Chưa cập nhật'}
+                        <a href={`tel:${payment?.creator?.phone}`}>
+                          {payment?.creator?.phone || 'Chưa cập nhật'}
                         </a>
                       </div>
 
@@ -614,8 +633,8 @@ const ViewPaymentDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <Mail className="h-4 w-4" />
                         </div>
-                        <a href={`mailto:${payment?.createdByUser?.email}`}>
-                          {payment?.createdByUser?.email || 'Chưa cập nhật'}
+                        <a href={`mailto:${payment?.creator?.email}`}>
+                          {payment?.creator?.email || 'Chưa cập nhật'}
                         </a>
                       </div>
                     </div>
@@ -754,6 +773,7 @@ const ViewPaymentDialog = ({
         <PrintPaymentView
           payment={printData}
           setting={setting}
+          onAfterPrint={() => setPrintData(null)}
         />
       )}
     </Dialog>

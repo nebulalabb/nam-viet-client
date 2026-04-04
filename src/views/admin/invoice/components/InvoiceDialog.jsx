@@ -961,21 +961,18 @@ const InvoiceDialog = ({
     try {
       let invoiceResponse;
       if (invoiceId) {
-        invoiceResponse = await dispatch(updateInvoice(dataToSend)).unwrap()
+        invoiceResponse = await dispatch(updateInvoice({ id: invoiceId, data: dataToSend })).unwrap()
       } else {
         invoiceResponse = await dispatch(createInvoice(dataToSend)).unwrap()
       }
 
       const invoice = invoiceResponse;
 
-      const getAdminInvoice = JSON.parse(
-        localStorage.getItem('permissionCodes'),
-      ).includes('GET_INVOICE')
-
-      const resultInvoiceId = invoice.id
-      const invoiceData = getAdminInvoice
-        ? await getInvoiceDetail(resultInvoiceId)
-        : await getInvoiceDetailByUser(resultInvoiceId)
+      // Extract invoice ID - handle both pickup (returns order directly) and delivery (returns {order, inventoryShortages})
+      const resultInvoiceId = invoice?.id || invoice?.order?.id
+      const invoiceData = resultInvoiceId
+        ? await dispatch(getInvoiceDetail(resultInvoiceId)).unwrap()
+        : null
 
       if (shouldPrintInvoice) {
         const generalInformationData = await dispatch(
@@ -1017,8 +1014,8 @@ const InvoiceDialog = ({
         }
       }
     } catch (error) {
-      console.error('Submit error:', error)
-      toast.error(error?.response?.data?.message || `Lỗi ${invoiceId ? 'cập nhật' : 'tạo'} hóa đơn`)
+      console.error('Submit error:', typeof error === 'object' ? JSON.stringify(error) : error)
+      toast.error(error?.message || error?.response?.data?.message || `Lỗi ${invoiceId ? 'cập nhật' : 'tạo'} hóa đơn`)
     }
   }
 

@@ -32,85 +32,92 @@ const PrintReceiptView = ({ receipt, setting, onAfterPrint }) => {
 const PrintableContent = React.forwardRef(
   ({ setting, receipt }, ref) => {
     const rDate = receipt?.receiptDate || receipt?.createdAt ? new Date(receipt?.receiptDate || receipt?.createdAt) : new Date();
-    const dateStr = `Ngày ${rDate.getDate().toString().padStart(2, '0')} Tháng ${rDate.getMonth() + 1 < 10 ? '0' : ''}${rDate.getMonth() + 1} Năm ${rDate.getFullYear()}`;
+    const dateStr = `Ngày ${rDate.getDate().toString().padStart(2, '0')} Tháng ${(rDate.getMonth() + 1).toString().padStart(2, '0')} Năm ${rDate.getFullYear()}`;
 
     const note = receipt?.note || receipt?.notes || (receipt?.invoice ? `Thu bán hàng hóa đơn ${receipt?.invoice?.orderCode || receipt?.invoice?.code}` : '');
 
     return (
-      <div ref={ref} className="mx-auto max-w-4xl bg-white p-10 font-['Times_New_Roman',Times,serif]">
-        
-        {/* Header Flex */}
-        <div className="flex justify-between items-start">
-          {/* Logo */}
-          <div className="w-[140px] flex flex-col items-center mt-2">
-            <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} className="w-[100px] h-[100px] object-contain" alt="Logo" />
-          </div>
+      <div ref={ref}>
+        <style dangerouslySetInnerHTML={{__html: `
+          @page { size: A5 landscape; margin: 6mm 8mm; }
+          @media print {
+            body { margin: 0; padding: 0; }
+            .print-receipt-a5 {
+              width: 195mm !important;
+              max-height: 136mm !important;
+              overflow: hidden !important;
+              padding: 5mm 8mm !important;
+              box-sizing: border-box !important;
+            }
+          }
+        `}} />
 
-          {/* Company Info */}
-          <div className="flex-1 text-center mt-6">
-            <h1 className="text-[#D64A38] font-bold text-[22px] tracking-wide mb-1">{setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}</h1>
-            <p className="text-[#089c65] text-[15px] font-semibold leading-relaxed">Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}</p>
-            <p className="text-[#804297] text-[15px] font-semibold leading-relaxed">
-              Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
-              {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
-            </p>
-            
-            <h2 className="mt-8 text-[32px] font-bold uppercase tracking-wider text-[#2CA5C9]">
-              PHIẾU THU
-            </h2>
-          </div>
-
-          {/* Receipt Number */}
-          <div className="w-[180px] text-right mt-16 pt-[70px]">
-             <p className="text-[15px] font-bold text-[#089c65]">Số: {receipt?.receiptCode || receipt?.code}</p>
-          </div>
-        </div>
-
-        {/* Content Details */}
-        <div className="mt-[20px] space-y-1.5 text-[17px] px-10">
-          <div className="flex">
-            <span className="text-[#D48625] min-w-[170px]">Họ tên người nộp tiền: </span>
-            <span className="text-[#3286A9] uppercase flex-1">{receipt?.receiver?.name || ''}</span>
-          </div>
-          <div className="flex">
-            <span className="text-[#089c65] min-w-[70px]">Địa chỉ: </span>
-            <span className="text-[#804297] flex-1">{receipt?.receiver?.address || ''}</span>
-          </div>
-          <div className="flex">
-            <span className="text-[#D48625] min-w-[130px]">Lý do nộp tiền: </span>
-            <span className="text-[#804297] flex-1">{note}</span>
-          </div>
+        <div className="print-receipt-a5 mx-auto bg-white font-['Times_New_Roman',Times,serif]"
+             style={{ width: '195mm', maxHeight: '136mm', padding: '5mm 8mm', boxSizing: 'border-box', overflow: 'hidden' }}>
           
-          <div className="flex items-center">
-            <span className="text-[#D48625] mr-2">Số tiền:</span>
-            <span className="text-[#D64A38] mr-[50px]">{moneyFormat(receipt?.amount)}</span>
-            <span className="text-[#089c65] mr-2">( Viết bằng chữ ):</span>
-            <span className="text-[#D64A38]">{toVietnamese(receipt?.amount)}</span>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ width: '90px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '2px' }}>
+              <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} style={{ width: '75px', height: '75px', objectFit: 'contain' }} alt="Logo" />
+            </div>
+            <div style={{ flex: 1, textAlign: 'center', marginTop: '2px' }}>
+              <h1 style={{ color: '#D64A38', fontWeight: 'bold', fontSize: '17px', letterSpacing: '0.5px', marginBottom: '3px', lineHeight: 1.3 }}>
+                {setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}
+              </h1>
+              <p style={{ color: '#089c65', fontSize: '13px', fontWeight: 600, lineHeight: 1.5, margin: '0 0 1px 0' }}>
+                Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}
+              </p>
+              <p style={{ color: '#804297', fontSize: '13px', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
+                Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
+                {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
+              </p>
+              <h2 style={{ marginTop: '12px', fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', color: '#2CA5C9', lineHeight: 1.2 }}>
+                PHIẾU THU
+              </h2>
+            </div>
+            <div style={{ width: '130px', textAlign: 'right', paddingTop: '55px' }}>
+               <p style={{ fontSize: '13px', fontWeight: 'bold', color: '#089c65', margin: 0 }}>Số: {receipt?.receiptCode || receipt?.code}</p>
+            </div>
           </div>
-          
-          <div className="flex items-center">
-             <span className="text-[#3286A9] w-[350px]">Kèm theo 1 ( chứng từ gốc )</span>
-             {receipt?.invoice && (
-               <span className="text-[#3286A9]">HĐ: {receipt?.invoice?.orderCode || receipt?.invoice?.code || ''} - 0</span>
-             )}
-          </div>
-        </div>
 
-        {/* Date Row */}
-        <div className="mt-6 flex justify-end pr-[100px]">
-          <p className="text-[#804297] text-[17px]">{dateStr}</p>
-        </div>
+          {/* Content */}
+          <div style={{ marginTop: '10px', paddingLeft: '24px', paddingRight: '24px', lineHeight: 1.7 }}>
+            <div style={{ display: 'flex', fontSize: '15px', marginBottom: '2px' }}>
+              <span style={{ color: '#D48625', minWidth: '155px', whiteSpace: 'nowrap' }}>Họ tên người nộp tiền: </span>
+              <span style={{ color: '#3286A9', textTransform: 'uppercase', flex: 1 }}>{receipt?.receiver?.name || ''}</span>
+            </div>
+            <div style={{ display: 'flex', fontSize: '15px', marginBottom: '2px' }}>
+              <span style={{ color: '#089c65', minWidth: '65px', whiteSpace: 'nowrap' }}>Địa chỉ: </span>
+              <span style={{ color: '#804297', flex: 1 }}>{receipt?.receiver?.address || ''}</span>
+            </div>
+            <div style={{ display: 'flex', fontSize: '15px', marginBottom: '2px' }}>
+              <span style={{ color: '#D48625', minWidth: '125px', whiteSpace: 'nowrap' }}>Lý do nộp tiền: </span>
+              <span style={{ color: '#804297', flex: 1 }}>{note}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', fontSize: '15px', marginBottom: '2px' }}>
+              <span style={{ color: '#D48625', marginRight: '6px', whiteSpace: 'nowrap' }}>Số tiền:</span>
+              <span style={{ color: '#D64A38', marginRight: '35px' }}>{moneyFormat(receipt?.amount)}</span>
+              <span style={{ color: '#089c65', marginRight: '6px', whiteSpace: 'nowrap' }}>( Viết bằng chữ ):</span>
+              <span style={{ color: '#D64A38' }}>{toVietnamese(receipt?.amount)}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', fontSize: '15px' }}>
+               <span style={{ color: '#3286A9', marginRight: '10px' }}>Kèm theo 1 ( chứng từ gốc )</span>
+               {receipt?.invoice && (
+                 <span style={{ color: '#3286A9' }}>HĐ: {receipt?.invoice?.orderCode || receipt?.invoice?.code || ''} - 0</span>
+               )}
+            </div>
+          </div>
 
-        {/* Signatures */}
-        <div className="mt-4 flex justify-between text-center font-bold text-[#D64A38] text-[18px] px-[80px]">
-          <div className="w-1/3">
-            Người nộp tiền
+          {/* Date */}
+          <div style={{ marginTop: '10px', textAlign: 'center', paddingRight: '0' }}>
+            <p style={{ color: '#804297', fontSize: '15px', margin: 0 }}>{dateStr}</p>
           </div>
-          <div className="w-1/3">
-            Thủ Quỹ
-          </div>
-          <div className="w-1/3 flex flex-col items-center">
-            <span className="mb-[100px]">Giám Đốc</span>
+
+          {/* Signatures */}
+          <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', textAlign: 'center', fontWeight: 'bold', color: '#D64A38', fontSize: '15px', paddingLeft: '50px', paddingRight: '50px' }}>
+            <div style={{ width: '33%' }}>Người nộp tiền</div>
+            <div style={{ width: '33%' }}>Thủ Quỹ</div>
+            <div style={{ width: '33%' }}>Giám Đốc</div>
           </div>
         </div>
       </div>
