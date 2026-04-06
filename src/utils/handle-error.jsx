@@ -1,9 +1,10 @@
 const handleError = (error) => {
   if (!error.response) {
-    return { message: error.message || 'Opps!! Đã có vài lỗi xảy ra' }
+    return { message: error.message || 'Opps!! Đã có vài lỗi xảy ra', url: error.config?.url }
   }
-  const { status, data } = error.response
+  const { status, data, config } = error.response
   const serverMessage = data?.error?.message || data?.message
+  console.error(`API Error ${status} from ${config?.url}:`, serverMessage || data)
   switch (status) {
     case 400:
       return { message: serverMessage || 'Yêu cầu không hợp lệ. Vui lòng kiểm tra dữ liệu đầu vào.' }

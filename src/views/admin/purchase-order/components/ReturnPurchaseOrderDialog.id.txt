@@ -1,0 +1,26 @@
+87: const detail = await dispatch(getWarehouseReceiptById(r.id)).unwrap()
+198: initialSelection[item.id] = false
+199: initialQuantities[item.id] = getDefaultReturnQty(item)
+212: if (selectedItems[item.id]) {
+213: const qty = Number(returnQuantities[item.id] || 0)
+233: .filter((item) => selectedIds.includes(String(item.id)))
+235: const qty = Number(returnQuantities[item.id] || 0)
+276: newSelection[item.id] = checked
+331: <SelectItem key={warehouse.id} value={warehouse.id.toString()}>
+384: const qtyVal = Number(returnQuantities[item.id] || 0)
+389: <TableRow key={item.id} className={!selectable ? 'bg-muted/30' : ''}>
+392: checked={!!selectedItems[item.id]}
+393: onCheckedChange={() => toggleItem(item.id)}
+429: value={returnQuantities[item.id] ?? ''}
+430: onChange={(e) => handleQuantityChange(item.id, e.target.value, maxReturn)}
+431: disabled={!selectable || !selectedItems[item.id]}
+477: key={item.id}
+482: onClick={() => selectable && toggleItem(item.id)}
+486: checked={!!selectedItems[item.id]}
+487: onCheckedChange={() => toggleItem(item.id)}
+527: value={returnQuantities[item.id] ?? ''}
+528: onChange={(e) => handleQuantityChange(item.id, e.target.value, maxReturn)}
+529: disabled={!selectable || !selectedItems[item.id]}
+532: {Number(returnQuantities[item.id] || 0) > 0 && (
+534: Hủy: <span className="text-orange-500">{splitReturnQty(item, Number(returnQuantities[item.id] || 0)).cancelQty}</span> | Thực xuất: <span className="text-blue-600">{splitReturnQty(item, Number(returnQuantities[item.id] || 0)).exportQty}</span>
+542: splitReturnQty(item, Number(returnQuantities[item.id] || 0)).exportQty * Number(item.price || 0)

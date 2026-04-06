@@ -61,31 +61,27 @@ const CustomerDebtPage = () => {
     }
 
     const handleToggleBlacklist = async (id) => {
-        if (window.confirm('Bạn có chắc chắn muốn thay đổi trạng thái danh sách đen của khách hàng này?')) {
-            try {
-                await dispatch(toggleBlacklist({ id, type: 'customer' })).unwrap();
-                dispatch(getDebts({
-                    ...filters,
-                    search: searchTerm,
-                    address: addressTerm,
-                    blacklist: activeTab === 'blacklist' ? 'true' : 'false'
-                }))
-            } catch (err) {}
-        }
+        try {
+            await dispatch(toggleBlacklist({ id, type: 'customer' })).unwrap();
+            dispatch(getDebts({
+                ...filters,
+                search: searchTerm,
+                address: addressTerm,
+                blacklist: activeTab === 'blacklist' ? 'true' : 'false'
+            }))
+        } catch (err) {}
     }
 
     const handleExtendDebt = async (id) => {
-        if (window.confirm('Gia hạn kiểm tra nợ thêm 1 năm cho khách hàng này?')) {
-            try {
-                await dispatch(extendDebt({ id, type: 'customer' })).unwrap();
-                dispatch(getDebts({
-                    ...filters,
-                    search: searchTerm,
-                    address: addressTerm,
-                    blacklist: activeTab === 'blacklist' ? 'true' : 'false'
-                }))
-            } catch (err) {}
-        }
+        try {
+            await dispatch(extendDebt({ id, type: 'customer' })).unwrap();
+            dispatch(getDebts({
+                ...filters,
+                search: searchTerm,
+                address: addressTerm,
+                blacklist: activeTab === 'blacklist' ? 'true' : 'false'
+            }))
+        } catch (err) {}
     }
 
     // Sync activeTab khi isAdmin thay đổi
@@ -445,6 +441,8 @@ const CustomerDebtPage = () => {
                             pageCount={monthlyObjectsPagination?.totalPages || 1}
                             rowCount={monthlyObjectsPagination?.total || 0}
                             onPaginationChange={(newPagination) => setFilters(prev => ({ ...prev, page: newPagination.page, limit: newPagination.limit }))}
+                            onToggleBlacklist={isAdmin ? handleToggleBlacklist : null}
+                            onExtendDebt={isAdmin ? handleExtendDebt : null}
                         />
                     )}
                 </div>

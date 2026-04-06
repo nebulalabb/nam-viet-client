@@ -314,7 +314,8 @@ const PurchaseOrderDialog = ({
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(p =>
         (p.productName || p.name).toLowerCase().includes(query) ||
-        p.code?.toLowerCase().includes(query)
+        p.code?.toLowerCase().includes(query) ||
+        p.supplier?.supplierName?.toLowerCase().includes(query)
       )
     }
 
@@ -408,6 +409,11 @@ const PurchaseOrderDialog = ({
       const defaultUnit = getBaseUnitId(product) || product?.prices?.[0]?.unitId
       if (defaultUnit) {
         setSelectedUnitIds(prev => ({ ...prev, [product.id]: defaultUnit }))
+      }
+
+      if (!form.getValues('supplierId') && product.supplier?.id) {
+        const supplier = suppliers.find(s => s.id === product.supplier.id) || product.supplier
+        handleSelectSupplier(supplier)
       }
     }
   }
@@ -1020,6 +1026,12 @@ const PurchaseOrderDialog = ({
                                       <div className='font-medium'>{product.productName || product.name}</div>
                                       <div className='text-xs text-muted-foreground flex gap-2'>
                                         <span>{product.code}</span>
+                                        {product.supplier?.supplierName && (
+                                          <>
+                                            <span>•</span>
+                                            <span>NCC: {product.supplier.supplierName}</span>
+                                          </>
+                                        )}
                                         <span>•</span>
                                         <span>Tồn: {product.totalStock ?? product.currentStock ?? 0}</span>
                                         <span>•</span>

@@ -15,13 +15,17 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { cn } from '@/lib/utils'
 
-const DeletePaymentDialog = ({ payment, showTrigger = true, onSuccess, contentClassName, overlayClassName, ...props }) => {
+const DeletePaymentDialog = ({ payment, showTrigger = true, onSuccess, onDelete, contentClassName, overlayClassName, ...props }) => {
   const dispatch = useDispatch()
   const loading = useSelector((state) => state.payment.loading)
 
   const destroy = async (data) => {
     try {
-      await dispatch(deletePayment(data)).unwrap()
+      if (onDelete) {
+        await onDelete(data)
+      } else {
+        await dispatch(deletePayment(data)).unwrap()
+      }
       onSuccess?.()
     } catch (error) {
       console.log('Submit error: ', error)
@@ -41,7 +45,7 @@ const DeletePaymentDialog = ({ payment, showTrigger = true, onSuccess, contentCl
         <DialogHeader>
           <DialogTitle>Bạn chắc chắn thực hiện hành động này?</DialogTitle>
           <DialogDescription>
-            Hành động này không thể hoàn tác. Phiếu chi sẽ bị xóa vĩnh viễn.
+            Hành động này không thể hoàn tác. {payment?.isReceipt ? 'Phiếu thu' : 'Phiếu chi'} sẽ bị xóa vĩnh viễn.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">

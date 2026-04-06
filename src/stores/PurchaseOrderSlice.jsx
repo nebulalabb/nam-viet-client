@@ -309,6 +309,20 @@ export const revertPurchaseOrder = createAsyncThunk(
   },
 )
 
+// Return PO
+export const returnPurchaseOrder = createAsyncThunk(
+  'purchaseOrder/return',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/purchase-orders/${id}/return`, data)
+      toast.success(response.data?.message || 'Xử lý trả hàng thành công')
+      return response.data
+    } catch (error) {
+      return rejectWithValue(handleError(error))
+    }
+  },
+)
+
 export const updatePurchaseOrderStatus = createAsyncThunk(
   'purchaseOrder/update-purchase-order-status',
   async (data, { rejectWithValue, dispatch }) => {
@@ -476,6 +490,14 @@ export const purchaseOrderSlice = createSlice({
       .addCase(importPurchaseOrder.fulfilled, (state) => { state.loading = false })
       .addCase(importPurchaseOrder.pending, (state) => { state.loading = true })
       .addCase(importPurchaseOrder.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload?.message || 'Lỗi không xác định'
+        toast.error(state.error)
+      })
+      // Return
+      .addCase(returnPurchaseOrder.fulfilled, (state) => { state.loading = false })
+      .addCase(returnPurchaseOrder.pending, (state) => { state.loading = true })
+      .addCase(returnPurchaseOrder.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload?.message || 'Lỗi không xác định'
         toast.error(state.error)

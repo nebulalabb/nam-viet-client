@@ -30,7 +30,6 @@ const DataTableRowActions = ({ row }) => {
 
   const handlePrintPayment = () => {
     setPrintData(payment)
-    setTimeout(() => setPrintData(null), 100)
   }
 
   return (
@@ -48,6 +47,7 @@ const DataTableRowActions = ({ row }) => {
         <PrintPaymentView
           payment={printData}
           setting={setting}
+          onAfterPrint={() => setPrintData(null)}
         />
       )}
 

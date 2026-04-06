@@ -43,7 +43,7 @@ export default function DebtMonthlyTable({ data, isLoading }) {
                             <TableRow>
                                 <TableHead className="w-[120px]">Tháng</TableHead>
                                 <TableHead className="text-right text-blue-600">Tổng mua (+)</TableHead>
-                                <TableHead className="text-right text-indigo-600">Trả hàng (-)</TableHead>
+                                <TableHead className="text-right text-indigo-600">Trả hàng</TableHead>
                                 <TableHead className="text-right text-green-600">Thanh toán (-)</TableHead>
                                 <TableHead className="text-right px-4 bg-gray-100/50 border-l border-gray-200">
                                     Phát sinh ròng
@@ -63,11 +63,11 @@ export default function DebtMonthlyTable({ data, isLoading }) {
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-right text-blue-600 font-bold text-xs font-mono">
-                                            {item.increase > 0 ? `+${formatCurrency(item.increase)}` : <span className="text-gray-300">-</span>}
+                                            {item.increase > 0 ? formatCurrency(item.increase) : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-right text-indigo-600 font-medium font-mono text-xs">
-                                            {item.returnAmount > 0 ? `-${formatCurrency(item.returnAmount)}` : <span className="text-gray-300">-</span>}
+                                            {item.returnAmount > 0 ? formatCurrency(item.returnAmount) : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-right text-green-600 font-medium font-mono text-xs">
@@ -96,10 +96,10 @@ export default function DebtMonthlyTable({ data, isLoading }) {
                                         TỔNG CỘNG
                                     </TableCell>
                                     <TableCell className="px-2 py-3 text-right text-blue-700 font-bold text-sm font-mono">
-                                        {summary.increase > 0 ? `+${formatCurrency(summary.increase)}` : '-'}
+                                        {summary.increase > 0 ? formatCurrency(summary.increase) : '-'}
                                     </TableCell>
                                     <TableCell className="px-2 py-3 text-right text-indigo-700 font-bold text-sm font-mono">
-                                        {summary.returnAmount > 0 ? `-${formatCurrency(summary.returnAmount)}` : '-'}
+                                        {summary.returnAmount > 0 ? formatCurrency(summary.returnAmount) : '-'}
                                     </TableCell>
                                     <TableCell className="px-2 py-3 text-right text-green-700 font-bold text-sm font-mono">
                                         {summary.payment > 0 ? `-${formatCurrency(summary.payment)}` : '-'}

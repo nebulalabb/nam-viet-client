@@ -94,6 +94,11 @@ const ProductGrid = ({
                             {product.code}
                           </p>
                         )}
+                        {product.supplier?.supplierName && (
+                          <p className="text-[11px] text-muted-foreground font-medium text-blue-600 dark:text-blue-400 mt-0.5">
+                            NCC: {product.supplier.supplierName}
+                          </p>
+                        )}
 
                         {/* Desktop Price/Stock Display */}
                         <div className="hidden md:block">

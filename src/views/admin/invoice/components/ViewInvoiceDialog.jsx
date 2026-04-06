@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/select'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import { MobileIcon, PlusIcon } from '@radix-ui/react-icons'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { statuses, paymentStatuses } from '../data'
 import { receiptStatus } from '../../receipt/data'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -48,6 +48,7 @@ import UpdateInvoiceStatusDialog from './UpdateInvoiceStatusDialog'
 import { DeleteWarehouseReceiptDialog } from '../../warehouse-receipt/components/DeleteWarehouseReceiptDialog'
 import { UpdateWarehouseReceiptStatusDialog } from '../../warehouse-receipt/components/UpdateWarehouseReceiptStatusDialog'
 import ConfirmWarehouseReceiptDialog from '../../warehouse-receipt/components/ConfirmWarehouseReceiptDialog'
+import ReturnWarehouseReceiptDialog from '../../warehouse-receipt/components/ReturnWarehouseReceiptDialog'
 import ViewWarehouseReceiptDialog from '../../warehouse-receipt/components/ViewWarehouseReceiptDialog'
 import ReceiptDialog from '../../receipt/components/ReceiptDialog'
 import ViewReceiptDialog from '../../receipt/components/ViewReceiptDialog'
@@ -66,6 +67,7 @@ import PaymentQRCodeDialog from '../../receipt/components/PaymentQRCodeDialog'
 import { Badge } from '@/components/ui/badge'
 import CustomerDetailDialog from '../../customer/components/CustomerDetailDialog'
 import CreateDeliveryDialog from '../../delivery/components/CreateDeliveryDialog'
+import api from '@/utils/axios'
 
 const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, contentClassName, overlayClassName, ...props }) => {
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -136,6 +138,33 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
       toast.error('Xóa đơn bán thất bại')
     }
   }
+
+  const isFullyExported = useMemo(() => {
+    if (!invoice?.details?.length) return false;
+    let isFully = true;
+    for (const item of invoice.details) {
+      const totalOrdered = Number(item.quantity || 0);
+      let totalShipped = 0;
+      if (invoice.warehouseReceipts) {
+        invoice.warehouseReceipts.forEach(receipt => {
+          if (receipt.isPosted && receipt.receiptType === 2) {
+            if (receipt.details) {
+              const match = receipt.details.filter(d =>
+                (d.invoiceItemId && d.invoiceItemId === item.id) ||
+                (!d.invoiceItemId && String(d.productId) === String(item.productId) && (!d.unitId || !item.unitId || String(d.unitId) === String(item.unitId)))
+              );
+              match.forEach(m => { totalShipped += Number(m.qtyActual || m.quantity || 0); });
+            }
+          }
+        });
+      }
+      if (totalShipped < totalOrdered) {
+        isFully = false;
+        break;
+      }
+    }
+    return isFully;
+  }, [invoice]);
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -285,24 +314,9 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
   const handleCreateWarehouseReceipt = () => {
     const invoiceStatus = invoice?.orderStatus
-    if (invoiceStatus !== 'preparing' && invoiceStatus !== 'delivering') {
+    if (invoiceStatus !== 'preparing' && invoiceStatus !== 'delivering' && invoiceStatus !== 'completed') {
       toast.warning('Chỉ có thể tạo phiếu xuất kho cho đơn hàng đã duyệt hoặc đang giao hàng')
       return
-    }
-
-    // Check if fully exported
-    // Logic moved to ConfirmWarehouseReceiptDialog to allow partial exports and visual filtering
-
-
-    if (invoice?.warehouseReceiptId) {
-      // Logic for legacy or inconsistent data
-      const hasReceiptInArray = invoice?.warehouseReceipts?.some(r => r.id === invoice.warehouseReceiptId && (r.status !== 'cancelled' && r.status !== 'canceled'));
-
-      // If not already caught by the array check above (e.g. array missing but ID present)
-      if (!hasReceiptInArray) {
-        toast.warning('Đơn hàng này đã có phiếu xuất kho')
-        return
-      }
     }
 
     // Show confirmation dialog
@@ -359,6 +373,38 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
     } finally {
       setWarehouseLoading(false)
       setShowConfirmWarehouseDialog(false)
+    }
+  }
+
+  const [showReturnWarehouseReceiptDialog, setShowReturnWarehouseReceiptDialog] = useState(false)
+  
+  const handleCreateReturnWarehouseReceipt = async (selectedItems, actualReceiptDate, warehouseId, reasonStr, notesStr) => {
+    try {
+      const receiptData = {
+        warehouseId: Number(warehouseId),
+        referenceType: 'sale_refunds',
+        referenceId: invoice.id,
+        customerId: invoice.customerId,
+        reason: reasonStr || 'Nhập hoàn trả hàng hóa từ đơn bán',
+        notes: notesStr,
+        actualReceiptDate: actualReceiptDate,
+        details: selectedItems.map(item => ({
+          productId: item.productId || item.product?.id,
+          unitId: item.unitId,
+          quantity: item.quantity,
+          notes: item.notes
+        }))
+      }
+
+      await api.post('/stock-transactions/import', receiptData);
+      
+      toast.success('Đã tạo phiếu nhập trả hàng thành công')
+      fetchData()
+      onSuccess?.()
+      setShowReturnWarehouseReceiptDialog(false)
+    } catch (error) {
+      console.error('Create return receipt error: ', error)
+      toast.error('Tạo phiếu trả hàng thất bại!')
     }
   }
 
@@ -1285,18 +1331,27 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
 
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">Phiếu xuất kho</h3>
-                            {(invoice?.orderStatus === 'preparing' || invoice?.orderStatus === 'delivering') ? (
-                              <Button
-                                size="sm"
-                                className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
-                                onClick={handleCreateWarehouseReceipt}
-                              >
-                                <IconPlus className="h-4 w-4" />
-                                <span>
-                                  Thêm
-                                </span>
-                              </Button>
+                            <h3 className="font-semibold">Phiếu xuất kho / Trả hàng</h3>
+                            {(invoice?.orderStatus === 'preparing' || invoice?.orderStatus === 'delivering' || invoice?.orderStatus === 'completed') ? (
+                              isFullyExported ? (
+                                <Button
+                                  size="sm"
+                                  className="h-8 gap-1 bg-orange-500 text-white hover:bg-orange-600 border-transparent shadow-sm"
+                                  onClick={() => setShowReturnWarehouseReceiptDialog(true)}
+                                >
+                                  <IconPlus className="h-4 w-4" />
+                                  <span>Trả hàng</span>
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
+                                  onClick={handleCreateWarehouseReceipt}
+                                >
+                                  <IconPlus className="h-4 w-4" />
+                                  <span>Thêm phiếu xuất</span>
+                                </Button>
+                              )
                             ) : (
                               invoice?.orderStatus === 'pending' ? (
                                 <span className="text-[12px] text-gray-500">Đơn hàng chưa được duyệt</span>
@@ -2070,6 +2125,15 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
         onConfirm={handleConfirmCreateWarehouseReceipt}
         loading={warehouseLoading}
         invoice={invoice}
+        contentClassName="z-[100010]"
+        overlayClassName="z-[100009]"
+      />
+
+      <ReturnWarehouseReceiptDialog
+        open={showReturnWarehouseReceiptDialog}
+        onOpenChange={setShowReturnWarehouseReceiptDialog}
+        invoice={invoice}
+        onConfirm={handleCreateReturnWarehouseReceipt}
         contentClassName="z-[100010]"
         overlayClassName="z-[100009]"
       />

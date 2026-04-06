@@ -45,6 +45,7 @@ import ConfirmImportWarehouseDialog from '../../warehouse-receipt/components/Con
 import PaymentFormDialog from '../../payment/components/PaymentDialog'
 import ViewProductDialog from '../../product/components/ViewProductDialog'
 import UpdatePurchaseOrderStatusDialog from './UpdatePurchaseOrderStatusDialog'
+import RefundReceiptDialog from './RefundReceiptDialog'
 import {
   updatePurchaseOrderStatus,
   confirmPurchaseOrder,
@@ -52,10 +53,12 @@ import {
   revertPurchaseOrder,
   getPurchaseOrders,
   deletePurchaseOrder,
+  returnPurchaseOrder
 } from '@/stores/PurchaseOrderSlice'
 import { createWarehouseReceipt } from '@/stores/WarehouseReceiptSlice'
 import ViewWarehouseReceiptDialog from '../../warehouse-receipt/components/ViewWarehouseReceiptDialog'
 import ViewPaymentDialog from '../../payment/components/ViewPaymentDialog'
+import ViewReceiptDialog from '../../receipt/components/ViewReceiptDialog'
 import PrintPurchaseOrderView from './PrintPurchaseOrderView'
 import MobilePurchaseOrderActions from './MobilePurchaseOrderActions'
 import ConfirmActionButton from '@/components/custom/ConfirmActionButton'
@@ -64,8 +67,11 @@ import { DeletePaymentDialog } from '../../payment/components/DeletePaymentDialo
 import { UpdateWarehouseReceiptStatusDialog } from '../../warehouse-receipt/components/UpdateWarehouseReceiptStatusDialog'
 import { DeleteWarehouseReceiptDialog } from '../../warehouse-receipt/components/DeleteWarehouseReceiptDialog'
 import { updateWarehouseReceipt, postWarehouseReceipt, cancelWarehouseReceipt } from '@/stores/WarehouseReceiptSlice'
-import { updatePaymentStatus } from '@/stores/PaymentSlice'
+import { updatePaymentStatus, deletePayment } from '@/stores/PaymentSlice'
+import { updateReceiptStatus, deleteReceipt } from '@/stores/ReceiptSlice'
 import ViewSupplierDialog from '../../supplier/components/ViewSupplierDialog'
+import ReturnPurchaseOrderDialog from './ReturnPurchaseOrderDialog'
+import { PackageMinus } from 'lucide-react'
 
 const ViewPurchaseOrderDialog = ({
   open,
@@ -89,6 +95,9 @@ const ViewPurchaseOrderDialog = ({
 
   const [showCreatePaymentDialog, setShowCreatePaymentDialog] = useState(false)
   const [showUpdateStatusDialog, setShowUpdateStatusDialog] = useState(false)
+
+  // HOÀN TIỀN
+  const [showRefundReceiptDialog, setShowRefundReceiptDialog] = useState(false)
 
   // Sub-detail Dialog States
   const [showWarehouseReceiptDetail, setShowWarehouseReceiptDetail] = useState(false)
@@ -119,6 +128,9 @@ const ViewPurchaseOrderDialog = ({
   // Delete Warehouse Receipt Dialog State
   const [showDeleteWarehouseReceiptDialog, setShowDeleteWarehouseReceiptDialog] = useState(false)
   const [warehouseReceiptToDelete, setWarehouseReceiptToDelete] = useState(null)
+
+  // Return Purchase Order Dialog State
+  const [showReturnDialog, setShowReturnDialog] = useState(false)
 
 
 
@@ -161,10 +173,15 @@ const ViewPurchaseOrderDialog = ({
     }
   }
 
-  const handleUpdatePaymentStatus = async (status, id) => {
+  const handleUpdatePaymentStatus = async (status, id, isReceipt) => {
     try {
-      await dispatch(updatePaymentStatus({ id, status })).unwrap()
-      toast.success('Cập nhật trạng thái phiếu chi thành công')
+      if (isReceipt) {
+        await dispatch(updateReceiptStatus({ id, status })).unwrap()
+        toast.success('Cập nhật trạng thái phiếu thu thành công')
+      } else {
+        await dispatch(updatePaymentStatus({ id, status })).unwrap()
+        toast.success('Cập nhật trạng thái phiếu chi thành công')
+      }
       setShowUpdatePaymentStatus(false)
       fetchData()
       onRefresh?.()
@@ -302,6 +319,61 @@ const ViewPurchaseOrderDialog = ({
       toast.error('Tạo phiếu nhập kho thất bại')
     }
   }
+
+  // ======= RETURN PURCHASE ORDER HANDLER =======
+  const handleCreateReturnPurchaseOrder = async (selectedItems, actualDate, warehouseId, reason, notes) => {
+    const items = selectedItems.map(item => ({
+      productId: item.productId || item.product?.id,
+      cancelQty: item.cancelQty || 0,
+      exportQty: item.exportQty || 0,
+      price: item.price !== undefined ? Number(item.price) : 0
+    }))
+
+    const payload = {
+      items,
+      warehouseId: Number(warehouseId),
+      actualDate: actualDate || new Date().toISOString(),
+      reason: reason || `Trả hàng từ đơn mua ${purchaseOrder.poCode || purchaseOrder.code}`,
+      notes: notes || ''
+    }
+
+    try {
+      await dispatch(returnPurchaseOrder({ id: purchaseOrder.id, data: payload })).unwrap()
+      // toast is handled in thunk
+      fetchData()
+      onRefresh?.()
+    } catch (error) {
+      console.error(error)
+      // toast is also handled in slice commonly, or you can add extra generic message here if you want
+    }
+  }
+
+  // ======= COMPUTE IMPORT COMPLETION =======
+  const importCompletion = useMemo(() => {
+    if (!purchaseOrder?.details || !purchaseOrder?.warehouseReceipts) return { isFullyImported: false, totalOrdered: 0 }
+    
+    const totalOrdered = purchaseOrder.details.reduce((sum, d) => sum + Number(d.quantity || 0), 0)
+    
+    // Calculate imported per product
+    const importedByProduct = {}
+    purchaseOrder.warehouseReceipts.forEach(receipt => {
+      const isImport = receipt.receiptType === 1 || receipt.transactionType === 'import'
+      const isPosted = receipt.isPosted || receipt.status === 'posted'
+      const isNormalImport = receipt.referenceType === 'purchase_order'
+      if (isImport && isPosted && isNormalImport && receipt.details) {
+        receipt.details.forEach(d => {
+          importedByProduct[d.productId] = (importedByProduct[d.productId] || 0) + Number(d.quantity || 0)
+        })
+      }
+    })
+
+    const allFullyImported = purchaseOrder.details.every(d => {
+      const imported = importedByProduct[d.productId] || 0
+      return imported >= Number(d.quantity || 0)
+    })
+
+    return { isFullyImported: allFullyImported, totalOrdered, importedByProduct }
+  }, [purchaseOrder])
 
   // Helper for Warehouse Receipt Status (assuming similar to Invoice)
   const getWarehouseReceiptStatusColor = (statusValue) => {
@@ -696,19 +768,45 @@ const ViewPurchaseOrderDialog = ({
                     <Separator className="my-4" />
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">Phiếu chi</h3>
-                        {!['pending', 'received', 'cancelled'].includes(purchaseOrder?.status) && purchaseOrder?.paymentStatus !== 'paid' && (
-                          <Button
-                            size="sm"
-                            className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
-                            onClick={handleCreatePayment}
-                          >
-                            <IconPlus className="h-4 w-4" />
-                            <span>
-                              Thêm
-                            </span>
-                          </Button>
-                        )}
+                        <h3 className="font-semibold">Phiếu chi & Thu</h3>
+                        <div className="flex gap-2">
+                          {(() => {
+                            // Điều kiện 1: Có ít nhất 1 phiếu nhập kho đã ghi sổ
+                            const hasPostedImport = purchaseOrder?.warehouseReceipts?.some(
+                              r => (r.receiptType === 1 || r.transactionType === 'import') && r.referenceType === 'purchase_order' && r.status === 'posted'
+                            )
+                            // Điều kiện 2: Có ít nhất 1 phiếu trả hàng (xuất kho) đã ghi sổ
+                            const hasPostedReturn = purchaseOrder?.warehouseReceipts?.some(
+                              r => r.referenceType === 'purchase_refunds' && r.status === 'posted'
+                            )
+                            // Điều kiện 3: Có ít nhất 1 phiếu chi đã thanh toán (posted)
+                            const hasPostedPayment = purchaseOrder?.paymentVouchers?.some(
+                              pv => pv.status === 'posted' && pv.receiptType !== 'refund'
+                            )
+                            return hasPostedImport && hasPostedReturn && hasPostedPayment
+                          })() && (
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1 bg-blue-600 text-white hover:bg-blue-700 border-transparent"
+                              onClick={() => setShowRefundReceiptDialog(true)}
+                            >
+                              <IconPlus className="h-4 w-4" />
+                              <span>Hoàn tiền</span>
+                            </Button>
+                          )}
+                          {!['pending', 'received', 'cancelled'].includes(purchaseOrder?.status) && purchaseOrder?.paymentStatus !== 'paid' && (
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
+                              onClick={handleCreatePayment}
+                            >
+                              <IconPlus className="h-4 w-4" />
+                              <span>
+                                Thêm
+                              </span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       {purchaseOrder?.paymentVouchers && purchaseOrder.paymentVouchers.length > 0 ? (
@@ -731,7 +829,7 @@ const ViewPurchaseOrderDialog = ({
                               </TableHeader>
                               <TableBody>
                                 {purchaseOrder.paymentVouchers.map((voucher, index) => (
-                                  <TableRow key={voucher.id}>
+                                  <TableRow key={voucher?.id || index}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>
                                       <span
@@ -805,7 +903,7 @@ const ViewPurchaseOrderDialog = ({
                         ) : (
                           <div className="space-y-3">
                             {purchaseOrder.paymentVouchers.map((voucher) => (
-                              <div key={voucher.id} className="space-y-2 rounded-lg border p-3 text-sm">
+                              <div key={voucher?.id || Math.random()} className="space-y-2 rounded-lg border p-3 text-sm">
                                 <div className="flex justify-between items-center">
                                   <strong>Mã phiếu:</strong>
                                   <div className="flex items-center gap-2">
@@ -899,19 +997,29 @@ const ViewPurchaseOrderDialog = ({
                     <Separator className="my-4" />
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">Phiếu nhập kho</h3>
-                        {!['pending', 'received', 'cancelled'].includes(purchaseOrder?.status) && (
-                          <Button
-                            size="sm"
-                            className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
-                            onClick={handleCreateImport}
-                          >
-                            <IconPlus className="h-4 w-4" />
-                            <span>
-                              Thêm
-                            </span>
-                          </Button>
-                        )}
+                        <h3 className="font-semibold">Phiếu kho</h3>
+                        <div className="flex items-center gap-2">
+                          {!['pending', 'received', 'cancelled'].includes(purchaseOrder?.status) && !importCompletion.isFullyImported && (
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
+                              onClick={handleCreateImport}
+                            >
+                              <IconPlus className="h-4 w-4" />
+                              <span>Nhập kho</span>
+                            </Button>
+                          )}
+                          {!['pending', 'cancelled'].includes(purchaseOrder?.status) && (
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1 bg-red-600 text-white hover:bg-red-700 border-transparent"
+                              onClick={() => setShowReturnDialog(true)}
+                            >
+                              <PackageMinus className="h-4 w-4" />
+                              <span>Trả hàng</span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       {purchaseOrder?.warehouseReceipts && purchaseOrder.warehouseReceipts.length > 0 ? (
@@ -933,7 +1041,7 @@ const ViewPurchaseOrderDialog = ({
                               </TableHeader>
                               <TableBody>
                                 {purchaseOrder.warehouseReceipts.map((receipt, index) => (
-                                  <TableRow key={receipt.id}>
+                                  <TableRow key={receipt?.id || index}>
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>
                                       <span
@@ -947,7 +1055,7 @@ const ViewPurchaseOrderDialog = ({
                                       </span>
                                     </TableCell>
                                     <TableCell>
-                                      {receipt.receiptType === 1 ? 'Nhập kho' : receipt.receiptType}
+                                      {receipt.receiptType === 1 ? 'Nhập kho' : receipt.receiptType === 2 ? (receipt.referenceType === 'purchase_refunds' ? 'Xuất trả NCC' : 'Xuất kho') : receipt.receiptType}
                                     </TableCell>
                                     <TableCell>
                                       <span
@@ -1002,7 +1110,7 @@ const ViewPurchaseOrderDialog = ({
                         ) : (
                           <div className="space-y-3">
                             {purchaseOrder.warehouseReceipts.map((receipt) => (
-                              <div key={receipt.id} className="space-y-2 rounded-lg border p-3 text-sm">
+                              <div key={receipt?.id || Math.random()} className="space-y-2 rounded-lg border p-3 text-sm">
                                 <div className="flex justify-between items-center">
                                   <strong>Mã phiếu:</strong>
                                   <div className="flex items-center gap-2">
@@ -1033,7 +1141,7 @@ const ViewPurchaseOrderDialog = ({
                                 </div>
                                 <div className="flex justify-between">
                                   <strong>Loại phiếu:</strong>
-                                  <span>{receipt.receiptType === 1 ? 'Nhập kho' : receipt.receiptType}</span>
+                                  <span>{receipt.receiptType === 1 ? 'Nhập kho' : receipt.receiptType === 2 ? (receipt.referenceType === 'purchase_refunds' ? 'Xuất trả NCC' : 'Xuất kho') : receipt.receiptType}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                   <strong>Trạng thái:</strong>
@@ -1315,6 +1423,17 @@ const ViewPurchaseOrderDialog = ({
                 </Button>
               )}
 
+              {!['pending', 'cancelled'].includes(purchaseOrder.status) && (
+                <Button
+                  size="sm"
+                  className="gap-2 bg-red-600 text-white hover:bg-red-700"
+                  onClick={() => setShowReturnDialog(true)}
+                >
+                  <PackageMinus className="h-4 w-4" />
+                  Trả Hàng NCC
+                </Button>
+              )}
+
               <Button
                 size="sm"
                 variant="outline"
@@ -1385,7 +1504,7 @@ const ViewPurchaseOrderDialog = ({
         <ConfirmImportWarehouseDialog
           open={showConfirmImportDialog}
           onOpenChange={setShowConfirmImportDialog}
-          purchaseOrderId={purchaseOrder.id}
+          purchaseOrderId={purchaseOrder?.id}
           onConfirm={handleCreateWarehouseReceipt}
           contentClassName="z-[100020]"
           overlayClassName="z-[100019]"
@@ -1407,13 +1526,29 @@ const ViewPurchaseOrderDialog = ({
         />
       )}
 
-      {/* View Payment Detail Dialog */}
-      {showPaymentDetail && (
+      {/* View Payment Detail Dialog (Phiếu chi) */}
+      {showPaymentDetail && selectedPaymentDetail && !selectedPaymentDetail.isReceipt && (
         <ViewPaymentDialog
           open={showPaymentDetail}
           onOpenChange={setShowPaymentDetail}
           paymentId={selectedPaymentDetail?.id}
 
+          contentClassName="z-[100030]"
+          overlayClassName="z-[100029]"
+          onSuccess={() => {
+            fetchData()
+            onRefresh?.()
+          }}
+        />
+      )}
+
+      {/* View Receipt Detail Dialog (Phiếu thu hoàn tiền) */}
+      {showPaymentDetail && selectedPaymentDetail && selectedPaymentDetail.isReceipt && (
+        <ViewReceiptDialog
+          open={showPaymentDetail}
+          onOpenChange={setShowPaymentDetail}
+          receiptId={selectedPaymentDetail?.id}
+          showTrigger={false}
           contentClassName="z-[100030]"
           overlayClassName="z-[100029]"
           onSuccess={() => {
@@ -1444,6 +1579,7 @@ const ViewPurchaseOrderDialog = ({
           open={!!selectedPaymentForEdit}
           onOpenChange={(open) => !open && setSelectedPaymentForEdit(null)}
           paymentId={selectedPaymentForEdit.id}
+          purchaseOrder={purchaseOrder}
           onSuccess={() => {
             fetchData()
             onRefresh?.()
@@ -1453,7 +1589,20 @@ const ViewPurchaseOrderDialog = ({
         />
       )}
 
-
+      {/* Create Refund Receipt Dialog */}
+      {showRefundReceiptDialog && (
+        <RefundReceiptDialog
+          open={showRefundReceiptDialog}
+          onOpenChange={setShowRefundReceiptDialog}
+          purchaseOrder={purchaseOrder}
+          onSuccess={() => {
+            fetchData()
+            onRefresh?.()
+          }}
+          contentClassName="z-[100020]"
+          overlayClassName="z-[100019]"
+        />
+      )}
 
       {/* Update Purchase Order Status Dialog */}
       {showUpdateStatusDialog && (
@@ -1464,8 +1613,8 @@ const ViewPurchaseOrderDialog = ({
               setShowUpdateStatusDialog(false)
             }
           }}
-          purchaseOrderId={purchaseOrder.id}
-          currentStatus={purchaseOrder.status}
+          purchaseOrderId={purchaseOrder?.id}
+          currentStatus={purchaseOrder?.status}
           statuses={purchaseOrderStatuses}
           onSubmit={handleUpdateStatus}
           contentClassName="z-[100020]"
@@ -1490,10 +1639,10 @@ const ViewPurchaseOrderDialog = ({
         <UpdatePaymentStatusDialog
           open={showUpdatePaymentStatus}
           onOpenChange={setShowUpdatePaymentStatus}
-          paymentId={selectedPaymentForUpdate.code || selectedPaymentForUpdate.id}
+          paymentId={selectedPaymentForUpdate?.code || selectedPaymentForUpdate?.id}
           currentStatus={selectedPaymentForUpdate.status}
           statuses={paymentStatus}
-          onSubmit={(status) => handleUpdatePaymentStatus(status, selectedPaymentForUpdate.id)}
+          onSubmit={(status) => handleUpdatePaymentStatus(status, selectedPaymentForUpdate.id, selectedPaymentForUpdate.isReceipt)}
           contentClassName="z-[100020]"
           overlayClassName="z-[100019]"
           selectContentClassName="z-[100050]"
@@ -1507,6 +1656,14 @@ const ViewPurchaseOrderDialog = ({
           onOpenChange={setShowDeletePaymentDialog}
           payment={paymentToDelete}
           showTrigger={false}
+          onDelete={async (id) => {
+            if (paymentToDelete.isReceipt) {
+              await dispatch(deleteReceipt(id)).unwrap()
+              toast.success('Xóa phiếu thu thành công')
+            } else {
+              await dispatch(deletePayment(id)).unwrap()
+            }
+          }}
           onSuccess={() => {
             setShowDeletePaymentDialog(false)
             fetchData()
@@ -1522,9 +1679,9 @@ const ViewPurchaseOrderDialog = ({
         <UpdateWarehouseReceiptStatusDialog
           open={showUpdateWarehouseReceiptStatus}
           onOpenChange={setShowUpdateWarehouseReceiptStatus}
-          receiptId={selectedWarehouseReceiptForUpdate.id}
-          receiptCode={selectedWarehouseReceiptForUpdate.code}
-          currentStatus={selectedWarehouseReceiptForUpdate.status}
+          receiptId={selectedWarehouseReceiptForUpdate?.id}
+          receiptCode={selectedWarehouseReceiptForUpdate?.code}
+          currentStatus={selectedWarehouseReceiptForUpdate?.status}
           statuses={warehouseReceiptStatuses}
           onSubmit={handleUpdateWarehouseReceiptStatus}
           contentClassName="z-[100020]"
@@ -1545,6 +1702,18 @@ const ViewPurchaseOrderDialog = ({
             fetchData()
             onRefresh?.()
           }}
+          contentClassName="z-[100020]"
+          overlayClassName="z-[100019]"
+        />
+      )}
+
+      {/* Return Purchase Order Dialog */}
+      {showReturnDialog && purchaseOrder && (
+        <ReturnPurchaseOrderDialog
+          open={showReturnDialog}
+          onOpenChange={setShowReturnDialog}
+          purchaseOrder={purchaseOrder}
+          onConfirm={handleCreateReturnPurchaseOrder}
           contentClassName="z-[100020]"
           overlayClassName="z-[100019]"
         />

@@ -259,6 +259,7 @@ const CreateProductDialog = ({
       await dispatch(createProduct(dataToSend)).unwrap()
       form.reset()
       onOpenChange(false)
+      if (props.onSuccess) props.onSuccess()
     } catch (error) {
       console.error('Submit error:', error)
     }

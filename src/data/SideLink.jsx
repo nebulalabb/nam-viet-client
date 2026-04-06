@@ -132,8 +132,14 @@ export const sideLinks = [
         permission: 'GET_PAYMENT',
       },
       {
-        title: 'Công nợ',
+        title: 'Công nợ khách hàng',
         href: '/customer-debt',
+        icon: <DatabaseBackup size={18} strokeWidth={1.5} />,
+        permission: 'GET_DEBT',
+      },
+      {
+        title: 'Công nợ nhà cung cấp',
+        href: '/partner-debt',
         icon: <DatabaseBackup size={18} strokeWidth={1.5} />,
         permission: 'GET_DEBT',
       },
@@ -146,15 +152,21 @@ export const sideLinks = [
     ],
   },
   {
-    title: 'Khách hàng',
+    title: 'Khách hàng / Đối tác',
     icon: <Users size={20} strokeWidth={1.5} />,
-    permission: ['GET_CUSTOMER', 'GET_CUSTOMER_USER', 'GET_CUSTOMER_CARE', 'GET_TASK'],
+    permission: ['GET_CUSTOMER', 'GET_CUSTOMER_USER', 'GET_CUSTOMER_CARE', 'GET_TASK', 'GET_SUPPLIER'],
     sub: [
       {
         title: 'Danh sách khách hàng',
         href: '/customer',
         icon: <Users size={18} strokeWidth={1.5} />,
         permission: ['GET_CUSTOMER', 'GET_CUSTOMER_USER'],
+      },
+      {
+        title: 'Nhà cung cấp / Đối tác',
+        href: '/partner',
+        icon: <Users size={18} strokeWidth={1.5} />,
+        permission: 'GET_SUPPLIER',
       },
       // {
       //   title: 'Công nợ',

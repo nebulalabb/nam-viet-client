@@ -2,6 +2,7 @@ import React from 'react'
 import { MapPin, User, Eye, ShieldAlert, SkipForward, ShieldOff, MoreHorizontal } from 'lucide-react'
 import { formatCurrency } from '@/utils/number-format'
 import DebtPagination from './DebtPagination'
+import ConfirmActionButton from '@/components/custom/ConfirmActionButton'
 
 import {
     Table,
@@ -150,11 +151,11 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-right align-top text-blue-600 font-bold text-xs font-mono">
-                                            {increase > 0 ? `+${formatCurrency(increase)}` : <span className="text-gray-300">-</span>}
+                                            {increase > 0 ? formatCurrency(increase) : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-right align-top text-indigo-600 font-medium font-mono text-xs">
-                                            {returnAmt > 0 ? `-${formatCurrency(returnAmt)}` : <span className="text-gray-300">-</span>}
+                                            {returnAmt > 0 ? formatCurrency(returnAmt) : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
 
@@ -209,26 +210,45 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                                         </DropdownMenuItem>
 
                                                         {type === 'customer' && isWarning && onExtendDebt && (
-                                                            <DropdownMenuItem onClick={() => onExtendDebt(objId)}>
-                                                                <SkipForward className="mr-2 h-4 w-4 text-green-600" />
-                                                                <span className="text-green-600 font-medium">Gia hạn kiểm tra 1 năm</span>
-                                                            </DropdownMenuItem>
+                                                            <ConfirmActionButton
+                                                                title="Xác nhận gia hạn"
+                                                                description="Gia hạn kiểm tra nợ thêm 1 năm cho khách hàng này?"
+                                                                onConfirm={() => onExtendDebt(objId)}
+                                                            >
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <SkipForward className="mr-2 h-4 w-4 text-green-600" />
+                                                                    <span className="text-green-600 font-medium">Gia hạn kiểm tra 1 năm</span>
+                                                                </DropdownMenuItem>
+                                                            </ConfirmActionButton>
                                                         )}
 
                                                         {(type === 'customer' && onToggleBlacklist) && <DropdownMenuSeparator />}
 
                                                         {type === 'customer' && !isBlacklisted && onToggleBlacklist && (
-                                                            <DropdownMenuItem onClick={() => onToggleBlacklist(objId)}>
-                                                                <ShieldAlert className="mr-2 h-4 w-4 text-red-600" />
-                                                                <span className="text-red-600 font-medium">Đưa vào danh sách đen</span>
-                                                            </DropdownMenuItem>
+                                                            <ConfirmActionButton
+                                                                title="Xác nhận thay đổi danh sách đen"
+                                                                description="Bạn có chắc chắn muốn đưa khách hàng này vào danh sách đen?"
+                                                                onConfirm={() => onToggleBlacklist(objId)}
+                                                                confirmBtnVariant="destructive"
+                                                            >
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <ShieldAlert className="mr-2 h-4 w-4 text-red-600" />
+                                                                    <span className="text-red-600 font-medium">Đưa vào danh sách đen</span>
+                                                                </DropdownMenuItem>
+                                                            </ConfirmActionButton>
                                                         )}
 
                                                         {type === 'customer' && isBlacklisted && onToggleBlacklist && (
-                                                            <DropdownMenuItem onClick={() => onToggleBlacklist(objId)}>
-                                                                <ShieldOff className="mr-2 h-4 w-4 text-blue-600" />
-                                                                <span className="text-blue-600 font-medium">Gỡ khỏi danh sách đen</span>
-                                                            </DropdownMenuItem>
+                                                            <ConfirmActionButton
+                                                                title="Xác nhận gỡ danh sách đen"
+                                                                description="Bạn có chắc chắn muốn gỡ khách hàng này khỏi danh sách đen?"
+                                                                onConfirm={() => onToggleBlacklist(objId)}
+                                                            >
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <ShieldOff className="mr-2 h-4 w-4 text-blue-600" />
+                                                                    <span className="text-blue-600 font-medium">Gỡ khỏi danh sách đen</span>
+                                                                </DropdownMenuItem>
+                                                            </ConfirmActionButton>
                                                         )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>

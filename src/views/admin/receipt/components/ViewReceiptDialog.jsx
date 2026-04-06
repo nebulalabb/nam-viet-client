@@ -104,7 +104,29 @@ const ViewReceiptDialog = ({
 
   const setting = useSelector((state) => state.setting.setting)
 
-  const invoiceItems = receipt?.invoice?.items || []
+  // Normalized data for display
+  const items = useMemo(() => {
+    if (receipt?.invoice?.details) return receipt.invoice.details
+    if (receipt?.purchaseOrder?.details) return receipt.purchaseOrder.details
+    return []
+  }, [receipt])
+
+  const receiverData = useMemo(() => {
+    if (receipt?.receiver) return receipt.receiver
+    if (receipt?.customerRef) return {
+      ...receipt.customerRef,
+      name: receipt.customerRef.customerName,
+      code: receipt.customerRef.customerCode
+    }
+    if (receipt?.supplier) return {
+      ...receipt.supplier,
+      name: receipt.supplier.supplierName,
+      code: receipt.supplier.supplierCode
+    }
+    return null
+  }, [receipt])
+
+  const creatorData = receipt?.creator || receipt?.createdByUser
 
   const dispatch = useDispatch()
 
@@ -159,8 +181,6 @@ const ViewReceiptDialog = ({
   const handlePrintReceipt = () => {
     if (!receipt) return
     setPrintData(receipt)
-    // small timeout to clear print data if needed, but react-to-print handles ref logic
-    setTimeout(() => setPrintData(null), 100)
   }
 
   return (
@@ -219,11 +239,17 @@ const ViewReceiptDialog = ({
                       >{receipt.invoice.orderCode || receipt.invoice.code}</div>)
                     </span>
                   )}
-                  {/* {receipt?.salesContract && (
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      (Hợp đồng: {receipt.salesContract.code})
+                  {receipt?.purchaseOrder && (
+                    <span className={cn("text-sm text-muted-foreground", isMobile ? "ml-0" : "ml-2")}>
+                      (Đơn mua: <div
+                        className="inline cursor-pointer text-primary hover:underline hover:text-blue-600"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                        }}
+                      >{receipt.purchaseOrder.poCode || receipt.purchaseOrder.code}</div>)
                     </span>
-                  )} */}
+                  )}
                 </h2>
 
                 <div className="space-y-6">
@@ -246,16 +272,22 @@ const ViewReceiptDialog = ({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {invoiceItems.map((product, index) => (
-                            <TableRow key={product.id || index}>
+                          {items.map((item, index) => {
+                            const productName = item.productName || item.product?.productName || '—'
+                            const productCode = item.productCode || item.product?.code || '—'
+                            const productImage = item.image || item.product?.image
+                            const unitName = item.unitName || item.product?.unit?.unitName || '—'
+
+                            return (
+                            <TableRow key={item.id || index}>
                               <TableCell>{index + 1}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-3">
                                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border">
-                                    {product?.image ? (
+                                    {productImage ? (
                                       <img
-                                        src={getPublicUrl(product.image)}
-                                        alt={product.productName}
+                                        src={getPublicUrl(productImage)}
+                                        alt={productName}
                                         className="h-full w-full object-cover"
                                       />
                                     ) : (
@@ -266,64 +298,58 @@ const ViewReceiptDialog = ({
                                   </div>
                                   <div>
                                     <div className="text-[10px] font-bold text-muted-foreground leading-none mb-1">
-                                      {product.product?.code || product.productCode || '—'}
+                                      {productCode}
                                     </div>
                                     <div
                                       className="font-medium cursor-pointer text-primary hover:underline hover:text-blue-600"
                                       onClick={() => {
-                                        setSelectedProductId(product.productId)
+                                        setSelectedProductId(item.productId)
                                         setShowViewProductDialog(true)
                                       }}
                                     >
-                                      {product.productName}
+                                      {productName}
                                     </div>
-                                    {product?.options && (
-                                      <div className="break-words text-sm text-muted-foreground">
-                                        {product.options
-                                          ?.map(
-                                            (option) =>
-                                              `${option.name}: ${option.pivot.value}`,
-                                          )
-                                          .join(', ')}
-                                      </div>
-                                    )}
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell>{product.quantity}</TableCell>
+                              <TableCell>{item.quantity}</TableCell>
                               <TableCell>
-                                {product.unitName || 'Không có'}
+                                {unitName}
                               </TableCell>
                               <TableCell className="text-end">
-                                {moneyFormat(product.price)}
+                                {moneyFormat(item.price)}
                               </TableCell>
                               <TableCell className="text-end">
-                                {moneyFormat(product.taxAmount)}
+                                {moneyFormat(item.taxAmount || 0)}
                               </TableCell>
                               <TableCell className="text-end">
-                                {moneyFormat(product.discount)}
+                                {moneyFormat(item.discount || 0)}
                               </TableCell>
                               <TableCell className="text-end">
-                                {moneyFormat(product.total)}
+                                {moneyFormat(item.total)}
                               </TableCell>
                             </TableRow>
-                          ))}
+                          )})}
                         </TableBody>
                       </Table>
                     ) : (
                       <div className="space-y-4">
-                        {invoiceItems.map((product, index) => (
+                        {items.map((item, index) => {
+                          const productName = item.productName || item.product?.productName || '—'
+                          const productCode = item.productCode || item.product?.code || '—'
+                          const productImage = item.image || item.product?.image
+                          const unitName = item.unitName || item.product?.unit?.unitName || '—'
+                          return (
                           <div
-                            key={product.id || index}
+                            key={item.id || index}
                             className="rounded-lg border p-3 shadow-sm bg-card text-card-foreground"
                           >
-                            {/* Header: Image + Name + Code */}
                             <div className="flex items-start gap-3 mb-3">
                               <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-muted/50">
-                                {product?.image ? (
+                                {productImage ? (
                                   <img
-                                    src={getPublicUrl(product.image)}
-                                    alt={product.productName}
+                                    src={getPublicUrl(productImage)}
+                                    alt={productName}
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
@@ -334,40 +360,29 @@ const ViewReceiptDialog = ({
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-[10px] font-bold text-muted-foreground leading-none mb-1">
-                                  {product.product?.code || product.productCode || '—'}
+                                  {productCode}
                                 </div>
                                 <div
                                   className="font-medium text-sm leading-tight line-clamp-2 cursor-pointer text-primary hover:underline hover:text-blue-600"
                                   onClick={() => {
-                                    setSelectedProductId(product.productId)
+                                    setSelectedProductId(item.productId)
                                     setShowViewProductDialog(true)
                                   }}
                                 >
-                                  {product.productName}
+                                  {productName}
                                 </div>
-                                {product?.options && (
-                                  <div className="break-words text-xs text-muted-foreground mt-1">
-                                    {product.options
-                                      ?.map(
-                                        (option) =>
-                                          `${option.name}: ${option.pivot.value}`,
-                                      )
-                                      .join(', ')}
-                                  </div>
-                                )}
                               </div>
                             </div>
 
                             <Separator className="my-2" />
 
-                            {/* Details Grid */}
                             <div className="grid grid-cols-2 gap-2 text-sm">
                               <div className="flex flex-col">
                                 <span className="text-muted-foreground text-xs">
                                   Số lượng
                                 </span>
                                 <span className="font-medium">
-                                  {Number(product.quantity)} {product.unitName}
+                                  {Number(item.quantity)} {unitName}
                                 </span>
                               </div>
                               <div className="flex flex-col text-right">
@@ -375,24 +390,7 @@ const ViewReceiptDialog = ({
                                   Đơn giá
                                 </span>
                                 <span className="font-medium">
-                                  {moneyFormat(product.price)}
-                                </span>
-                              </div>
-
-                              <div className="flex flex-col">
-                                <span className="text-muted-foreground text-xs">
-                                  Giảm giá
-                                </span>
-                                <span className="font-medium">
-                                  {moneyFormat(product.discount)}
-                                </span>
-                              </div>
-                              <div className="flex flex-col text-right">
-                                <span className="text-muted-foreground text-xs">
-                                  Thuế
-                                </span>
-                                <span className="font-medium">
-                                  {moneyFormat(product.taxAmount)}
+                                  {moneyFormat(item.price)}
                                 </span>
                               </div>
                             </div>
@@ -402,29 +400,11 @@ const ViewReceiptDialog = ({
                                 Thành tiền
                               </span>
                               <span className="font-bold text-primary">
-                                {moneyFormat(product.total)}
+                                {moneyFormat(item.total)}
                               </span>
                             </div>
-
-                            {/* Note/Warranty if exists */}
-                            {(product.note || product.warranty) && (
-                              <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                                {product.warranty && (
-                                  <div className="flex gap-1">
-                                    <span className="font-semibold">BH:</span>{' '}
-                                    {product.warranty}
-                                  </div>
-                                )}
-                                {product.note && (
-                                  <div className="flex gap-1">
-                                    <span className="font-semibold">GC:</span>{' '}
-                                    {product.note}
-                                  </div>
-                                )}
-                              </div>
-                            )}
                           </div>
-                        ))}
+                        )})}
                       </div>
                     )}
                   </div>
@@ -441,13 +421,13 @@ const ViewReceiptDialog = ({
                     <div className="space-y-4 text-sm">
                       <div className="flex justify-between">
                         <strong>Tổng tiền:</strong>
-                        <div>{moneyFormat(receipt?.amount || receipt?.invoice?.totalAmount)}</div>
+                        <div>{moneyFormat(receipt?.amount || receipt?.invoice?.totalAmount || receipt?.purchaseOrder?.totalAmount)}</div>
                       </div>
                       <div className="flex justify-start">
                         <div className="text-sm">
                           Số tiền viết bằng chữ:{' '}
                           <span className="font-medium italic">
-                            {toVietnamese(receipt?.amount || receipt?.invoice?.totalAmount || 0)}
+                            {toVietnamese(receipt?.amount || receipt?.invoice?.totalAmount || receipt?.purchaseOrder?.totalAmount || 0)}
                           </span>
                         </div>
                       </div>
@@ -457,24 +437,24 @@ const ViewReceiptDialog = ({
                         <div className="flex items-center gap-2">
                           <Badge
                             className={cn(
-                              receipt?.isPosted ? 'bg-green-500' : 'bg-yellow-500'
+                              receipt?.status === 'posted' ? 'bg-green-500' : 'bg-yellow-500'
                             )}
                           >
-                            {receipt?.isPosted ? 'Đã ghi sổ' : 'Chờ duyệt'}
+                            {receipt?.status === 'posted' ? 'Đã ghi sổ' : 'Chờ duyệt'}
                           </Badge>
                         </div>
                       </div>
 
                       <div className="flex justify-between">
                         <strong>Đã thanh toán:</strong>
-                        <div>{moneyFormat(receipt?.invoice?.paidAmount ?? receipt?.invoice?.paid_amount ?? 0)}</div>
+                        <div>{moneyFormat(receipt?.invoice?.paidAmount ?? receipt?.invoice?.paid_amount ?? receipt?.purchaseOrder?.paidAmount ?? 0)}</div>
                       </div>
                       <div className="flex justify-between">
                         <strong>Còn lại:</strong>
                         <div>
                           {(() => {
-                            const total = parseFloat(receipt?.amount || receipt?.invoice?.totalAmount || 0)
-                            const paid = parseFloat(receipt?.invoice?.paidAmount ?? receipt?.invoice?.paid_amount ?? 0)
+                            const total = parseFloat(receipt?.amount || receipt?.invoice?.totalAmount || receipt?.purchaseOrder?.totalAmount || 0)
+                            const paid = parseFloat(receipt?.invoice?.paidAmount ?? receipt?.invoice?.paid_amount ?? receipt?.purchaseOrder?.paidAmount ?? 0)
                             const remaining = total - paid
                             return (
                               <Badge
@@ -538,29 +518,36 @@ const ViewReceiptDialog = ({
               {/* ===== Right: Khách hàng & Nhân viên ===== */}
               <div className="w-full rounded-lg border p-4 lg:w-80 h-fit sticky top-0">
                 <div className="flex items-center justify-between">
-                  <h2 className="py-2 text-lg font-semibold">Khách hàng</h2>
+                  <h2 className="py-2 text-lg font-semibold">{receipt?.supplier ? 'Nhà cung cấp' : 'Khách hàng'}</h2>
                 </div>
 
                 <div className="space-y-6">
+                  {receiverData ? (
                   <div className="flex items-center gap-4">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${receipt?.receiver?.name}`}
-                        alt={receipt?.receiver?.name}
+                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${receiverData?.name}`}
+                        alt={receiverData?.name}
                       />
-                      <AvatarFallback>AD</AvatarFallback>
+                      <AvatarFallback>RC</AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-medium">{receipt?.receiver?.name}</div>
-                      {receipt?.receiver?.code && (
-                        <div className="text-xs text-muted-foreground">{receipt.receiver.code}</div>
+                      <div className="font-medium">{receiverData?.name}</div>
+                      {receiverData?.code && (
+                        <div className="text-xs text-muted-foreground">{receiverData.code}</div>
                       )}
                     </div>
                   </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground italic text-center py-4">
+                      Không có thông tin người thu
+                    </div>
+                  )}
 
+                  {receiverData && (
                   <div>
                     <div className="mb-2 flex items-center justify-between">
-                      <div className="font-medium">Thông tin khách hàng</div>
+                      <div className="font-medium">Thông tin chi tiết</div>
                     </div>
 
                     <div className="mt-4 space-y-2 text-sm">
@@ -568,8 +555,8 @@ const ViewReceiptDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <MobileIcon className="h-4 w-4" />
                         </div>
-                        <a href={`tel:${receipt?.receiver?.phone}`}>
-                          {receipt?.receiver?.phone || 'Chưa cập nhật'}
+                        <a href={`tel:${receiverData?.phone}`}>
+                          {receiverData?.phone || 'Chưa cập nhật'}
                         </a>
                       </div>
 
@@ -577,15 +564,15 @@ const ViewReceiptDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <CreditCard className="h-4 w-4" />
                         </div>
-                        {receipt?.receiver?.identityCard || 'Chưa cập nhật'}
+                        {receiverData?.identityCard || receiverData?.taxCode || '—'}
                       </div>
 
                       <div className="flex items-center text-muted-foreground">
                         <div className="mr-2 h-4 w-4 ">
                           <Mail className="h-4 w-4" />
                         </div>
-                        <a href={`mailto:${receipt?.receiver?.email}`}>
-                          {receipt?.receiver?.email || 'Chưa cập nhật'}
+                        <a href={`mailto:${receiverData?.email}`}>
+                          {receiverData?.email || 'Chưa cập nhật'}
                         </a>
                       </div>
 
@@ -593,10 +580,11 @@ const ViewReceiptDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <MapPin className="h-4 w-4" />
                         </div>
-                        {receipt?.receiver?.address || 'Chưa cập nhật'}
+                        {receiverData?.address || 'Chưa cập nhật'}
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 <Separator className="my-4" />
@@ -611,14 +599,14 @@ const ViewReceiptDialog = ({
                   <div className="flex items-center gap-4">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${receipt?.createdByUser?.fullName}`}
-                        alt={receipt?.createdByUser?.fullName}
+                        src={`https://ui-avatars.com/api/?bold=true&background=random&name=${creatorData?.fullName}`}
+                        alt={creatorData?.fullName}
                       />
                       <AvatarFallback>AD</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">
-                        {receipt?.createdByUser?.fullName}
+                        {creatorData?.fullName}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {dateFormat(receipt?.createdAt, true)}
@@ -636,8 +624,8 @@ const ViewReceiptDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <MobileIcon className="h-4 w-4" />
                         </div>
-                        <a href={`tel:${receipt?.createdByUser?.phone}`}>
-                          {receipt?.createdByUser?.phone || 'Chưa cập nhật'}
+                        <a href={`tel:${creatorData?.phone}`}>
+                          {creatorData?.phone || 'Chưa cập nhật'}
                         </a>
                       </div>
 
@@ -645,8 +633,8 @@ const ViewReceiptDialog = ({
                         <div className="mr-2 h-4 w-4 ">
                           <Mail className="h-4 w-4" />
                         </div>
-                        <a href={`mailto:${receipt?.createdByUser?.email}`}>
-                          {receipt?.createdByUser?.email || 'Chưa cập nhật'}
+                        <a href={`mailto:${creatorData?.email}`}>
+                          {creatorData?.email || 'Chưa cập nhật'}
                         </a>
                       </div>
                     </div>
@@ -661,7 +649,7 @@ const ViewReceiptDialog = ({
         <DialogFooter className={cn("hidden md:flex sm:space-x-0")}>
           <div className={cn("w-full grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end")}>
 
-            {(!receipt?.isPosted) && (
+            {(receipt?.status === 'draft') && (
               <Button
                 size="sm"
                 className="gap-2 bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
@@ -727,6 +715,7 @@ const ViewReceiptDialog = ({
         <PrintReceiptView
           receipt={printData}
           setting={setting}
+          onAfterPrint={() => setPrintData(null)}
         />
       )}
 
