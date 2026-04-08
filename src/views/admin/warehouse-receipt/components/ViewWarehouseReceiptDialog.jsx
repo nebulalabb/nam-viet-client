@@ -21,7 +21,7 @@ import { getWarehouseReceiptById, updateWarehouseReceipt, postWarehouseReceipt, 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { MobileIcon } from '@radix-ui/react-icons'
-import { Mail, MapPin, CreditCard, Package, Printer, FileSpreadsheet, Pencil, Trash, X, Save } from 'lucide-react'
+import { Mail, MapPin, CreditCard, Package, Printer, FileSpreadsheet, Pencil, Trash, X, Save, Home } from 'lucide-react'
 import PrintWarehouseReceiptView from './PrintWarehouseReceiptView'
 import { getPublicUrl } from '@/utils/file'
 import { exportWarehouseReceiptToExcel } from '@/utils/export-warehouse-receipt'
@@ -78,11 +78,30 @@ const ViewWarehouseReceiptDialog = ({
   const [selectedProductId, setSelectedProductId] = useState(null)
   const [showViewProductDialog, setShowViewProductDialog] = useState(false)
   const setting = useSelector((state) => state.setting.setting)
+  const { warehouses } = useSelector((state) => state.warehouse)
   const [details, setDetails] = useState([])
   const [receiptNotes, setReceiptNotes] = useState('')
 
   const [showCustomerDialog, setShowCustomerDialog] = useState(false)
   const [showSupplierDialog, setShowSupplierDialog] = useState(false)
+
+  // Transfer specific data
+  const isTransferIn = receipt?.referenceType === 'transfer_in'
+  const isTransferOut = receipt?.referenceType === 'transfer_out'
+  const isTransferType = isTransferIn || isTransferOut
+  
+  // Real Source Warehouse
+  const sourceTransferWarehouse = isTransferOut 
+    ? (receipt?.warehouse || warehouses?.find(w => w.id === receipt?.warehouseId))
+    : warehouses?.find(w => w.id === receipt?.referenceId)
+
+  // Real Destination Warehouse
+  const destTransferWarehouse = isTransferIn 
+    ? (receipt?.warehouse || warehouses?.find(w => w.id === receipt?.warehouseId))
+    : warehouses?.find(w => w.id === receipt?.referenceId)
+
+  // Partner warehouse shown on the right panel
+  const displayTransferWarehouse = isTransferIn ? sourceTransferWarehouse : destTransferWarehouse
 
   const handleUpdateStatus = async (newStatus, id) => {
     try {
@@ -294,6 +313,18 @@ const ViewWarehouseReceiptDialog = ({
                         </p>
                       </div>
                     )}
+                    {isTransferIn && (
+                      <div>
+                        <span className="text-sm text-muted-foreground">Kho hàng nhận:</span>
+                        <p className="font-medium">{destTransferWarehouse?.warehouseName || 'Chưa xác định'}</p>
+                      </div>
+                    )}
+                    {isTransferOut && (
+                      <div>
+                        <span className="text-sm text-muted-foreground">Kho xuất hàng:</span>
+                        <p className="font-medium">{sourceTransferWarehouse?.warehouseName || 'Chưa xác định'}</p>
+                      </div>
+                    )}
                     <div>
                       <span className="text-sm text-muted-foreground">Trạng thái:</span>
                       {isMobile ? (
@@ -417,7 +448,9 @@ const ViewWarehouseReceiptDialog = ({
                                     }}
                                   >{detail.product?.productName || detail.productName || 'Sản phẩm không xác định'}</div>
                                   <div className="text-sm text-muted-foreground break-words">
-                                    Mã: {detail.product?.code || detail.productCode || detail.productId}
+                                    Mã: {detail.product?.code || detail.productCode || detail.productId} 
+                                    <span className="mx-2">•</span> 
+                                    ĐVT: {detail.unitName || detail.product?.unit?.name || '—'}
                                   </div>
                                 </div>
                               </div>
@@ -531,17 +564,57 @@ const ViewWarehouseReceiptDialog = ({
               <div className="w-full rounded-lg border p-4 lg:w-80 h-fit sticky top-0">
                 <div className="flex items-center justify-between">
                   <h2 className="py-2 text-lg font-semibold">
-                    {receipt?.receiptType === 1 ? 'Nhà cung cấp' : 'Khách hàng'}
+                    {isTransferIn ? 'Kho xuất hàng' : isTransferOut ? 'Kho nhận hàng' : receipt?.receiptType === 1 ? 'Nhà cung cấp' : 'Khách hàng'}
                   </h2>
                 </div>
 
-                {partner ? (
+                {isTransferType && displayTransferWarehouse ? (
                   <div className="space-y-6">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-8 w-8">
                         <AvatarImage
-                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${partner.name || partner.customerName || '?'}`}
-                          alt={partner.name || partner.customerName || 'Partner'}
+                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${displayTransferWarehouse.warehouseName}`}
+                          alt={displayTransferWarehouse.warehouseName}
+                        />
+                        <AvatarFallback>W</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">
+                          {displayTransferWarehouse.warehouseName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{displayTransferWarehouse.code || ''}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="font-medium">Thông tin chi tiết</div>
+                      </div>
+
+                      <div className="mt-4 space-y-2 text-sm">
+                        {displayTransferWarehouse.phone && (
+                          <div className="flex cursor-pointer items-center text-primary hover:text-secondary-foreground">
+                            <MobileIcon className="mr-2 h-4 w-4" />
+                            <a href={`tel:${displayTransferWarehouse.phone}`}>{displayTransferWarehouse.phone}</a>
+                          </div>
+                        )}
+
+                        {displayTransferWarehouse.address && (
+                          <div className="flex items-center text-muted-foreground">
+                            <MapPin className="mr-2 h-4 w-4 shrink-0 mt-0.5 self-start" />
+                            <span>{displayTransferWarehouse.address}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : partner ? (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={`https://ui-avatars.com/api/?bold=true&background=random&name=${partner.supplierName || partner.name || partner.customerName || '?'}`}
+                          alt={partner.supplierName || partner.name || partner.customerName || 'Partner'}
                         />
                         <AvatarFallback>P</AvatarFallback>
                       </Avatar>
@@ -556,9 +629,9 @@ const ViewWarehouseReceiptDialog = ({
                             }
                           }}
                         >
-                          {partner.name || partner.customerName || 'Chưa cập nhật tên'}
+                          {partner.supplierName || partner.name || partner.customerName || 'Chưa cập nhật tên'}
                         </div>
-                        <div className="text-xs text-muted-foreground">{partner.code || partner.customerCode || ''}</div>
+                        <div className="text-xs text-muted-foreground">{partner.supplierCode || partner.code || partner.customerCode || ''}</div>
                       </div>
                     </div>
 
@@ -795,6 +868,10 @@ const ViewWarehouseReceiptDialog = ({
         <PrintWarehouseReceiptView
           receipt={printData}
           setting={setting}
+          isTransferType={isTransferType}
+          displayTransferWarehouse={displayTransferWarehouse}
+          isTransferIn={isTransferIn}
+          isTransferOut={isTransferOut}
         />
 
       )}

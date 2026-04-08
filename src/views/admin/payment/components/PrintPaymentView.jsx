@@ -31,11 +31,9 @@ const PrintPaymentView = ({ payment, setting, onAfterPrint }) => {
 
 const PrintableContent = React.forwardRef(
   ({ setting, payment }, ref) => {
-    // Top header print time
     const now = new Date()
     const nowTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear().toString().slice(-2)}`
 
-    // Date formatting
     const createdDate = new Date(payment?.paymentDate || payment?.createdAt || new Date())
     const day = createdDate.getDate().toString().padStart(2, '0')
     const month = (createdDate.getMonth() + 1).toString().padStart(2, '0')
@@ -43,86 +41,105 @@ const PrintableContent = React.forwardRef(
     const printDateStr = `Ngày ${day} Tháng ${month} Năm ${year}`
 
     return (
-      <div ref={ref} className="font-serif text-black mx-auto bg-white w-[210mm] min-h-[297mm] text-[17px] p-8 pt-6 relative">
-        {/* Top small header */}
-        <div className="flex justify-between items-center mb-4 text-sm font-sans">
-          <span>{nowTime}</span>
-          <span>In Chứng Từ</span>
-        </div>
+      <div ref={ref}>
+        <style dangerouslySetInnerHTML={{__html: `
+          @page { size: A5 landscape; margin: 6mm 8mm; }
+          @media print {
+            body { margin: 0; padding: 0; }
+            .print-payment-a5 {
+              width: 195mm !important;
+              max-height: 136mm !important;
+              overflow: hidden !important;
+              padding: 5mm 8mm !important;
+              box-sizing: border-box !important;
+            }
+          }
+        `}} />
 
-        {/* Brand Header */}
-        <div className="flex items-center mb-6 pl-8 pr-4">
-          {/* Logo */}
-          <div className="w-[120px] h-[120px] flex items-center justify-center flex-shrink-0">
-            <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} alt="Logo" className="max-w-full max-h-full object-contain" />
-          </div>
+        <div className="print-payment-a5 mx-auto bg-white font-serif"
+             style={{ width: '195mm', maxHeight: '136mm', padding: '5mm 8mm', boxSizing: 'border-box', overflow: 'hidden', color: '#000' }}>
           
-          <div className="flex-1 text-center -ml-4">
-            <h1 className="text-3xl font-bold uppercase text-[#e2362b] tracking-wider mb-2" style={{ textShadow: '0 0 1px rgba(226,54,43,0.3)' }}>{setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}</h1>
-            <p className="text-[#1ab85c] font-bold text-lg mb-0.5">Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}</p>
-            <p className="text-[#8c52d4] font-bold text-lg">
-               Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
-               {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
-            </p>
+          {/* Top header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', fontSize: '10px', fontFamily: 'sans-serif' }}>
+            <span>{nowTime}</span>
+            <span>In Chứng Từ</span>
           </div>
-        </div>
 
-        {/* Title & Receipt Number */}
-        <div className="relative text-center mb-8 h-12">
-          <h2 className="text-4xl font-bold uppercase text-[#3498db] tracking-wider inline-block">PHIẾU CHI</h2>
-          <div className="absolute right-12 top-1/2 -translate-y-1/2 text-[#e2362b] font-bold text-lg tracking-wide">
-            Số: {payment?.code || ''}
-          </div>
-        </div>
-
-        {/* Body Info */}
-        <div className="space-y-1.5 px-6 mb-12">
-          <div className="flex text-[#3498db] text-xl">
-            <span className="whitespace-nowrap mr-2">Họ tên người nhận tiền:</span>
-            <span className="uppercase">{payment?.receiver?.name || (payment?.receiverType === 'supplier' ? 'Nhà cung cấp' : '')}</span>
-          </div>
-          <div className="flex text-[#e67e22] text-xl">
-            <span className="whitespace-nowrap mr-2">Địa chỉ:</span>
-            <span>{payment?.receiver?.address || ''}</span>
-          </div>
-          <div className="flex text-[#8c52d4] text-xl">
-            <span className="whitespace-nowrap mr-2">Lý do nhận tiền:</span>
-            <span>{payment?.reason || payment?.note || (payment?.purchaseOrder ? `Thanh toán tiền hàng cho đơn hàng ${payment?.purchaseOrder?.code}` : '')}</span>
-          </div>
-          <div className="flex flex-wrap items-center text-xl">
-            <div className="flex text-[#3498db]">
-                <span className="whitespace-nowrap mr-2">Số tiền:</span>
-                <span>{payment?.amount ? payment.amount.toLocaleString('vi-VN') : '0'}</span>
+          {/* Brand Header */}
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '6px', paddingLeft: '14px', paddingRight: '10px' }}>
+            <div style={{ width: '78px', height: '78px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
             </div>
-            <div className="flex text-[#1ab85c]">
-              <span className="whitespace-nowrap ml-6 mr-2">( Viết bằng chữ ):</span>
-              <span>{payment?.amount ? toVietnamese(payment?.amount, true) : 'Không đồng'}</span>
+            <div style={{ flex: 1, textAlign: 'center', marginLeft: '-8px' }}>
+              <h1 style={{ fontSize: '17px', fontWeight: 'bold', textTransform: 'uppercase', color: '#e2362b', letterSpacing: '0.5px', marginBottom: '3px', lineHeight: 1.3 }}>
+                {setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}
+              </h1>
+              <p style={{ color: '#1ab85c', fontWeight: 'bold', fontSize: '13px', marginBottom: '1px', lineHeight: 1.5 }}>
+                Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}
+              </p>
+              <p style={{ color: '#8c52d4', fontWeight: 'bold', fontSize: '13px', lineHeight: 1.5, margin: 0 }}>
+                 Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
+                 {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
+              </p>
             </div>
           </div>
-          
-          <div className="flex justify-between w-[480px] text-[#8c52d4] text-xl mt-1">
-            <div className="flex">
-              <span className="mr-2">Kèm theo</span>
-              <span className="mr-2">0</span>
-              <span>( chứng từ gốc )</span>
-            </div>
-            <div className="flex">
-              <span className="mr-2">HĐ:</span>
-              <span>0</span>
+
+          {/* Title */}
+          <div style={{ position: 'relative', textAlign: 'center', marginBottom: '10px', height: '32px', lineHeight: '32px' }}>
+            <h2 style={{ fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase', color: '#3498db', letterSpacing: '2px', display: 'inline-block', margin: 0 }}>PHIẾU CHI</h2>
+            <div style={{ position: 'absolute', right: '28px', top: '50%', transform: 'translateY(-50%)', color: '#e2362b', fontWeight: 'bold', fontSize: '13px' }}>
+              Số: {payment?.code || ''}
             </div>
           </div>
-        </div>
 
-        {/* Date */}
-        <div className="flex justify-end pr-16 mb-8 text-lg">
-          <span className="text-[#e2362b]">{printDateStr}</span>
-        </div>
+          {/* Body */}
+          <div style={{ paddingLeft: '18px', paddingRight: '18px', marginBottom: '6px', lineHeight: 1.7 }}>
+            <div style={{ display: 'flex', color: '#3498db', fontSize: '15px', marginBottom: '2px' }}>
+              <span style={{ whiteSpace: 'nowrap', marginRight: '6px' }}>Họ tên người nhận tiền:</span>
+              <span style={{ textTransform: 'uppercase' }}>{payment?.receiver?.name || (payment?.receiverType === 'supplier' ? 'Nhà cung cấp' : '')}</span>
+            </div>
+            <div style={{ display: 'flex', color: '#e67e22', fontSize: '15px', marginBottom: '2px' }}>
+              <span style={{ whiteSpace: 'nowrap', marginRight: '6px' }}>Địa chỉ:</span>
+              <span>{payment?.receiver?.address || ''}</span>
+            </div>
+            <div style={{ display: 'flex', color: '#8c52d4', fontSize: '15px', marginBottom: '2px' }}>
+              <span style={{ whiteSpace: 'nowrap', marginRight: '6px' }}>Lý do nhận tiền:</span>
+              <span>{payment?.reason || payment?.note || (payment?.purchaseOrder ? `Thanh toán tiền hàng cho đơn hàng ${payment?.purchaseOrder?.code}` : '')}</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', fontSize: '15px', marginBottom: '2px' }}>
+              <div style={{ display: 'flex', color: '#3498db' }}>
+                  <span style={{ whiteSpace: 'nowrap', marginRight: '6px' }}>Số tiền:</span>
+                  <span>{payment?.amount ? payment.amount.toLocaleString('vi-VN') : '0'}</span>
+              </div>
+              <div style={{ display: 'flex', color: '#1ab85c' }}>
+                <span style={{ whiteSpace: 'nowrap', marginLeft: '24px', marginRight: '6px' }}>( Viết bằng chữ ):</span>
+                <span>{payment?.amount ? toVietnamese(payment?.amount, true) : 'Không đồng'}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '35px', color: '#8c52d4', fontSize: '15px', marginTop: '2px' }}>
+              <div style={{ display: 'flex' }}>
+                <span style={{ marginRight: '6px' }}>Kèm theo</span>
+                <span style={{ marginRight: '6px' }}>0</span>
+                <span>( chứng từ gốc )</span>
+              </div>
+              <div style={{ display: 'flex' }}>
+                <span style={{ marginRight: '6px' }}>HĐ:</span>
+                <span>0</span>
+              </div>
+            </div>
+          </div>
 
-        {/* Signatures */}
-        <div className="flex justify-between px-20 text-[#e2362b] font-bold text-xl text-center">
-          <div className="w-1/3">Người nhận tiền</div>
-          <div className="w-1/3">Thủ Quỹ</div>
-          <div className="w-1/3 text-right">Người duyệt</div>
+          {/* Date */}
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+            <span style={{ color: '#e2362b', fontSize: '15px' }}>{printDateStr}</span>
+          </div>
+
+          {/* Signatures */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '50px', paddingRight: '50px', color: '#e2362b', fontWeight: 'bold', fontSize: '15px', textAlign: 'center' }}>
+            <div style={{ width: '33%' }}>Người nhận tiền</div>
+            <div style={{ width: '33%' }}>Thủ Quỹ</div>
+            <div style={{ width: '33%' }}>Người duyệt</div>
+          </div>
         </div>
       </div>
     )

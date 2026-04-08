@@ -157,53 +157,19 @@ const UpdateEmployeeDialog = ({
                                 )}
                             />
 
-                            {/* Toggle cấp tài khoản */}
-                            <div className="col-span-full flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 mb-2">
-                                <FormControl>
-                                    <Checkbox
-                                        checked={provideAccount}
-                                        onCheckedChange={setProvideAccount}
-                                    />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel>Cấp tài khoản đăng nhập</FormLabel>
-                                    <p className="text-sm text-muted-foreground">
-                                        Nếu được chọn, hệ thống sẽ cấp quyền truy cập bằng tài khoản. Nếu bỏ chọn, nhân viên sẽ bị thu hồi quyền đăng nhập.
-                                    </p>
-                                </div>
-                            </div>
-
-                            {provideAccount && (
-                                <>
-                                    <FormField
-                                        control={form.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem className="mb-2 space-y-1">
-                                                <FormLabel required={provideAccount}>Email</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Nhập địa chỉ email" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="password"
-                                        render={({ field }) => (
-                                            <FormItem className="mb-2 space-y-1">
-                                                <FormLabel>Mật khẩu mới (Tùy chọn)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="password" placeholder="Bỏ trống nếu không đổi" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </>
-                            )}
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem className="mb-2 space-y-1">
+                                        <FormLabel required={true}>Email</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Nhập địa chỉ email" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             <FormField
                                 control={form.control}

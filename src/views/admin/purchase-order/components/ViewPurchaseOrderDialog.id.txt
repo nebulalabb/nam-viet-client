@@ -1,0 +1,23 @@
+294: referenceId: purchaseOrder.id,
+296: productId: item.productId || item.product?.id,
+297: unitId: item.unitId || item.unit?.id,
+300: purchaseOrderId: purchaseOrder.id,
+301: purchaseOrderItemId: item.id
+319: productId: item.productId || item.product?.id,
+334: await dispatch(returnPurchaseOrder({ id: purchaseOrder.id, data: payload })).unwrap()
+644: onValueChange={(val) => handleUpdateStatus(val, purchaseOrder.id)}
+811: <TableRow key={voucher.id}>
+885: <div key={voucher.id} className="space-y-2 rounded-lg border p-3 text-sm">
+1023: <TableRow key={receipt.id}>
+1092: <div key={receipt.id} className="space-y-2 rounded-lg border p-3 text-sm">
+1225: supplierId={purchaseOrder?.supplier?.id}
+1271: {isCustomer && party?.identityCard && (
+1274: {party.identityCard}
+1486: purchaseOrderId={purchaseOrder.id}
+1498: receiptId={selectedReceiptDetail?.id}
+1513: paymentId={selectedPaymentDetail?.id}
+1544: paymentId={selectedPaymentForEdit.id}
+1579: purchaseOrderId={purchaseOrder.id}
+1605: paymentId={selectedPaymentForUpdate.code || selectedPaymentForUpdate.id}
+1608: onSubmit={(status) => handleUpdatePaymentStatus(status, selectedPaymentForUpdate.id)}
+1637: receiptId={selectedWarehouseReceiptForUpdate.id}

@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input'
 import { DataTableViewOption } from './DataTableViewOption'
 import { DataTableFacetedFilter } from '@/views/admin/customer/components/DataTableFacetedFilter'
 import CreateWarehouseDialog from './CreateWarehouseDialog'
-import DeleteWarehouseDialog from './DeleteWarehouseDialog'
 import Can from '@/utils/can'
 import { warehouseTypes, warehouseStatuses } from '../data'
 import { useState } from 'react'
@@ -12,7 +11,6 @@ import { useDispatch } from 'react-redux'
 import { PlusIcon, FileSpreadsheet } from 'lucide-react'
 import { TrashIcon } from '@radix-ui/react-icons'
 import { IconFileTypeXls } from '@tabler/icons-react'
-import { deleteMultipleWarehouses } from '@/stores/WarehouseSlice'
 import ImportWarehouseDialog from './ImportWarehouseDialog'
 import ExportWarehouseDialog from './ExportWarehouseDialog'
 import { DeleteMultipleWarehousesDialog } from './DeleteMultipleWarehousesDialog'
@@ -27,15 +25,9 @@ export function DataTableToolbar({ table }) {
   const dispatch = useDispatch()
   const selectedRows = table.getSelectedRowModel().rows
 
-  const handleDelete = async () => {
-    const selectedIds = selectedRows.map((row) => row.original.id)
-    try {
-      await dispatch(deleteMultipleWarehouses(selectedIds)).unwrap()
-      table.resetRowSelection()
-      setShowDeleteDialog(false)
-    } catch (error) {
-      console.log(error)
-    }
+  const handleDeleteComplete = () => {
+    table.resetRowSelection()
+    setShowDeleteDialog(false)
   }
 
   return (
@@ -135,8 +127,9 @@ export function DataTableToolbar({ table }) {
       <DeleteMultipleWarehousesDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        onConfirm={handleDelete}
+        onConfirm={handleDeleteComplete}
         count={selectedRows.length}
+        selectedRows={selectedRows}
       />
 
       <DataTableViewOption table={table} />

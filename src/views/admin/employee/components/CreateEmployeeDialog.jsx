@@ -52,7 +52,7 @@ const CreateEmployeeDialog = ({
         },
     })
 
-    const [provideAccount, setProvideAccount] = useState(false)
+    const [grantAccount, setGrantAccount] = useState(false)
     const [roles, setRoles] = useState([])
     const loading = useSelector((state) => state.user.loading)
     const dispatch = useDispatch()
@@ -73,31 +73,17 @@ const CreateEmployeeDialog = ({
 
     const onSubmit = async (data) => {
         try {
-            if (provideAccount) {
-                let isValid = true
-                if (!data.email || data.email.trim() === '') {
-                    form.setError('email', { type: 'manual', message: 'Vui lòng nhập email khi cấp tài khoản' })
-                    isValid = false
-                }
-                if (!data.password || data.password.trim() === '') {
-                    form.setError('password', { type: 'manual', message: 'Vui lòng nhập mật khẩu khi cấp tài khoản' })
-                    isValid = false
-                }
-                if (!isValid) return
+            if (grantAccount && (!data.email || !data.password)) {
+                if (!data.email) form.setError('email', { type: 'manual', message: 'Vui lòng nhập Email' });
+                if (!data.password) form.setError('password', { type: 'manual', message: 'Vui lòng nhập Mật khẩu' });
+                return;
             }
 
             const payload = {
                 ...data,
-                email: provideAccount ? data.email : undefined,
-                password: provideAccount ? data.password : undefined,
-                phone: data.phone || undefined,
+                email: grantAccount ? data.email : undefined,
+                password: grantAccount ? data.password : undefined,
             }
-
-            Object.keys(payload).forEach(key => {
-                if (payload[key] === '') {
-                    delete payload[key];
-                }
-            });
 
             await dispatch(createUser(payload)).unwrap()
             form.reset()
@@ -158,21 +144,36 @@ const CreateEmployeeDialog = ({
                                 )}
                             />
 
-                            {/* Toggle cấp tài khoản */}
-                            <div className="col-span-full flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 mb-2">
-                                <FormControl>
-                                    <Checkbox
-                                        checked={provideAccount}
-                                        onCheckedChange={setProvideAccount}
+                            <div className="col-span-1 md:col-span-2 my-2">
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="grantEmployeeAccount"
+                                        className="h-4 w-4 rounded border-gray-300"
+                                        checked={grantAccount}
+                                        onChange={(e) => setGrantAccount(e.target.checked)}
                                     />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel>Cấp tài khoản đăng nhập</FormLabel>
-                                    <p className="text-sm text-muted-foreground">
-                                        Nếu được chọn, nhân viên sẽ có thể đăng nhập vào hệ thống bằng Email và Mật khẩu. Hủy chọn sẽ bỏ qua bước tạo tài khoản đăng nhập.
-                                    </p>
+                                    <label htmlFor="grantEmployeeAccount" className="text-sm font-medium">
+                                        Cấp tài khoản đăng nhập (Email & Mật khẩu)
+                                    </label>
                                 </div>
                             </div>
+
+                            {grantAccount && (
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-2 space-y-1">
+                                            <FormLabel required={true}>Email</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Nhập địa chỉ email" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
                             {provideAccount && (
                                 <>
@@ -190,20 +191,20 @@ const CreateEmployeeDialog = ({
                                         )}
                                     />
 
-                                    <FormField
-                                        control={form.control}
-                                        name="password"
-                                        render={({ field }) => (
-                                            <FormItem className="mb-2 space-y-1">
-                                                <FormLabel required={provideAccount}>Mật khẩu</FormLabel>
-                                                <FormControl>
-                                                    <Input type="password" placeholder="Mật khẩu" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </>
+                            {grantAccount && (
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem className="mb-2 space-y-1">
+                                            <FormLabel required={true}>Mật khẩu</FormLabel>
+                                            <FormControl>
+                                                <Input type="password" placeholder="Mật khẩu" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             )}
 
                             <FormField

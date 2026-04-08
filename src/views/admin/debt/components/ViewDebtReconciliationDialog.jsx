@@ -225,7 +225,7 @@ export function ViewDebtReconciliationDialog({
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
                                 <StatBox label="Nợ đầu kỳ" value={data.financials?.opening} />
                                 <StatBox label="Tổng mua (+)" value={data.financials?.increase} color="text-blue-600" />
-                                <StatBox label="Trả hàng (-)" value={data.financials?.returnAmount} color="text-indigo-600" />
+                                <StatBox label="Trả hàng" value={data.financials?.returnAmount} color="text-indigo-600" />
                                 <StatBox label="Thanh toán (-)" value={data.financials?.payment} color="text-green-600" />
 
                                 <StatBox label="Dư nợ cuối kỳ (=)" value={data.financials?.closing} color="text-red-600" isBig bg="bg-red-50" />
@@ -426,7 +426,7 @@ function DocumentHistoryTable({ data, type, onCodeClick }) {
 
                         if (type === 'ORDER') { amountColor = 'text-blue-600'; prefix = '+' }
                         else if (type === 'PAYMENT') { amountColor = 'text-green-600'; prefix = '-' }
-                        else if (type === 'RETURN') { amountColor = 'text-indigo-600'; prefix = '-' }
+                        else if (type === 'RETURN') { amountColor = 'text-indigo-600'; prefix = '' }
 
                         const isClickable = onCodeClick && (type === 'ORDER' || (type === 'PAYMENT' && item.orderId))
 

@@ -1,7 +1,8 @@
 import React from 'react'
-import { MapPin, User, Eye, AlertTriangle, ShieldOff, CalendarClock, ShieldCheck, Undo2 } from 'lucide-react'
+import { MapPin, User, Eye, ShieldAlert, SkipForward, ShieldOff, MoreHorizontal } from 'lucide-react'
 import { formatCurrency } from '@/utils/number-format'
 import DebtPagination from './DebtPagination'
+import ConfirmActionButton from '@/components/custom/ConfirmActionButton'
 
 import {
     Table,
@@ -11,8 +12,16 @@ import {
     TableCell,
     TableHead,
 } from '@/components/ui/table'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/custom/Button'
 
-export default function DebtReconciliationTable({ data, isLoading, onView, onBlacklist, onUnblacklist, onExtend, pagination, pageCount, rowCount, onPaginationChange }) {
+export default function DebtReconciliationTable({ data, isLoading, onView, pagination, pageCount, rowCount, onPaginationChange, onToggleBlacklist, onExtendDebt }) {
     // 1. Loading State
     if (isLoading) {
         return (
@@ -65,7 +74,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, onBla
                             {data.map((item) => {
                                 const {
                                     name, code, type, objId, periodName,
-                                    assignedUser, location
+                                    assignedUser, location, isWarning, isBlacklisted
                                 } = item
 
                                 const isCustomer = type === 'customer'
@@ -96,7 +105,7 @@ export default function DebtReconciliationTable({ data, isLoading, onView, onBla
                                         : "";
 
                                 return (
-                                    <TableRow key={`${type}-${objId}`} className={rowStyle}>
+                                    <TableRow key={`${type}-${objId}`} className={`${isWarning ? 'bg-yellow-50 hover:bg-yellow-100' : ''}`}>
                                         <TableCell className="px-4 py-3 align-top">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border flex items-center gap-1 ${item.isBlacklisted ? 'bg-gray-800 text-white border-gray-900' : typeColor}`}>
@@ -107,6 +116,12 @@ export default function DebtReconciliationTable({ data, isLoading, onView, onBla
                                                     {isWarningCandidate && <AlertTriangle className="h-4 w-4 text-amber-500" title="Cảnh báo: Hơn 1 năm không trả nợ" />}
                                                     {item.isBlacklisted && <ShieldOff className="h-4 w-4 text-gray-700" title="Đã cho vào danh sách đen" />}
                                                 </div>
+                                                {isWarning && (
+                                                    <span className="text-[9px] px-1 py-0.5 rounded font-bold bg-yellow-200 text-yellow-800 border border-yellow-300 whitespace-nowrap" title="Nợ quá 1 năm không thanh toán">⚠ Nợ lâu</span>
+                                                )}
+                                                {isBlacklisted && (
+                                                    <span className="text-[9px] px-1 py-0.5 rounded font-bold bg-gray-800 text-white whitespace-nowrap">● DS Đen</span>
+                                                )}
                                             </div>
                                             <div className="text-xs text-gray-500 font-mono ml-9">{code}</div>
                                         </TableCell>
@@ -148,11 +163,11 @@ export default function DebtReconciliationTable({ data, isLoading, onView, onBla
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-right align-top text-blue-600 font-bold text-xs font-mono">
-                                            {increase > 0 ? `+${formatCurrency(increase)}` : <span className="text-gray-300">-</span>}
+                                            {increase > 0 ? formatCurrency(increase) : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-right align-top text-indigo-600 font-medium font-mono text-xs">
-                                            {returnAmt > 0 ? `-${formatCurrency(returnAmt)}` : <span className="text-gray-300">-</span>}
+                                            {returnAmt > 0 ? formatCurrency(returnAmt) : <span className="text-gray-300">-</span>}
                                         </TableCell>
 
 
@@ -203,42 +218,64 @@ export default function DebtReconciliationTable({ data, isLoading, onView, onBla
                                             )}
                                         </TableCell>
 
-                                        <TableCell className="px-2 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => onView(objId, type, periodName)}
-                                                    className="rounded p-1.5 text-blue-600 hover:bg-blue-100 transition-colors"
-                                                    title="Xem chi tiết"
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </button>
-                                                {isCustomer && !item.isBlacklisted && isDebt && (
-                                                    <button
-                                                        onClick={() => onBlacklist(objId)}
-                                                        className="rounded p-1.5 text-gray-600 hover:bg-gray-200 transition-colors"
-                                                        title="Đưa vào danh sách đen"
-                                                    >
-                                                        <ShieldOff className="h-4 w-4" />
-                                                    </button>
-                                                )}
-                                                {isCustomer && item.isBlacklisted && (
-                                                    <button
-                                                        onClick={() => onUnblacklist(objId)}
-                                                        className="rounded p-1.5 text-blue-600 hover:bg-blue-200 transition-colors"
-                                                        title="Loại khỏi danh sách đen (Khôi phục)"
-                                                    >
-                                                        <Undo2 className="h-4 w-4" />
-                                                    </button>
-                                                )}
-                                                {isCustomer && isWarningCandidate && (
-                                                    <button
-                                                        onClick={() => onExtend(objId)}
-                                                        className="rounded p-1.5 text-amber-600 hover:bg-amber-200 transition-colors"
-                                                        title="Gia hạn nợ thêm 1 năm"
-                                                    >
-                                                        <CalendarClock className="h-4 w-4" />
-                                                    </button>
-                                                )}
+                                        <TableCell className="px-4 py-3 text-right">
+                                            <div className="flex items-center justify-end">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                            <span className="sr-only">Mở menu</span>
+                                                            <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-56">
+                                                        <DropdownMenuItem onClick={() => onView(objId, type, periodName)}>
+                                                            <Eye className="mr-2 h-4 w-4 text-gray-600" />
+                                                            Xem chi tiết
+                                                        </DropdownMenuItem>
+
+                                                        {type === 'customer' && isWarning && onExtendDebt && (
+                                                            <ConfirmActionButton
+                                                                title="Xác nhận gia hạn"
+                                                                description="Gia hạn kiểm tra nợ thêm 1 năm cho khách hàng này?"
+                                                                onConfirm={() => onExtendDebt(objId)}
+                                                            >
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <SkipForward className="mr-2 h-4 w-4 text-green-600" />
+                                                                    <span className="text-green-600 font-medium">Gia hạn kiểm tra 1 năm</span>
+                                                                </DropdownMenuItem>
+                                                            </ConfirmActionButton>
+                                                        )}
+
+                                                        {(type === 'customer' && onToggleBlacklist) && <DropdownMenuSeparator />}
+
+                                                        {type === 'customer' && !isBlacklisted && onToggleBlacklist && (
+                                                            <ConfirmActionButton
+                                                                title="Xác nhận thay đổi danh sách đen"
+                                                                description="Bạn có chắc chắn muốn đưa khách hàng này vào danh sách đen?"
+                                                                onConfirm={() => onToggleBlacklist(objId)}
+                                                                confirmBtnVariant="destructive"
+                                                            >
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <ShieldAlert className="mr-2 h-4 w-4 text-red-600" />
+                                                                    <span className="text-red-600 font-medium">Đưa vào danh sách đen</span>
+                                                                </DropdownMenuItem>
+                                                            </ConfirmActionButton>
+                                                        )}
+
+                                                        {type === 'customer' && isBlacklisted && onToggleBlacklist && (
+                                                            <ConfirmActionButton
+                                                                title="Xác nhận gỡ danh sách đen"
+                                                                description="Bạn có chắc chắn muốn gỡ khách hàng này khỏi danh sách đen?"
+                                                                onConfirm={() => onToggleBlacklist(objId)}
+                                                            >
+                                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                    <ShieldOff className="mr-2 h-4 w-4 text-blue-600" />
+                                                                    <span className="text-blue-600 font-medium">Gỡ khỏi danh sách đen</span>
+                                                                </DropdownMenuItem>
+                                                            </ConfirmActionButton>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
                                         </TableCell>
 

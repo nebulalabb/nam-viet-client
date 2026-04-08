@@ -155,9 +155,7 @@ const ReceiptDialog = ({
         localStorage.getItem('permissionCodes') || '[]',
       ).includes('GET_INVOICE')
 
-      const data = getAdminInvoice
-        ? await dispatch(getInvoiceDetail(targetId)).unwrap()
-        : await dispatch(getInvoiceDetailByUser(targetId)).unwrap()
+      const data = await dispatch(getInvoiceDetail(targetId)).unwrap()
 
       console.log('Invoice data:', data)
       setInvoiceData(data || null)

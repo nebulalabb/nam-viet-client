@@ -87,9 +87,10 @@ const ConfirmWarehouseReceiptDialog = ({
           // In retail mode, fetch fresh invoice details
           data = await dispatch(getInvoiceDetail(invoice.id)).unwrap()
 
+          let invoiceData = { ...data }
           // Fetch details for existing warehouse receipts if they exist but don't have details
-          if (data.warehouseReceipts && data.warehouseReceipts.length > 0) {
-            const receiptsWithDetails = await Promise.all(data.warehouseReceipts.map(async (receipt) => {
+          if (invoiceData.warehouseReceipts && invoiceData.warehouseReceipts.length > 0) {
+            const receiptsWithDetails = await Promise.all(invoiceData.warehouseReceipts.map(async (receipt) => {
               try {
                 // If we already have details, skip
                 if (receipt.details && receipt.details.length > 0) return receipt;
@@ -103,13 +104,13 @@ const ConfirmWarehouseReceiptDialog = ({
             }));
 
             // Update data with fetched details
-            data.warehouseReceipts = receiptsWithDetails;
+            invoiceData.warehouseReceipts = receiptsWithDetails;
           }
 
-          setDetailInvoice(data)
+          setDetailInvoice(invoiceData)
           
-          if (data.details && data.details.length > 0) {
-            const productIds = data.details
+          if (invoiceData.details && invoiceData.details.length > 0) {
+            const productIds = invoiceData.details
               .map(item => item.productId)
               .filter(id => !!id)
               .join(',')

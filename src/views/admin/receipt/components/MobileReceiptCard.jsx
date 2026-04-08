@@ -79,7 +79,6 @@ const MobileReceiptCard = ({
 
   const handlePrintReceipt = () => {
     setPrintData(receipt)
-    setTimeout(() => setPrintData(null), 100)
   }
 
   const handleGenerateQR = async () => {
@@ -180,6 +179,7 @@ const MobileReceiptCard = ({
         <PrintReceiptView
           receipt={printData}
           setting={setting}
+          onAfterPrint={() => setPrintData(null)}
         />
       )}
 

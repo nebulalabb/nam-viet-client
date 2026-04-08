@@ -287,9 +287,7 @@ const MobileInvoiceCard = ({
     ).includes('GET_INVOICE')
 
     try {
-      const data = getAdminInvoice
-        ? await getInvoiceDetail(invoiceId)
-        : await getInvoiceDetailByUser(invoiceId)
+      const data = await dispatch(getInvoiceDetail(invoiceId)).unwrap()
         
       if (!data?.warehouseReceipts || data.warehouseReceipts.length === 0) {
         toast.warning('Chỉ được in hóa đơn khi đã có phiếu xuất kho')

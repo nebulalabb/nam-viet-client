@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 import { Calendar as CalendarIcon, User, FileText } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DatePicker } from '@/components/custom/DatePicker'
+import ViewInvoiceDialog from '../../invoice/components/ViewInvoiceDialog'
 
 const SaleHistoryColGroup = () => (
   <colgroup>
@@ -85,6 +86,7 @@ const ProductSaleHistoryTab = ({ productId }) => {
   const [limit] = useState(10)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(null)
 
   const totalsText = useMemo(() => {
     if (!Array.isArray(totalsByUnit) || totalsByUnit.length === 0) return ''
@@ -103,7 +105,7 @@ const ProductSaleHistoryTab = ({ productId }) => {
 
     setLoading(true)
     try {
-      const response = await api.get(`/product/${productId}/sale-history`, {
+      const response = await api.get(`/products/${productId}/sale-history`, {
         params: {
           page: pageParam,
           limit,
@@ -209,7 +211,10 @@ const ProductSaleHistoryTab = ({ productId }) => {
                     <CalendarIcon className="h-3.5 w-3.5" />
                     <span>{dateFormat(item.createdAt, true)}</span>
                   </div>
-                  <div className="font-mono font-bold bg-muted px-2 py-0.5 rounded text-xs">
+                  <div 
+                    className="font-mono font-bold bg-muted px-2 py-0.5 rounded text-xs cursor-pointer text-blue-600 hover:underline"
+                    onClick={() => setSelectedInvoiceId(item?.invoice?.id)}
+                  >
                     {item?.invoice?.code}
                   </div>
                 </div>
@@ -288,7 +293,12 @@ const ProductSaleHistoryTab = ({ productId }) => {
                       </TableCell>
 
                       <TableCell className="font-mono align-top text-xs">
-                        {item?.invoice?.code}
+                        <span 
+                          className="cursor-pointer text-blue-600 hover:underline"
+                          onClick={() => setSelectedInvoiceId(item?.invoice?.id)}
+                        >
+                          {item?.invoice?.code}
+                        </span>
                       </TableCell>
 
                       <TableCell className="whitespace-normal align-top">
@@ -364,6 +374,17 @@ const ProductSaleHistoryTab = ({ productId }) => {
           totalItems={pagination.total}
           totalPages={pagination.totalPages}
           onPageChange={setPage}
+        />
+      )}
+
+      {selectedInvoiceId && (
+        <ViewInvoiceDialog
+          invoiceId={selectedInvoiceId}
+          open={!!selectedInvoiceId}
+          onOpenChange={(open) => !open && setSelectedInvoiceId(null)}
+          showTrigger={false}
+          contentClassName="z-[100040]"
+          overlayClassName="z-[100039]"
         />
       )}
     </div>

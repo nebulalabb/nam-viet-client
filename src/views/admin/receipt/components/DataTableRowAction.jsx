@@ -58,7 +58,6 @@ const DataTableRowActions = ({ row }) => {
 
   const handlePrintReceipt = () => {
     setPrintData(receipt)
-    setTimeout(() => setPrintData(null), 100)
   }
 
   return (
@@ -92,6 +91,7 @@ const DataTableRowActions = ({ row }) => {
         <PrintReceiptView
           receipt={printData}
           setting={setting}
+          onAfterPrint={() => setPrintData(null)}
         />
       )}
 
