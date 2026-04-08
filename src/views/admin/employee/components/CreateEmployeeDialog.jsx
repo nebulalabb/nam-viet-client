@@ -28,6 +28,7 @@ import { createUserSchema } from '../schema/index'
 import { createUser } from '@/stores/UserSlice'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Checkbox } from '@/components/ui/checkbox'
 import { employeeStatuses } from '../data/index'
 import { useState, useEffect } from 'react'
 import api from '@/utils/axios'
@@ -86,6 +87,7 @@ const CreateEmployeeDialog = ({
 
             await dispatch(createUser(payload)).unwrap()
             form.reset()
+            setProvideAccount(false)
             onOpenChange?.(false)
         } catch (error) {
             console.log('Submit error: ', error)
@@ -173,19 +175,21 @@ const CreateEmployeeDialog = ({
                                 />
                             )}
 
-                            <FormField
-                                control={form.control}
-                                name="phone"
-                                render={({ field }) => (
-                                    <FormItem className="mb-2 space-y-1">
-                                        <FormLabel>Số điện thoại</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Nhập số điện thoại" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {provideAccount && (
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={provideAccount}>Email</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Nhập địa chỉ email" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                             {grantAccount && (
                                 <FormField

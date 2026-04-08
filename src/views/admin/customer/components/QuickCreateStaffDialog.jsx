@@ -94,7 +94,7 @@ const QuickCreateStaffDialog = ({ open, onOpenChange, onSuccess }) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] z-[100100]">
         <DialogHeader>
-          <DialogTitle>Thêm nhanh nhân viên giả lập</DialogTitle>
+          <DialogTitle>Thêm nhanh nhân viên</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

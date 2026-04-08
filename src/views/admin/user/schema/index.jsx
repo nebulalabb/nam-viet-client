@@ -19,7 +19,8 @@ const createUserFormSchema = z.object({
     .regex(/^[a-zA-Z0-9-_]+$/, {
       message: 'Mã nhân viên chỉ được chứa chữ cái, số, dấu - và _',
     })
-    .optional(),
+    .optional()
+    .or(z.literal('')),
   phone: z
     .string()
     .max(20)

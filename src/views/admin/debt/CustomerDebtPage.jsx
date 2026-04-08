@@ -20,6 +20,8 @@ import {
     Users, MapPin,
     FileDown, ShieldAlert, Layers
 } from 'lucide-react'
+import api from '@/utils/axios'
+import { toast } from 'sonner'
 
 const CustomerDebtPage = () => {
     const dispatch = useDispatch()
@@ -141,11 +143,11 @@ const CustomerDebtPage = () => {
     }
 
     const finalSummary = serverPagination?.summary || {
-        opening: 0, increase: 0, returnAmount: 0, payment: 0, closing: 0
+        opening: 0, increase: 0, returnAmount: 0, payment: 0, closing: 0, blacklistDebt: 0
     }
 
     const monthlySummary = monthlyObjectsPagination?.summary || {
-        opening: 0, increase: 0, returnAmount: 0, payment: 0, closing: 0
+        opening: 0, increase: 0, returnAmount: 0, payment: 0, closing: 0, blacklistDebt: 0
     }
 
     const closingLabel =
@@ -229,11 +231,14 @@ const CustomerDebtPage = () => {
                                 <span>TỔNG HỢP NĂM {filters.year || new Date().getFullYear()}</span>
                                 <span className="bg-blue-100 px-2 py-0.5 rounded-full text-[10px]">Toàn kỳ</span>
                             </div>
-                            <div className="grid grid-cols-5 divide-x divide-blue-50 py-2">
+                            <div className={`grid ${filters.type === 'supplier' ? 'grid-cols-5' : 'grid-cols-6'} divide-x divide-blue-50 py-2`}>
                                 <StripCell label="NỢ ĐẦU KỲ" value={finalSummary.opening} />
                                 <StripCell label="TỔNG MUA" value={finalSummary.increase} color="text-blue-600" />
                                 <StripCell label="TRẢ HÀNG" value={finalSummary.returnAmount} color="text-indigo-600" />
                                 <StripCell label="THANH TOÁN" value={finalSummary.payment} color="text-green-600" />
+                                {filters.type !== 'supplier' && (
+                                    <StripCell label="NỢ ĐEN" value={finalSummary.blacklistDebt || 0} color="text-gray-800" />
+                                )}
                                 <StripCell label={closingLabel} value={finalSummary.closing} color="text-red-600" highlight />
                             </div>
                         </div>
@@ -262,11 +267,14 @@ const CustomerDebtPage = () => {
                             <span>TỔNG HỢP THÁNG {monthNow}/{filters.year || new Date().getFullYear()}</span>
                             <span className="bg-green-100 px-2 py-0.5 rounded-full text-[10px]">hiện tại</span>
                         </div>
-                        <div className="grid grid-cols-5 divide-x divide-green-50 py-2">
+                        <div className={`grid ${filters.type === 'supplier' ? 'grid-cols-5' : 'grid-cols-6'} divide-x divide-green-50 py-2`}>
                             <StripCell label="NỢ ĐẦU KỲ" value={monthlySummary.opening} />
                             <StripCell label="TỔNG MUA" value={monthlySummary.increase} color="text-blue-600" />
                             <StripCell label="TRẢ HÀNG" value={monthlySummary.returnAmount} color="text-indigo-600" />
                             <StripCell label="THANH TOÁN" value={monthlySummary.payment} color="text-green-600" />
+                            {filters.type !== 'supplier' && (
+                                <StripCell label="NỢ ĐEN" value={monthlySummary.blacklistDebt || 0} color="text-gray-800" />
+                            )}
                             <StripCell label={closingLabel} value={monthlySummary.closing} color="text-red-600" highlight />
                         </div>
                     </div>
@@ -425,6 +433,9 @@ const CustomerDebtPage = () => {
                             data={debts}
                             isLoading={loading}
                             onView={handleView}
+                            onBlacklist={handleBlacklist}
+                            onUnblacklist={handleUnblacklist}
+                            onExtend={handleExtend}
                             pagination={filters}
                             pageCount={serverPagination?.totalPages || 1}
                             rowCount={serverPagination?.total || 0}
@@ -437,6 +448,9 @@ const CustomerDebtPage = () => {
                             data={monthlyObjectsData}
                             isLoading={monthlyObjectsLoading}
                             onView={handleView}
+                            onBlacklist={handleBlacklist}
+                            onUnblacklist={handleUnblacklist}
+                            onExtend={handleExtend}
                             pagination={filters}
                             pageCount={monthlyObjectsPagination?.totalPages || 1}
                             rowCount={monthlyObjectsPagination?.total || 0}

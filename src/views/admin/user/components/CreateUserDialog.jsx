@@ -103,6 +103,7 @@ const CreateUserDialog = ({
       }
       await dispatch(createUser(payload)).unwrap()
       form.reset()
+      setProvideAccount(false)
       onOpenChange?.(false)
     } catch (error) {
       console.log('Submit error: ', error)

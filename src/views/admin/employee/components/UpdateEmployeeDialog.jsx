@@ -51,6 +51,7 @@ const UpdateEmployeeDialog = ({
         },
     })
 
+    const [provideAccount, setProvideAccount] = useState(!!user?.email)
     const [roles, setRoles] = useState([])
     const loading = useSelector((state) => state.user.loading)
     const dispatch = useDispatch()
@@ -71,12 +72,34 @@ const UpdateEmployeeDialog = ({
 
     const onSubmit = async (data) => {
         try {
-            const payloadData = { ...data }
-            if (!payloadData.password) {
-                delete payloadData.password
+            if (provideAccount) {
+                if (!data.email || data.email.trim() === '') {
+                    form.setError('email', { type: 'manual', message: 'Vui lòng nhập email khi cấp tài khoản' })
+                    return
+                }
             }
-            payloadData.roleId = Number(payloadData.roleId)
 
+            const payloadData = { ...data }
+            if (!provideAccount) {
+                payloadData.email = null;
+                delete payloadData.password; // backend logic handles password removal if email is null
+            } else {
+                payloadData.email = data.email || undefined;
+                if (!payloadData.password) {
+                    delete payloadData.password
+                }
+            }
+            
+            payloadData.roleId = Number(payloadData.roleId)
+            
+            // Lọc các giá trị rỗng để không bị validator từ API chối
+            Object.keys(payloadData).forEach(key => {
+                if (payloadData[key] === '') {
+                    payloadData[key] = null; // Hoặc có thể delete payloadData[key]
+                }
+            });
+            if (!payloadData.phone) delete payloadData.phone;
+            
             await dispatch(updateUser({ id: user.id, data: payloadData })).unwrap()
             form.reset()
             onOpenChange?.(false)
@@ -156,20 +179,6 @@ const UpdateEmployeeDialog = ({
                                         <FormLabel>Số điện thoại</FormLabel>
                                         <FormControl>
                                             <Input placeholder="Nhập số điện thoại" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem className="mb-2 space-y-1">
-                                        <FormLabel>Mật khẩu mới (Tùy chọn)</FormLabel>
-                                        <FormControl>
-                                            <Input type="password" placeholder="Bỏ trống nếu không đổi" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

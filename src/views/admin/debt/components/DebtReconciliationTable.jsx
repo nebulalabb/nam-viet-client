@@ -94,15 +94,27 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                 const isOverpaid = closing < -1000
                                 const absClosing = Math.abs(closing)
 
+                                const isWarningCandidate = isCustomer && isDebt && !item.isBlacklisted &&
+                                    (!item.lastPaymentDate || new Date(item.lastPaymentDate) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)) &&
+                                    (!item.debtExtensionDate || new Date(item.debtExtensionDate) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000));
+
+                                const rowStyle = item.isBlacklisted 
+                                    ? "bg-gray-100 opacity-70"
+                                    : isWarningCandidate 
+                                        ? "bg-amber-100/50 hover:bg-amber-100" 
+                                        : "";
+
                                 return (
                                     <TableRow key={`${type}-${objId}`} className={`${isWarning ? 'bg-yellow-50 hover:bg-yellow-100' : ''}`}>
                                         <TableCell className="px-4 py-3 align-top">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border ${typeColor}`}>
+                                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold border flex items-center gap-1 ${item.isBlacklisted ? 'bg-gray-800 text-white border-gray-900' : typeColor}`}>
                                                     {typeLabel}
                                                 </span>
-                                                <div className="font-semibold text-sm text-gray-900 truncate max-w-[160px]" title={name}>
+                                                <div className="font-semibold text-sm text-gray-900 truncate max-w-[160px] flex items-center gap-1" title={name}>
                                                     {name}
+                                                    {isWarningCandidate && <AlertTriangle className="h-4 w-4 text-amber-500" title="Cảnh báo: Hơn 1 năm không trả nợ" />}
+                                                    {item.isBlacklisted && <ShieldOff className="h-4 w-4 text-gray-700" title="Đã cho vào danh sách đen" />}
                                                 </div>
                                                 {isWarning && (
                                                     <span className="text-[9px] px-1 py-0.5 rounded font-bold bg-yellow-200 text-yellow-800 border border-yellow-300 whitespace-nowrap" title="Nợ quá 1 năm không thanh toán">⚠ Nợ lâu</span>
@@ -177,9 +189,21 @@ export default function DebtReconciliationTable({ data, isLoading, onView, pagin
                                         </TableCell>
 
                                         <TableCell className="px-2 py-3 text-center align-middle">
-                                            {isDebt && (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
-                                                    CÒN NỢ
+                                            {item.isBlacklisted && (
+                                                <span className="inline-flex items-center ml-1 px-2 py-0.5 rounded text-[10px] font-bold bg-gray-800 text-white border border-gray-900">
+                                                    NỢ ĐEN
+                                                </span>
+                                            )}
+                                            {isDebt && !item.isBlacklisted && (
+                                                <span className="inline-flex flex-col items-center px-1 py-0.5 gap-1">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                                                        CÒN NỢ
+                                                    </span>
+                                                    {isWarningCandidate && (
+                                                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-800 border border-amber-300">
+                                                            CẤP BÁO
+                                                        </span> 
+                                                    )}
                                                 </span>
                                             )}
                                             {isOverpaid && (

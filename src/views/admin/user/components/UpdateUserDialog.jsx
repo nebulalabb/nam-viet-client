@@ -27,7 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useEffect } from 'react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { statuses } from '../data'
 import { Input } from '@/components/ui/input'
@@ -53,6 +54,7 @@ const UpdateUserDialog = ({
 }) => {
   const loading = useSelector((state) => state.user.loading)
   const roles = useSelector((state) => state.role.roles)
+  const [provideAccount, setProvideAccount] = useState(!!user.email)
 
   const form = useForm({
     resolver: zodResolver(updateUserFormSchema),
@@ -81,10 +83,18 @@ const UpdateUserDialog = ({
 
   const onSubmit = async (data) => {
     try {
+      if (provideAccount) {
+        if (!data.email || data.email.trim() === '') {
+          form.setError('email', { type: 'manual', message: 'Vui lòng nhập email khi cấp tài khoản' })
+          return
+        }
+      }
+
       // Loại bỏ password rỗng và các field rỗng không cần thiết
       const payload = {
         ...data,
-        password: data.password || undefined,
+        email: provideAccount ? (data.email || undefined) : null,
+        password: provideAccount && data.password ? data.password : undefined,
         phone: data.phone || undefined,
         address: data.address || undefined,
         cccd: data.cccd || undefined,
@@ -150,43 +160,65 @@ const UpdateUserDialog = ({
                   )}
                 />
 
-                {/* Email */}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="Nhập địa chỉ email"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Toggle cấp tài khoản */}
+                <div className="col-span-full flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 mb-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={provideAccount}
+                      onCheckedChange={setProvideAccount}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Cấp tài khoản đăng nhập
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Nếu được chọn, nhân viên sẽ có thể đăng nhập vào hệ thống bằng Email và Mật khẩu. Hủy chọn sẽ thu hồi quyền đăng nhập.
+                    </p>
+                  </div>
+                </div>
 
-                {/* Mật khẩu mới (tùy chọn) */}
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="mb-2 space-y-1">
-                      <FormLabel>Mật khẩu mới</FormLabel>
-                      <FormControl>
-                        <PasswordInput
-                          autoComplete="new-password"
-                          placeholder="Để trống nếu không đổi"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {provideAccount && (
+                  <>
+                    {/* Email */}
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="mb-2 space-y-1">
+                          <FormLabel required={provideAccount}>Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="Nhập địa chỉ email"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Mật khẩu mới (tùy chọn) */}
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem className="mb-2 space-y-1">
+                          <FormLabel>Mật khẩu mới</FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              autoComplete="new-password"
+                              placeholder="Để trống nếu không đổi"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
 
                 {/* Số điện thoại */}
                 <FormField
