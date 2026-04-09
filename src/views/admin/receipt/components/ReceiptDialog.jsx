@@ -46,7 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { paymentMethods } from '../data'
+import { paymentMethods, receiptTypes } from '../data'
 import { createReceiptSchema } from '../schema'
 import { useDispatch, useSelector } from 'react-redux'
 import { createReceipt, updateReceipt, getReceiptById, getReceiptQRCode } from '@/stores/ReceiptSlice'
@@ -70,9 +70,11 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { getCustomers } from '@/stores/CustomerSlice'
+import { getSuppliers } from '@/stores/SupplierSlice'
 import { toast } from 'sonner'
 import { useMediaQuery } from '@/hooks/UseMediaQuery'
 import PaymentQRCodeDialog from '../../receipt/components/PaymentQRCodeDialog'
+import { ChevronsUpDown } from 'lucide-react'
 
 const ReceiptDialog = ({
   invoiceId,
@@ -97,9 +99,32 @@ const ReceiptDialog = ({
   const [showQrDialog, setShowQrDialog] = useState(false)
   const [createdReceiptId, setCreatedReceiptId] = useState(null)
   const setting = useSelector((state) => state.setting.setting)
+
+  const [customTypes, setCustomTypes] = useState([])
+  const [isAddTypeOpen, setIsAddTypeOpen] = useState(false)
+  const [newTypeName, setNewTypeName] = useState('')
+  const allReceiptTypes = [...receiptTypes, ...customTypes]
+
+  const handleAddType = () => {
+    if (!newTypeName.trim()) return
+    const isExist = allReceiptTypes.find((t) => t.label.toLowerCase() === newTypeName.trim().toLowerCase())
+    if (!isExist) {
+       const newType = { value: 'custom_' + newTypeName.trim(), label: newTypeName.trim() }
+       setCustomTypes([...customTypes, newType])
+       form.setValue('receiptType', newType.value)
+    } else {
+       form.setValue('receiptType', isExist.value)
+    }
+    setNewTypeName('')
+    setIsAddTypeOpen(false)
+  }
+
   const customers = useSelector((state) => state.customer.customers)
+  const suppliers = useSelector((state) => state.supplier.suppliers)
   const [selectedCustomer, setSelectedCustomer] = useState(null)
   const [openCustomerPopover, setOpenCustomerPopover] = useState(false)
+  const [selectedRefundSupplier, setSelectedRefundSupplier] = useState(null)
+  const [openRefundSupplierPopover, setOpenRefundSupplierPopover] = useState(false)
 
   const effectiveReceiptId = receiptId || propReceipt?.id
   const isEditMode = !!effectiveReceiptId
@@ -134,6 +159,7 @@ const ReceiptDialog = ({
     resolver: zodResolver(createReceiptSchema),
     defaultValues: async () => ({
       note: '',
+      receiptType: isStandaloneMode ? 'debt_collection' : 'sales',
       totalAmount: remainingAmount > 0 ? remainingAmount : 0,
       paymentMethod: paymentMethods[0].value,
       paymentNote: '',
@@ -144,6 +170,7 @@ const ReceiptDialog = ({
     }),
   })
 
+  const selectedReceiptType = form.watch('receiptType')
 
   const fetchData = useCallback(async () => {
     const targetId = invoiceId || receipt?.invoiceId
@@ -183,6 +210,7 @@ const ReceiptDialog = ({
   useEffect(() => {
     if (open && isStandaloneMode) {
       dispatch(getCustomers())
+      dispatch(getSuppliers())
     }
   }, [open, dispatch, isStandaloneMode])
 
@@ -226,6 +254,7 @@ const ReceiptDialog = ({
 
         form.reset({
           note: receipt.reason || '',
+          receiptType: receipt.receiptType || (isStandaloneMode ? 'debt_collection' : 'sales'),
           totalAmount: parseFloat(receipt.amount || 0),
           paymentMethod: receipt.paymentMethod || 'cash',
           paymentNote: receipt.note || '',
@@ -264,8 +293,17 @@ const ReceiptDialog = ({
       : parseInt(invoiceData?.customerId || customer?.id || receipt?.customerId)
 
     // Build payload matching backend requirements
+    const actualType = data.receiptType.startsWith('custom_') ? 'other' : data.receiptType;
+    const customTypeName = data.receiptType.startsWith('custom_') ? data.receiptType.replace('custom_', '') : '';
+    const finalNote = customTypeName ? `[Loại: ${customTypeName}] ${data.note || ''}`.trim() : (data.note || (isStandaloneMode ? 'Thu tiền công nợ' : 'Thu tiền bán hàng'));
+
+    // For refund type, add supplier name to note
+    const refundNote = actualType === 'refund' && selectedRefundSupplier
+      ? `[Hoàn tiền NCC: ${selectedRefundSupplier.supplierName}] ${finalNote}`.trim()
+      : finalNote
+
     const dataToSend = {
-      receiptType: isStandaloneMode ? 'debt_collection' : 'sales',
+      receiptType: actualType,
       customerId: parseInt(customerId),
       orderId: isStandaloneMode ? undefined : (invoiceId || receipt?.orderId || receipt?.invoiceId || invoiceData?.id),
       amount: parseInt(data.totalAmount) || 0,
@@ -274,7 +312,7 @@ const ReceiptDialog = ({
         ? JSON.stringify(data.bankAccount)
         : null,
       receiptDate: data.receiptDate || new Date().toISOString(),
-      notes: data.note || (isStandaloneMode ? 'Thu tiền công nợ' : 'Thu tiền bán hàng'),
+      notes: refundNote,
       transactionReference: data.paymentNote || null,
     }
 
@@ -287,10 +325,10 @@ const ReceiptDialog = ({
           bankName: data.paymentMethod === 'transfer' && data.bankAccount
             ? JSON.stringify(data.bankAccount)
             : null,
-          notes: data.note || 'Thu tiền bán hàng',
+          notes: refundNote,
           transactionReference: data.paymentNote || null,
           receiptDate: data.receiptDate || new Date().toISOString(),
-          receiptType: receipt?.receiptType || 'sales',
+          receiptType: actualType,
         }
         await dispatch(updateReceipt(dataToUpdate)).unwrap()
 
@@ -662,6 +700,97 @@ const ReceiptDialog = ({
                               <Separator />
 
                               <div className="mb-3">
+                                <FormField
+                                  control={form.control}
+                                  name="receiptType"
+                                  render={({ field }) => (
+                                    <FormItem className="mb-3 space-y-1">
+                                      <div className="flex items-center justify-between">
+                                        <FormLabel required={true}>Loại phiếu thu</FormLabel>
+                                        <button 
+                                          type="button" 
+                                          onClick={() => setIsAddTypeOpen(true)}
+                                          className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
+                                        >
+                                          <PlusIcon className="w-3 h-3" /> Thêm loại mới
+                                        </button>
+                                      </div>
+                                      <Select
+                                        onValueChange={field.onChange}
+                                        value={field.value}
+                                        defaultValue={field.value}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Chọn loại phiếu thu" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent className="z-[100020]">
+                                          <SelectGroup>
+                                            {allReceiptTypes?.map((type) => (
+                                              <SelectItem
+                                                key={type.value}
+                                                value={type.value}
+                                              >
+                                                {type.label}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectGroup>
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                {/* Show supplier combobox when refund type selected */}
+                                {selectedReceiptType === 'refund' && (
+                                  <div className="mb-3">
+                                    <FormLabel>Nhà cung cấp (hoàn tiền)</FormLabel>
+                                    <Popover open={openRefundSupplierPopover} onOpenChange={setOpenRefundSupplierPopover}>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          role="combobox"
+                                          className="w-full justify-between mt-1 text-sm bg-background font-normal border-input"
+                                        >
+                                          {selectedRefundSupplier ? selectedRefundSupplier.supplierName : 'Chọn nhà cung cấp...'}
+                                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-full p-0 z-[100100]" align="start">
+                                        <Command>
+                                          <CommandInput placeholder="Tìm nhà cung cấp..." />
+                                          <CommandList>
+                                            <CommandEmpty>Không tìm thấy NCC.</CommandEmpty>
+                                            <CommandGroup>
+                                              {suppliers?.map((s) => (
+                                                <CommandItem
+                                                  key={s.id}
+                                                  value={s.supplierName}
+                                                  onSelect={() => {
+                                                    setSelectedRefundSupplier(s)
+                                                    setOpenRefundSupplierPopover(false)
+                                                  }}
+                                                >
+                                                  <CheckIcon
+                                                    className={cn(
+                                                      'mr-2 h-4 w-4',
+                                                      selectedRefundSupplier?.id === s.id ? 'opacity-100' : 'opacity-0',
+                                                    )}
+                                                  />
+                                                  {s.supplierName} - {s.phone}
+                                                </CommandItem>
+                                              ))}
+                                            </CommandGroup>
+                                          </CommandList>
+                                        </Command>
+                                      </PopoverContent>
+                                    </Popover>
+                                  </div>
+                                )}
+
                                 <FormField
                                   control={form.control}
                                   name="totalAmount"
@@ -1061,6 +1190,33 @@ const ReceiptDialog = ({
             <Button form="create-receipt" loading={loading} className={cn(isMobile && "flex-1")}>
               {submitLabel}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Custom Type Dialog */}
+      <Dialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen}>
+        <DialogContent className="sm:max-w-[425px] z-[100100]">
+          <DialogHeader>
+            <DialogTitle>Thêm loại phiếu thu mới</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              value={newTypeName} 
+              onChange={e => setNewTypeName(e.target.value)} 
+              placeholder="Nhập tên loại phiếu thu..."
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleAddType()
+                }
+              }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddTypeOpen(false)}>Hủy</Button>
+            <Button onClick={handleAddType} disabled={!newTypeName.trim()}>Thêm mới</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

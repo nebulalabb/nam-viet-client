@@ -46,7 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { paymentMethods } from '../../receipt/data'
+import { paymentMethods, voucherTypes } from '../../receipt/data'
 import { createPaymentSchema } from '../../receipt/schema'
 import { useDispatch, useSelector } from 'react-redux'
 import { createPayment, updatePayment, getPaymentById } from '@/stores/PaymentSlice'
@@ -54,6 +54,22 @@ import { Input } from '@/components/ui/input'
 import { getSetting } from '@/stores/SettingSlice'
 import { cn } from '@/lib/utils'
 import { getPublicUrl } from '@/utils/file'
+import { getUsers } from '@/stores/UserSlice'
+import { getSuppliers } from '@/stores/SupplierSlice'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { CheckIcon, ChevronsUpDown } from 'lucide-react'
 
 const PaymentDialog = ({
   paymentId, // Optional: for Edit mode
@@ -73,6 +89,39 @@ const PaymentDialog = ({
   const loading = useSelector((state) => state.payment.loading)
   const setting = useSelector((state) => state.setting.setting)
   const banks = setting?.banks || []
+
+  const [customTypes, setCustomTypes] = useState([])
+  const [isAddTypeOpen, setIsAddTypeOpen] = useState(false)
+  const [newTypeName, setNewTypeName] = useState('')
+  const allVoucherTypes = [...voucherTypes, ...customTypes]
+
+  const handleAddType = () => {
+    if (!newTypeName.trim()) return
+    const isExist = allVoucherTypes.find((t) => t.label.toLowerCase() === newTypeName.trim().toLowerCase())
+    if (!isExist) {
+       const newType = { value: 'custom_' + newTypeName.trim(), label: newTypeName.trim() }
+       setCustomTypes([...customTypes, newType])
+       form.setValue('voucherType', newType.value)
+    } else {
+       form.setValue('voucherType', isExist.value)
+    }
+    setNewTypeName('')
+    setIsAddTypeOpen(false)
+  }
+
+  const users = useSelector((state) => state.user.users)
+  const suppliersList = useSelector((state) => state.supplier.suppliers)
+  const [openUserPopover, setOpenUserPopover] = useState(false)
+  const [openSupplierPopover, setOpenSupplierPopover] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [selectedSupplier, setSelectedSupplier] = useState(null)
+
+  useEffect(() => {
+    if (open) {
+      if (!users || users.length === 0) dispatch(getUsers())
+      if (!suppliersList || suppliersList.length === 0) dispatch(getSuppliers())
+    }
+  }, [open, dispatch, users, suppliersList])
 
   const effectivePaymentId = paymentId || propPayment?.id
   const isEditMode = !!effectivePaymentId
@@ -137,6 +186,7 @@ const PaymentDialog = ({
     resolver: zodResolver(createPaymentSchema),
     defaultValues: {
       note: '',
+      voucherType: isCustomerPO ? 'refund' : 'supplier_payment',
       paymentAmount: 0,
       paymentMethod: 'cash',
       paymentNote: '',
@@ -146,6 +196,8 @@ const PaymentDialog = ({
       paymentDate: new Date().toISOString(),
     },
   })
+
+  const selectedVoucherType = form.watch('voucherType')
 
   // Fetch Payment Detail on Open if Edit Mode
   useEffect(() => {
@@ -198,6 +250,7 @@ const PaymentDialog = ({
 
         form.reset({
           note: dataToUse.reason || '',
+          voucherType: dataToUse.voucherType || (isCustomerPO ? 'refund' : 'supplier_payment'),
           paymentAmount: parseFloat(dataToUse.amount || 0),
           paymentMethod: dataToUse.paymentMethod || 'cash',
           paymentNote: dataToUse.note || '',
@@ -211,6 +264,7 @@ const PaymentDialog = ({
         const initialAmount = remainingAmount > 0 ? remainingAmount : 0
         form.reset({
           note: '',
+          voucherType: isCustomerPO ? 'refund' : 'supplier_payment',
           paymentAmount: initialAmount,
           paymentMethod: 'cash',
           paymentNote: '',
@@ -234,13 +288,24 @@ const PaymentDialog = ({
       return
     }
 
+    const actualType = data.voucherType.startsWith('custom_') ? 'other' : data.voucherType;
+    const customTypeName = data.voucherType.startsWith('custom_') ? data.voucherType.replace('custom_', '') : '';
+    const baseReason = data.note || (effectivePurchaseOrder ? `Chi trả đơn hàng ${effectivePurchaseOrder.code}` : '');
+    
+    let appendedNote = ''
+    if (actualType === 'salary' && selectedUser) {
+        appendedNote = `[NV: ${selectedUser.fullName || selectedUser.username}] `
+    }
+    const finalReason = customTypeName ? `[Loại: ${customTypeName}] ${baseReason}`.trim() : (baseReason || undefined);
+    const superFinalReason = (appendedNote + (finalReason || '')).trim()
+
     const commonData = {
       amount: parseInt(data.paymentAmount) || 0,
       paymentMethod: data.paymentMethod,
       bankName: data.paymentMethod === 'transfer' && data.bankAccount
         ? JSON.stringify(data.bankAccount)
         : undefined, // undefined passes z.string().optional() better than null, but we'll fix validator too
-      reason: data.note || (effectivePurchaseOrder ? `Chi trả đơn hàng ${effectivePurchaseOrder.code}` : undefined),
+      reason: superFinalReason,
       notes: data.paymentNote,
       paymentDate: data.paymentDate,
     }
@@ -250,6 +315,7 @@ const PaymentDialog = ({
         // UPDATE
         const dataToSend = {
           ...data, // includes status etc from form if needed
+          voucherType: actualType,
           id: effectivePaymentId,
           ...commonData
         }
@@ -266,8 +332,8 @@ const PaymentDialog = ({
           ...data,
           ...commonData,
           purchaseOrderId: effectivePurchaseOrder?.id,
-          voucherType: isCustomerPO ? 'refund' : 'supplier_payment',
-          supplierId: !isCustomerPO ? party?.id : undefined,
+          voucherType: actualType,
+          supplierId: !isCustomerPO ? (party?.id || selectedSupplier?.id) : undefined,
           voucherDate: new Date().toISOString(),
         }
         delete dataToSend.note
@@ -561,6 +627,49 @@ const PaymentDialog = ({
 
                           <FormField
                             control={form.control}
+                            name="voucherType"
+                            render={({ field }) => (
+                              <FormItem className="mb-3 space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <FormLabel required={true}>Loại phiếu chi</FormLabel>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => setIsAddTypeOpen(true)}
+                                    className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
+                                  >
+                                    <PlusIcon className="w-3 h-3" /> Thêm loại mới
+                                  </button>
+                                </div>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Chọn loại phiếu chi" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent className="z-[100100]">
+                                    <SelectGroup>
+                                      {allVoucherTypes?.map((type) => (
+                                        <SelectItem
+                                          key={type.value}
+                                          value={type.value}
+                                        >
+                                          {type.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
                             name="paymentAmount"
                             render={({ field }) => (
                               <FormItem className="mb-2 space-y-1">
@@ -584,6 +693,100 @@ const PaymentDialog = ({
                               </FormItem>
                             )}
                           />
+
+                          {selectedVoucherType === 'salary' && !effectivePurchaseOrder && (
+                            <div className="mb-3 mt-3">
+                              <FormLabel>Nhân viên</FormLabel>
+                              <Popover open={openUserPopover} onOpenChange={setOpenUserPopover}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openUserPopover}
+                                    className="w-full justify-between mt-1 text-sm bg-background font-normal border-input"
+                                  >
+                                    {selectedUser ? (selectedUser.fullName || selectedUser.username) : 'Chọn nhân viên...'}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-full p-0 z-[100100]" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Tìm nhân viên..." />
+                                    <CommandList>
+                                      <CommandEmpty>Không tìm thấy nhân viên.</CommandEmpty>
+                                      <CommandGroup>
+                                        {users?.map((u) => (
+                                          <CommandItem
+                                            key={u.id}
+                                            value={u.fullName || u.username}
+                                            onSelect={() => {
+                                              setSelectedUser(u)
+                                              setOpenUserPopover(false)
+                                            }}
+                                          >
+                                            <CheckIcon
+                                              className={cn(
+                                                'mr-2 h-4 w-4',
+                                                selectedUser?.id === u.id ? 'opacity-100' : 'opacity-0',
+                                              )}
+                                            />
+                                            {u.fullName || u.username} - {u.phone}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          )}
+
+                          {selectedVoucherType === 'supplier_payment' && !effectivePurchaseOrder && (
+                            <div className="mb-3 mt-3">
+                              <FormLabel>Nhà cung cấp</FormLabel>
+                              <Popover open={openSupplierPopover} onOpenChange={setOpenSupplierPopover}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openSupplierPopover}
+                                    className="w-full justify-between mt-1 text-sm bg-background font-normal border-input"
+                                  >
+                                    {selectedSupplier ? selectedSupplier.supplierName : 'Chọn nhà cung cấp...'}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-full p-0 z-[100100]" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Tìm nhà cung cấp..." />
+                                    <CommandList>
+                                      <CommandEmpty>Không tìm thấy NCC.</CommandEmpty>
+                                      <CommandGroup>
+                                        {suppliersList?.map((s) => (
+                                          <CommandItem
+                                            key={s.id}
+                                            value={s.supplierName}
+                                            onSelect={() => {
+                                              setSelectedSupplier(s)
+                                              setOpenSupplierPopover(false)
+                                            }}
+                                          >
+                                            <CheckIcon
+                                              className={cn(
+                                                'mr-2 h-4 w-4',
+                                                selectedSupplier?.id === s.id ? 'opacity-100' : 'opacity-0',
+                                              )}
+                                            />
+                                            {s.supplierName} - {s.phone}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          )}
 
                           <div className="mb-3 mt-3">
                             <FormField
@@ -782,6 +985,33 @@ const PaymentDialog = ({
             </form>
           </Form>
         </div>
+
+        {/* Add Custom Type Dialog */}
+        <Dialog open={isAddTypeOpen} onOpenChange={setIsAddTypeOpen}>
+          <DialogContent className="sm:max-w-[425px] z-[100100]">
+            <DialogHeader>
+              <DialogTitle>Thêm loại phiếu chi mới</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <Input 
+                value={newTypeName} 
+                onChange={e => setNewTypeName(e.target.value)} 
+                placeholder="Nhập tên loại phiếu chi..."
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddType()
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddTypeOpen(false)}>Hủy</Button>
+              <Button onClick={handleAddType} disabled={!newTypeName.trim()}>Thêm mới</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <DialogFooter className={cn("flex gap-2 sm:space-x-0", isMobile && "pb-4 px-4 flex-row")}>
           <DialogClose asChild>

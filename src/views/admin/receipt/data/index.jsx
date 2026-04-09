@@ -61,4 +61,19 @@ const paymentStatus = [
   },
 ]
 
-export { paymentMethods, debts, paymentStatus, receiptStatus }
+const receiptTypes = [
+  { value: 'sales', label: 'Bán hàng' },
+  { value: 'debt_collection', label: 'Thu công nợ' },
+  { value: 'refund', label: 'Hoàn tiền' },
+  { value: 'other', label: 'Thu khác' },
+]
+
+const voucherTypes = [
+  { value: 'salary', label: 'Lương nhân viên' },
+  { value: 'operating_cost', label: 'Chi phí vận hành' },
+  { value: 'supplier_payment', label: 'Chi nhà cung cấp' },
+  { value: 'refund', label: 'Hoàn tiền' },
+  { value: 'other', label: 'Chi khác' },
+]
+
+export { paymentMethods, debts, paymentStatus, receiptStatus, receiptTypes, voucherTypes }
