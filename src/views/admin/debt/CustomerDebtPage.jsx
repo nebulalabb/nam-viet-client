@@ -433,9 +433,6 @@ const CustomerDebtPage = () => {
                             data={debts}
                             isLoading={loading}
                             onView={handleView}
-                            onBlacklist={handleBlacklist}
-                            onUnblacklist={handleUnblacklist}
-                            onExtend={handleExtend}
                             pagination={filters}
                             pageCount={serverPagination?.totalPages || 1}
                             rowCount={serverPagination?.total || 0}
@@ -448,9 +445,6 @@ const CustomerDebtPage = () => {
                             data={monthlyObjectsData}
                             isLoading={monthlyObjectsLoading}
                             onView={handleView}
-                            onBlacklist={handleBlacklist}
-                            onUnblacklist={handleUnblacklist}
-                            onExtend={handleExtend}
                             pagination={filters}
                             pageCount={monthlyObjectsPagination?.totalPages || 1}
                             rowCount={monthlyObjectsPagination?.total || 0}

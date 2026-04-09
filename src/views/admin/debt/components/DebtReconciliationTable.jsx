@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, User, Eye, ShieldAlert, SkipForward, ShieldOff, MoreHorizontal } from 'lucide-react'
+import { MapPin, User, Eye, ShieldAlert, SkipForward, ShieldOff, MoreHorizontal, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/utils/number-format'
 import DebtPagination from './DebtPagination'
 import ConfirmActionButton from '@/components/custom/ConfirmActionButton'
