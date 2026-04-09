@@ -67,23 +67,29 @@ const PrintableContent = React.forwardRef(
               <p style={{ color: '#089c65', fontSize: '13px', fontWeight: 600, lineHeight: 1.5, margin: '0 0 1px 0' }}>
                 Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}
               </p>
+              <div style={{ color: '#1976d2', fontSize: '11px', fontWeight: 'bold', lineHeight: 1.1, margin: '0 0 2px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ margin: '0 0 1px 0' }}>TK cá nhân - 975767788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+                <div>TK công ty - 08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+              </div>
               <p style={{ color: '#804297', fontSize: '13px', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
-                Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
+                Điện thoại: {setting?.phone ? (setting.phone.includes("0868") ? setting.phone : setting.phone + " - 0868 759 588") : "088 635 7788 - 0868 759 588"}
                 {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
               </p>
-              <h2 style={{ marginTop: '12px', fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', color: '#2CA5C9', lineHeight: 1.2 }}>
-                PHIẾU THU
-              </h2>
-            </div>
-            <div style={{ width: '130px', textAlign: 'right', paddingTop: '55px' }}>
-               <p style={{ fontSize: '13px', fontWeight: 'bold', color: '#089c65', margin: 0 }}>Số: {receipt?.receiptCode || receipt?.code}</p>
+              <div style={{ position: 'relative', marginTop: '12px' }}>
+                <h2 style={{ fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', color: '#2CA5C9', lineHeight: 1.2, margin: 0 }}>
+                  PHIẾU THU
+                </h2>
+                <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', fontWeight: 'bold', color: '#089c65' }}>
+                  Số: {receipt?.receiptCode || receipt?.code}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Content */}
           <div style={{ marginTop: '10px', paddingLeft: '24px', paddingRight: '24px', lineHeight: 1.7 }}>
             <div style={{ display: 'flex', fontSize: '15px', marginBottom: '2px' }}>
-              <span style={{ color: '#D48625', minWidth: '155px', whiteSpace: 'nowrap' }}>Họ tên người nộp tiền: </span>
+              <span style={{ color: '#3286A9', minWidth: '155px', whiteSpace: 'nowrap' }}>Họ tên người nộp tiền: </span>
               <span style={{ color: '#3286A9', textTransform: 'uppercase', flex: 1 }}>{receipt?.receiver?.name || ''}</span>
             </div>
             <div style={{ display: 'flex', fontSize: '15px', marginBottom: '2px' }}>
@@ -109,7 +115,7 @@ const PrintableContent = React.forwardRef(
           </div>
 
           {/* Date */}
-          <div style={{ marginTop: '10px', textAlign: 'center', paddingRight: '0' }}>
+          <div style={{ marginTop: '5px', textAlign: 'right', paddingRight: '12%' }}>
             <p style={{ color: '#804297', fontSize: '15px', margin: 0 }}>{dateStr}</p>
           </div>
 

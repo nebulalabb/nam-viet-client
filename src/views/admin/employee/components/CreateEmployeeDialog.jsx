@@ -81,13 +81,15 @@ const CreateEmployeeDialog = ({
 
             const payload = {
                 ...data,
+                roleId: data.roleId ? parseInt(data.roleId, 10) : undefined,
+                phone: data.phone || undefined,
                 email: grantAccount ? data.email : undefined,
                 password: grantAccount ? data.password : undefined,
             }
 
             await dispatch(createUser(payload)).unwrap()
             form.reset()
-            setProvideAccount(false)
+            setGrantAccount(false)
             onOpenChange?.(false)
         } catch (error) {
             console.log('Submit error: ', error)
@@ -160,29 +162,13 @@ const CreateEmployeeDialog = ({
                             </div>
 
                             {grantAccount && (
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem className="mb-2 space-y-1">
-                                            <FormLabel required={true}>Email</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Nhập địa chỉ email" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            )}
-
-                            {provideAccount && (
                                 <>
                                     <FormField
                                         control={form.control}
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem className="mb-2 space-y-1">
-                                                <FormLabel required={provideAccount}>Email</FormLabel>
+                                                <FormLabel required={true}>Email</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="Nhập địa chỉ email" {...field} />
                                                 </FormControl>
@@ -190,21 +176,20 @@ const CreateEmployeeDialog = ({
                                             </FormItem>
                                         )}
                                     />
-
-                            {grantAccount && (
-                                <FormField
-                                    control={form.control}
-                                    name="password"
-                                    render={({ field }) => (
-                                        <FormItem className="mb-2 space-y-1">
-                                            <FormLabel required={true}>Mật khẩu</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" placeholder="Mật khẩu" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                    <FormField
+                                        control={form.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2 space-y-1">
+                                                <FormLabel required={true}>Mật khẩu</FormLabel>
+                                                <FormControl>
+                                                    <Input type="password" placeholder="Mật khẩu" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </>
                             )}
 
                             <FormField
@@ -262,6 +247,7 @@ const CreateEmployeeDialog = ({
                             </div>
 
                         </div>
+
                     </form>
                 </Form>
 

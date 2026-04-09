@@ -77,8 +77,12 @@ const PrintableContent = React.forwardRef(
               <p style={{ color: '#1ab85c', fontWeight: 'bold', fontSize: '13px', marginBottom: '1px', lineHeight: 1.5 }}>
                 Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}
               </p>
+              <div style={{ color: '#1976d2', fontSize: '11px', fontWeight: 'bold', lineHeight: 1.1, margin: '0 0 2px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ margin: '0 0 1px 0' }}>TK cá nhân - 975767788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+                <div>TK công ty - 08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+              </div>
               <p style={{ color: '#8c52d4', fontWeight: 'bold', fontSize: '13px', lineHeight: 1.5, margin: 0 }}>
-                 Điện thoại: {setting?.phone || '088 635 7788 - 0868 759 588'}
+                 Điện thoại: {setting?.phone ? (setting.phone.includes("0868") ? setting.phone : setting.phone + " - 0868 759 588") : "088 635 7788 - 0868 759 588"}
                  {setting?.taxCode && <span> - MST: {setting.taxCode}</span>}
               </p>
             </div>
@@ -88,7 +92,7 @@ const PrintableContent = React.forwardRef(
           <div style={{ position: 'relative', textAlign: 'center', marginBottom: '10px', height: '32px', lineHeight: '32px' }}>
             <h2 style={{ fontSize: '26px', fontWeight: 'bold', textTransform: 'uppercase', color: '#3498db', letterSpacing: '2px', display: 'inline-block', margin: 0 }}>PHIẾU CHI</h2>
             <div style={{ position: 'absolute', right: '28px', top: '50%', transform: 'translateY(-50%)', color: '#e2362b', fontWeight: 'bold', fontSize: '13px' }}>
-              Số: {payment?.code || ''}
+              Số: {payment?.code || payment?.paymentCode || payment?.receiptCode || payment?.voucherCode || ''}
             </div>
           </div>
 
@@ -96,15 +100,25 @@ const PrintableContent = React.forwardRef(
           <div style={{ paddingLeft: '18px', paddingRight: '18px', marginBottom: '6px', lineHeight: 1.7 }}>
             <div style={{ display: 'flex', color: '#3498db', fontSize: '15px', marginBottom: '2px' }}>
               <span style={{ whiteSpace: 'nowrap', marginRight: '6px' }}>Họ tên người nhận tiền:</span>
-              <span style={{ textTransform: 'uppercase' }}>{payment?.receiver?.name || (payment?.receiverType === 'supplier' ? 'Nhà cung cấp' : '')}</span>
+              <span style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>
+                {payment?.supplier?.supplierName || 
+                 payment?.customer?.customerName || 
+                 payment?.employee?.fullName || 
+                 payment?.receiver?.name || ''}
+              </span>
             </div>
             <div style={{ display: 'flex', color: '#e67e22', fontSize: '15px', marginBottom: '2px' }}>
               <span style={{ whiteSpace: 'nowrap', marginRight: '6px' }}>Địa chỉ:</span>
-              <span>{payment?.receiver?.address || ''}</span>
+              <span>
+                {payment?.supplier?.address || 
+                 payment?.customer?.address || 
+                 payment?.employee?.address || 
+                 payment?.receiver?.address || ''}
+              </span>
             </div>
             <div style={{ display: 'flex', color: '#8c52d4', fontSize: '15px', marginBottom: '2px' }}>
               <span style={{ whiteSpace: 'nowrap', marginRight: '6px' }}>Lý do nhận tiền:</span>
-              <span>{payment?.reason || payment?.note || (payment?.purchaseOrder ? `Thanh toán tiền hàng cho đơn hàng ${payment?.purchaseOrder?.code}` : '')}</span>
+              <span>{payment?.reason || payment?.note || (payment?.purchaseOrder?.code ? `Thanh toán tiền hàng cho đơn hàng ${payment.purchaseOrder.code}` : (payment?.purchaseOrder ? 'Thanh toán tiền hàng' : ''))}</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', fontSize: '15px', marginBottom: '2px' }}>
               <div style={{ display: 'flex', color: '#3498db' }}>
@@ -113,7 +127,7 @@ const PrintableContent = React.forwardRef(
               </div>
               <div style={{ display: 'flex', color: '#1ab85c' }}>
                 <span style={{ whiteSpace: 'nowrap', marginLeft: '24px', marginRight: '6px' }}>( Viết bằng chữ ):</span>
-                <span>{payment?.amount ? toVietnamese(payment?.amount, true) : 'Không đồng'}</span>
+                <span>{payment?.amount ? toVietnamese(payment?.amount) : 'Không đồng'}</span>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '35px', color: '#8c52d4', fontSize: '15px', marginTop: '2px' }}>
@@ -130,7 +144,7 @@ const PrintableContent = React.forwardRef(
           </div>
 
           {/* Date */}
-          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+          <div style={{ marginTop: '5px', textAlign: 'right', paddingRight: '12%', marginBottom: '8px' }}>
             <span style={{ color: '#e2362b', fontSize: '15px' }}>{printDateStr}</span>
           </div>
 
