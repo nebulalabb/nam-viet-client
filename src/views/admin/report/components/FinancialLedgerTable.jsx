@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import ViewReceiptDialog from '../../receipt/components/ViewReceiptDialog'
 import ViewPaymentDialog from '../../payment/components/ViewPaymentDialog'
+import api from '@/utils/axios'
 
 const moneyFmt = (v) =>
   new Intl.NumberFormat('vi-VN').format(v || 0)
@@ -26,7 +27,7 @@ const PAYMENT_TYPE_LABELS = {
   other: 'Chi khác',
 }
 
-const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onPageSizeChange }) => {
+const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onPageSizeChange, filters }) => {
   const [selectedReceipt, setSelectedReceipt] = useState(null)
   const [selectedPayment, setSelectedPayment] = useState(null)
 
@@ -114,8 +115,7 @@ const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onP
                 <th className="px-3 py-3 border-r text-right font-bold w-28">GIÁ TRỊ</th>
                 <th className="px-3 py-3 border-r text-left w-32">NV NỘP TIỀN</th>
                 <th className="px-3 py-3 border-r text-left w-32">PHỤ TRÁCH BỞI</th>
-                <th className="px-3 py-3 border-r text-left w-24">TỈNH/THÀNH</th>
-                <th className="px-3 py-3 text-right font-bold w-28">TỒN QUỸ</th>
+                <th className="px-3 py-3 text-left w-24">TỈNH/THÀNH</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -139,7 +139,7 @@ const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onP
                   : 'text-red-500'
 
                 const amountText = tx.isReceipt 
-                  ? `${moneyFmt(tx.amount)}` 
+                  ? `+ ${moneyFmt(tx.amount)}` 
                   : `- ${moneyFmt(tx.amount)}`
 
                 return (
@@ -202,12 +202,6 @@ const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onP
 
                     <td className="px-3 py-2 text-left text-xs text-gray-600 align-top pt-3">
                       {tx.province || 'Thành phố Hồ Chí Minh'}
-                    </td>
-
-                    <td className="px-3 py-2 text-right align-top pt-3">
-                      <span className="font-bold text-blue-600 whitespace-nowrap text-sm">
-                        {moneyFmt(tx.runningBalance)}
-                      </span>
                     </td>
                   </tr>
                 )

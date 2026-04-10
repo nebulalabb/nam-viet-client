@@ -71,7 +71,7 @@ const CustomerDebtPage = () => {
                 address: addressTerm,
                 blacklist: activeTab === 'blacklist' ? 'true' : 'false'
             }))
-        } catch (err) {}
+        } catch (err) { }
     }
 
     const handleExtendDebt = async (id) => {
@@ -83,7 +83,7 @@ const CustomerDebtPage = () => {
                 address: addressTerm,
                 blacklist: activeTab === 'blacklist' ? 'true' : 'false'
             }))
-        } catch (err) {}
+        } catch (err) { }
     }
 
     // Sync activeTab khi isAdmin thay đổi
@@ -154,7 +154,7 @@ const CustomerDebtPage = () => {
         filters.type === 'supplier'
             ? 'NỢ CẦN TRẢ'
             : (!filters.type ? 'NỢ CẦN THU / NỢ CẦN TRẢ' : 'NỢ CẦN THU')
-    
+
     const monthNow = new Date().getMonth() + 1;
 
     return (

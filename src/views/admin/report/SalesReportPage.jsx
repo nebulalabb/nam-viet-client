@@ -199,14 +199,14 @@ const SalesReportPage = () => {
                     <RevenueKPICards data={data} isLoading={loading} />
                 </div>
 
-                {/* Charts */}
-                <div className="mb-6">
-                    <RevenueCharts data={data} isLoading={loading} />
-                </div>
-
                 {/* Data Tables */}
                 <div className="mb-6">
                     <RevenueDataTables data={data} isLoading={loading} />
+                </div>
+
+                {/* Charts */}
+                <div className="mb-6">
+                    <RevenueCharts data={data} isLoading={loading} />
                 </div>
 
                 {/* Debug Info - Only in development */}

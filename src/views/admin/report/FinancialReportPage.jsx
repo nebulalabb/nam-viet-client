@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, Download } from 'lucide-react'
+import { AlertCircle, Download, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -15,6 +15,7 @@ import FinancialKPICards from './components/FinancialKPICards'
 import FinancialCharts from './components/FinancialCharts'
 import FinancialTopPartners from './components/FinancialTopPartners'
 import FinancialLedgerTable from './components/FinancialLedgerTable'
+import ExportFinancialLedgerPreviewDialog from './components/ExportFinancialLedgerPreviewDialog'
 
 const formatCurrency = (v) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(v || 0)
@@ -39,6 +40,8 @@ const FinancialReportPage = () => {
   const [loading, setLoading] = useState(false)
   const [chartLoading, setChartLoading] = useState(false)
   const [error, setError] = useState(null)
+  
+  const [isPreviewPrintOpen, setIsPreviewPrintOpen] = useState(false)
 
   // ── Fetch sổ quỹ (cash-book) ───────────────────────────────────────────────
   const fetchCashBook = useCallback(async (currentFilters, currentPage, currentPageSize) => {
@@ -105,7 +108,8 @@ const FinancialReportPage = () => {
   const handleExport = async () => {
     try {
       const params = { fromDate: filters.fromDate, toDate: filters.toDate }
-      const response = await api.get('/reports/financial/export', { params, responseType: 'blob' })
+      // Call the new export route for cash book details
+      const response = await api.get('/reports/financial/export-cash-book', { params, responseType: 'blob' })
       const contentType = (response.headers?.['content-type'] || '').toLowerCase()
       if (!contentType.includes('spreadsheet') && !contentType.includes('octet-stream')) {
         alert('Không thể xuất file Excel.')
@@ -128,19 +132,39 @@ const FinancialReportPage = () => {
   return (
     <Layout>
       <LayoutBody className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 pt-6 h-[calc(100vh-var(--header-height))] pb-10">
+        
+        {/* Print Preview Dialog */}
+        <ExportFinancialLedgerPreviewDialog 
+            isOpen={isPreviewPrintOpen} 
+            onClose={() => setIsPreviewPrintOpen(false)} 
+            filters={filters} 
+        />
+
         {/* Page header */}
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Báo cáo Tài chính</h2>
             <p className="text-muted-foreground text-sm">Sổ quỹ & tổng quan tình hình tài chính</p>
           </div>
-          <Button
-            onClick={handleExport}
-            className="flex items-center gap-2 bg-white text-green-700 border-2 border-green-600 hover:bg-green-600 hover:text-white font-medium"
-          >
-            <Download className="h-4 w-4" />
-            Xuất Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPreviewPrintOpen(true)}
+              className="flex items-center gap-2 bg-white text-indigo-700 border-2 border-indigo-500 hover:bg-indigo-600 hover:text-white font-medium"
+            >
+              <Printer className="h-4 w-4" />
+              In phiếu
+            </Button>
+            <Button
+              type="button"
+              onClick={handleExport}
+              className="flex items-center gap-2 bg-white text-green-700 border-2 border-green-600 hover:bg-green-600 hover:text-white font-medium"
+            >
+              <Download className="h-4 w-4" />
+              Xuất Excel
+            </Button>
+          </div>
         </div>
 
         {/* Error */}
@@ -169,6 +193,18 @@ const FinancialReportPage = () => {
           closingBalance={cashBook?.closingBalance}
           loading={loading}
         />
+
+        {/* Sổ quỹ chi tiết */}
+        <div className="flex-1 mt-4 mb-8">
+          <FinancialLedgerTable
+            data={cashBook}
+            loading={loading}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(ps) => { setPageSize(ps); setPage(1) }}
+          />
+        </div>
 
         {/* Charts (existing) */}
         <FinancialCharts
@@ -223,18 +259,6 @@ const FinancialReportPage = () => {
               </CardContent>
             </Card>
           </div>
-        </div>
-
-        {/* Sổ quỹ chi tiết */}
-        <div className="flex-1 mt-4">
-          <FinancialLedgerTable
-            data={cashBook}
-            loading={loading}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={(ps) => { setPageSize(ps); setPage(1) }}
-          />
         </div>
       </LayoutBody>
     </Layout>

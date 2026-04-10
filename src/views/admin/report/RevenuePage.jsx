@@ -146,25 +146,25 @@ const RevenuePage = () => {
                     </div>
                 )}
 
-                {/* Charts */}
-                {!loading && data && (
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                            <div className="h-1 w-1 rounded-full bg-green-600"></div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Biểu đồ Trực quan</h3>
-                        </div>
-                        <RevenueCharts data={data} isLoading={loading} />
-                    </div>
-                )}
-
                 {/* Data Tables */}
                 {!loading && data && (
-                    <div className="space-y-3 pb-8">
+                    <div className="space-y-3">
                         <div className="flex items-center gap-2">
                             <div className="h-1 w-1 rounded-full bg-purple-600"></div>
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Chi tiết Dữ liệu</h3>
                         </div>
                         <RevenueDataTables data={data} isLoading={loading} />
+                    </div>
+                )}
+
+                {/* Charts */}
+                {!loading && data && (
+                    <div className="space-y-3 pb-8">
+                        <div className="flex items-center gap-2">
+                            <div className="h-1 w-1 rounded-full bg-green-600"></div>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Biểu đồ Trực quan</h3>
+                        </div>
+                        <RevenueCharts data={data} isLoading={loading} />
                     </div>
                 )}
 
