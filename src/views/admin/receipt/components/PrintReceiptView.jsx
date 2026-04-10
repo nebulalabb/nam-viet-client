@@ -68,8 +68,8 @@ const PrintableContent = React.forwardRef(
                 Địa chỉ: {setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}
               </p>
               <div style={{ color: '#1976d2', fontSize: '11px', fontWeight: 'bold', lineHeight: 1.1, margin: '0 0 2px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ margin: '0 0 1px 0' }}>TK cá nhân - 975767788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
-                <div>TK công ty - 08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+                <div style={{ margin: '0 0 1px 0' }}>975767 788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+                <div>08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
               </div>
               <p style={{ color: '#804297', fontSize: '13px', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
                 Điện thoại: {setting?.phone ? (setting.phone.includes("0868") ? setting.phone : setting.phone + " - 0868 759 588") : "088 635 7788 - 0868 759 588"}

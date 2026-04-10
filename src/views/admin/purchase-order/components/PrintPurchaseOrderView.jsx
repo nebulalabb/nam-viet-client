@@ -2,6 +2,7 @@ import { dateFormat } from '@/utils/date-format'
 import { moneyFormat, toVietnamese } from '@/utils/money-format'
 import React, { useEffect, useRef } from 'react'
 import { useReactToPrint } from 'react-to-print'
+import { getPublicUrl } from '@/utils/file'
 
 const PrintPurchaseOrderView = ({ purchaseOrder, setting, onAfterPrint }) => {
   const contentRef = useRef(null)
@@ -15,7 +16,6 @@ const PrintPurchaseOrderView = ({ purchaseOrder, setting, onAfterPrint }) => {
     reactToPrintFn()
   }, [reactToPrintFn])
 
-
   return (
     <div className="hidden">
       <PrintableContent
@@ -27,137 +27,218 @@ const PrintPurchaseOrderView = ({ purchaseOrder, setting, onAfterPrint }) => {
   )
 }
 
-import { getPublicUrl } from '@/utils/file'
+const PrintableContent = React.forwardRef(({ setting, purchaseOrder }, ref) => {
+  const items = purchaseOrder?.details || []
 
-const PrintableContent = React.forwardRef(
-  ({ setting, purchaseOrder }, ref) => (
-    <div ref={ref} className="mx-auto max-w-3xl bg-white p-6">
-      <div className="mb-6 flex items-start">
-        <div className="w-24 h-24 mr-4 flex items-center justify-center flex-shrink-0">
-          <img src={setting?.logo ? getPublicUrl(setting.logo) : "/images/logo/logo-nobackground.png"} alt="Logo" className="max-w-full max-h-full object-contain" />
+  const totalAmount = Number(purchaseOrder?.totalCurrentAmount ?? purchaseOrder?.totalAmount ?? 0)
+  const discountAmount = Number(purchaseOrder?.discountAmount ?? purchaseOrder?.totalDiscountAmount ?? purchaseOrder?.discount ?? 0)
+  const taxAmount = Number(purchaseOrder?.totalTaxAmount ?? purchaseOrder?.taxAmount ?? 0)
+  const otherCosts = Number(purchaseOrder?.otherCosts ?? 0)
+
+  const createdDate = new Date(purchaseOrder?.orderDate || purchaseOrder?.createdAt || new Date())
+  const day = createdDate.getDate().toString().padStart(2, '0')
+  const month = (createdDate.getMonth() + 1).toString().padStart(2, '0')
+  const year = createdDate.getFullYear()
+  const printDateStr = `Ngày ${day} tháng ${month} năm ${year}`
+
+  const now = new Date()
+  const nowTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear().toString().slice(-2)}`
+
+  const logoSrc = setting?.logo
+    ? (setting.logo.startsWith('http') ? setting.logo : window.location.origin + getPublicUrl(setting.logo))
+    : window.location.origin + '/images/logo/logo-nobackground.png'
+
+  const creatorName =
+    purchaseOrder?.creator?.fullName ||
+    purchaseOrder?.user?.fullName ||
+    purchaseOrder?.createdByUser?.fullName ||
+    'Quản trị viên hệ thống'
+
+  return (
+    <div ref={ref}>
+      <style dangerouslySetInnerHTML={{__html: `
+        @page { size: A5 portrait; margin: 5mm 6mm; }
+        @media print {
+          body { margin: 0; padding: 0; }
+          .ppo-wrap {
+            width: 136mm !important;
+            max-height: 198mm !important;
+            overflow: hidden !important;
+            padding: 3mm 5mm !important;
+            font-size: 11px !important;
+            box-sizing: border-box !important;
+          }
+          .ppo-wrap * { box-sizing: border-box !important; }
+          .ppo-wrap table { border-collapse: collapse !important; }
+          .ppo-wrap th, .ppo-wrap td { border: 0.5px solid #000 !important; }
+        }
+      `}} />
+
+      <div
+        className="ppo-wrap mx-auto bg-white"
+        style={{
+          width: '136mm',
+          maxHeight: '198mm',
+          padding: '3mm 5mm',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+          color: '#000',
+          fontSize: '11px',
+          fontFamily: 'serif',
+        }}
+      >
+        {/* ── Top timestamp ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#555', marginBottom: '2px', fontFamily: 'sans-serif' }}>
+          <span>{nowTime}</span>
+          <span>In Chứng Từ</span>
         </div>
-        <div className="flex-1">
-          <h1 className="mb-1 text-lg font-bold">{setting?.brandName || 'TÊN CÔNG TY'}</h1>
-          <p className="mb-1 text-sm flex gap-2"><span>Địa chỉ: {setting?.address}</span></p>
-          <div className="mb-1 text-[11px] leading-[1.1] text-blue-700 font-bold flex flex-col items-center">
-            <div className="mb-[1px]">TK cá nhân - 975767788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
-            <div>TK công ty - 08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+
+        {/* ── Brand header ── */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '4px' }}>
+          <div style={{ width: '58px', height: '58px', flexShrink: 0, marginRight: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={logoSrc} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
           </div>
-          <p className="mb-1 text-sm flex gap-2"><span>Điện thoại: {setting?.phone ? (setting.phone.includes("0868") ? setting.phone : setting.phone + " - 0868 759 588") : "088 635 7788 - 0868 759 588"}</span> {setting?.taxCode && <span>MST: {setting.taxCode}</span>}</p>
-          <p className="text-sm">Email: {setting?.email}</p>
+          <div style={{ flex: 1, fontSize: '9.5px', lineHeight: 1.45 }}>
+            <p style={{ margin: '0 0 1px 0', fontWeight: 'bold', fontSize: '11.5px', textTransform: 'uppercase', color: '#c00000' }}>
+              {setting?.brandName || 'CÔNG TY CỔ PHẦN HOÁ SINH NAM VIỆT'}
+            </p>
+            <p style={{ margin: '0 0 1px 0' }}>{setting?.address || 'QL30/ấp Đông Mỹ, Mỹ Hội, Cao Lãnh, Đồng Tháp'}</p>
+            {setting?.bankAccount1
+              ? <p style={{ margin: '0 0 1px 0' }}>{setting.bankAccount1}</p>
+              : <p style={{ margin: '0 0 1px 0' }}>TK cá nhân - 975767788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</p>
+            }
+            {setting?.bankAccount2
+              ? <p style={{ margin: '0 0 1px 0' }}>{setting.bankAccount2}</p>
+              : <p style={{ margin: '0 0 1px 0' }}>TK công ty - 08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</p>
+            }
+            <p style={{ margin: '0 0 1px 0', color: '#0070c0', fontWeight: 'bold' }}>
+              Điện thoại: {setting?.phone || '0886357788 - 0868 759 588'}
+            </p>
+            {setting?.email && <p style={{ margin: '0 0 1px 0' }}>{setting.email}</p>}
+            {setting?.website && <p style={{ margin: 0 }}>{setting.website}</p>}
+          </div>
         </div>
-      </div>
 
-      <h2 className="mb-4 text-center text-xl font-bold uppercase">
-        Đơn Đặt Hàng
-      </h2>
+        {/* ── Title ── */}
+        <div style={{ position: 'relative', textAlign: 'center', marginBottom: '5px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', margin: 0, color: '#c00000' }}>
+            HÓA ĐƠN ĐẶT HÀNG
+          </h2>
+          <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', fontSize: '10px' }}>
+            Số: {purchaseOrder?.poCode || purchaseOrder?.code}
+          </div>
+        </div>
 
-      <p className="mb-4 text-center text-sm">
-        Số: {purchaseOrder?.poCode || purchaseOrder?.code} - Ngày: {dateFormat(purchaseOrder?.orderDate || purchaseOrder?.createdAt, true)}
-      </p>
+        {/* ── Supplier Info ── */}
+        <div style={{ marginBottom: '4px', fontSize: '11px', lineHeight: 1.65 }}>
+          <div style={{ display: 'flex' }}>
+            <span style={{ minWidth: '100px', whiteSpace: 'nowrap' }}>Nhà cung cấp:</span>
+            <span style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
+              {purchaseOrder?.supplier?.supplierName || purchaseOrder?.supplier?.name || ''}
+            </span>
+          </div>
+          <div style={{ display: 'flex' }}>
+            <span style={{ minWidth: '100px', whiteSpace: 'nowrap' }}>MST:</span>
+            <span>{purchaseOrder?.supplier?.taxCode || ''}</span>
+          </div>
+          <div style={{ display: 'flex' }}>
+            <span style={{ minWidth: '100px', whiteSpace: 'nowrap' }}>Địa chỉ:</span>
+            <span>{purchaseOrder?.supplier?.address || ''}</span>
+          </div>
+          <div style={{ display: 'flex' }}>
+            <span style={{ minWidth: '100px', whiteSpace: 'nowrap' }}>Điện thoại:</span>
+            <span>{purchaseOrder?.supplier?.phone || ''}</span>
+          </div>
+        </div>
 
-      <div className="mb-6">
-        <p className="mb-1 font-bold">Nhà cung cấp: {purchaseOrder?.supplier?.supplierName || purchaseOrder?.supplier?.name}</p>
-        <p className="mb-1">
-          Địa chỉ: {purchaseOrder?.supplier?.address || '—'}
-        </p>
-        <p>Điện thoại: {purchaseOrder?.supplier?.phone || '—'}</p>
-        {purchaseOrder?.supplier?.taxCode && <p>MST: {purchaseOrder.supplier.taxCode}</p>}
-        {purchaseOrder?.notes && <p className="mt-1 text-sm italic">Ghi chú: {purchaseOrder.notes}</p>}
-      </div>
-
-      <table className="mb-6 w-full border-collapse">
-        <thead>
-          <tr className="border bg-gray-100">
-            <th className="border p-2 text-center text-sm font-semibold">STT</th>
-            <th className="border p-2 text-center text-sm font-semibold">Nguyên liệu</th>
-            <th className="border p-2 text-center text-sm font-semibold">Đơn vị</th>
-            <th className="border p-2 text-center text-sm font-semibold">Số lượng</th>
-            <th className="border p-2 text-center text-sm font-semibold">Đơn giá</th>
-            <th className="border p-2 text-center text-sm font-semibold">Thành tiền</th>
-          </tr>
-        </thead>
-        <tbody>
-          {purchaseOrder.details?.map((item, index) => (
-            <tr className="border" key={`po-item-${index}`}>
-              <td className="border p-2 text-center text-sm">{index + 1}</td>
-              <td className="border p-2 text-sm">
-                {item.product?.productName}
-                {item.notes && <div className="text-xs text-gray-500 italic">({item.notes})</div>}
-              </td>
-              <td className="border p-2 text-center text-sm">{item.unitName || 'Cái'}</td>
-              <td className="border p-2 text-center text-sm">{item.quantity}</td>
-              <td className="border p-2 text-right text-sm">{moneyFormat(item.price)}</td>
-              <td className="border p-2 text-right text-sm">{moneyFormat(item.total)}</td>
+        {/* ── Product Table ── */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2px', fontSize: '10px' }}>
+          <thead>
+            <tr>
+              <th style={{ border: '0.5px solid #000', padding: '2px 3px', textAlign: 'center', width: '22px', fontWeight: 'bold' }}>TT</th>
+              <th style={{ border: '0.5px solid #000', padding: '2px 3px', textAlign: 'center', fontWeight: 'bold' }}>Tên sản phẩm</th>
+              <th style={{ border: '0.5px solid #000', padding: '2px 3px', textAlign: 'center', width: '32px', fontWeight: 'bold' }}>DVT</th>
+              <th style={{ border: '0.5px solid #000', padding: '2px 3px', textAlign: 'center', width: '26px', fontWeight: 'bold' }}>SL</th>
+              <th style={{ border: '0.5px solid #000', padding: '2px 3px', textAlign: 'center', width: '56px', fontWeight: 'bold' }}>Giá</th>
+              <th style={{ border: '0.5px solid #000', padding: '2px 3px', textAlign: 'center', width: '66px', fontWeight: 'bold' }}>Thành tiền</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="mb-6 flex w-full justify-end">
-        <table className="w-64 text-sm">
+          </thead>
           <tbody>
-            {(purchaseOrder?.discountAmount ?? purchaseOrder?.discount ?? 0) > 0 && (
-              <tr>
-                <td className="py-1 text-red-600">Giảm giá:</td>
-                <td className="py-1 text-right text-red-600">
-                  -{moneyFormat(purchaseOrder?.discountAmount ?? purchaseOrder?.discount ?? 0)}
+            {items.map((item, index) => (
+              <tr key={`item-${index}`}>
+                <td style={{ border: '0.5px solid #000', padding: '1px 3px', textAlign: 'center' }}>{index + 1}</td>
+                <td style={{ border: '0.5px solid #000', padding: '1px 3px' }}>
+                  {item.product?.productName || item.productName || ''}
+                  {item.notes && <div style={{ fontSize: '9px', color: '#555', fontStyle: 'italic' }}>({item.notes})</div>}
                 </td>
+                <td style={{ border: '0.5px solid #000', padding: '1px 3px', textAlign: 'center' }}>
+                  {item.unitName || item.product?.unit?.unitName || item.unit?.unitName || 'Cái'}
+                </td>
+                <td style={{ border: '0.5px solid #000', padding: '1px 3px', textAlign: 'center' }}>{item.quantity}</td>
+                <td style={{ border: '0.5px solid #000', padding: '1px 3px', textAlign: 'right' }}>{moneyFormat(item.price)}</td>
+                <td style={{ border: '0.5px solid #000', padding: '1px 3px', textAlign: 'right' }}>{moneyFormat(item.total)}</td>
+              </tr>
+            ))}
+
+            {/* Summary rows */}
+            {discountAmount > 0 && (
+              <tr>
+                <td colSpan={5} style={{ border: '0.5px solid #000', padding: '2px 5px', color: '#c00000' }}>Giảm giá:</td>
+                <td style={{ border: '0.5px solid #000', padding: '2px 5px', textAlign: 'right', color: '#c00000' }}>-{moneyFormat(discountAmount)}</td>
               </tr>
             )}
-
-            {(purchaseOrder?.taxAmount ?? 0) > 0 && (
+            {taxAmount > 0 && (
               <tr>
-                <td className="py-1 text-blue-600">Tiền thuế:</td>
-                <td className="py-1 text-right text-blue-600">
-                  +{moneyFormat(purchaseOrder?.taxAmount ?? 0)}
-                </td>
+                <td colSpan={5} style={{ border: '0.5px solid #000', padding: '2px 5px', color: '#0070c0' }}>Tiền thuế:</td>
+                <td style={{ border: '0.5px solid #000', padding: '2px 5px', textAlign: 'right', color: '#0070c0' }}>+{moneyFormat(taxAmount)}</td>
               </tr>
             )}
-
-            {(purchaseOrder?.otherCosts ?? 0) > 0 && (
+            {otherCosts > 0 && (
               <tr>
-                <td className="py-1">Chi phí khác:</td>
-                <td className="py-1 text-right">
-                  {moneyFormat(purchaseOrder?.otherCosts ?? 0)}
-                </td>
+                <td colSpan={5} style={{ border: '0.5px solid #000', padding: '2px 5px' }}>Chi phí khác:</td>
+                <td style={{ border: '0.5px solid #000', padding: '2px 5px', textAlign: 'right' }}>{moneyFormat(otherCosts)}</td>
               </tr>
             )}
-
-            <tr className="font-bold text-base">
-              <td className="py-1">Tổng tiền:</td>
-              <td className="py-1 text-right font-bold text-primary">
-                {moneyFormat(purchaseOrder?.totalCurrentAmount ?? purchaseOrder?.totalAmount ?? 0)}
-              </td>
+            <tr>
+              <td colSpan={5} style={{ border: '0.5px solid #000', padding: '2px 5px', fontWeight: 'bold' }}>Tổng cộng:</td>
+              <td style={{ border: '0.5px solid #000', padding: '2px 5px', textAlign: 'right', fontWeight: 'bold' }}>{moneyFormat(totalAmount)}</td>
             </tr>
           </tbody>
         </table>
-      </div>
 
-      <p className="mt-4 font-bold text-sm">
-        Số tiền bằng chữ: {toVietnamese(purchaseOrder?.totalAmount)}
-      </p>
-
-      <div className="mt-4 text-sm">
-        <strong>Ghi chú:</strong> {purchaseOrder?.notes || purchaseOrder?.note || 'Không có ghi chú'}
-      </div>
-
-      <div className="mt-8 flex justify-between text-center text-sm">
-        <div className="w-1/3">
-          <p className="font-bold">Người lập phiếu</p>
-          <p className="italic">(Ký, họ tên)</p>
-          <div className="h-20"></div>
-          <p className="font-bold">{purchaseOrder?.creator?.fullName || purchaseOrder?.user?.fullName || purchaseOrder?.createdByUser?.fullName}</p>
+        {/* ── In words & Notes ── */}
+        <div style={{ fontSize: '10px', lineHeight: 1.5, marginBottom: '3px' }}>
+          <p style={{ margin: '0 0 1px 0', color: '#c00000' }}>
+            Viết bằng chữ: <span style={{ fontStyle: 'italic' }}>{toVietnamese(totalAmount)}</span>
+          </p>
+          <p style={{ margin: 0 }}>Ghi chú: {purchaseOrder?.notes || purchaseOrder?.note || ''}</p>
         </div>
-        <div className="w-1/3">
-          <p className="font-bold">Nhà cung cấp</p>
-          <p className="italic">(Ký, họ tên)</p>
+
+        {/* ── Date ── */}
+        <div style={{ textAlign: 'right', paddingRight: '8px', marginBottom: '4px' }}>
+          <span style={{ fontStyle: 'italic', fontSize: '11px', display: 'inline-block', width: '50%', textAlign: 'center' }}>
+            {printDateStr}
+          </span>
+        </div>
+
+        {/* ── Signatures ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center', fontSize: '11px', paddingLeft: '8px', paddingRight: '8px' }}>
+          <div style={{ width: '45%' }}>
+            <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Người lập phiếu</p>
+            <div style={{ height: '50px' }} />
+            <p style={{ margin: 0 }}>{creatorName}</p>
+          </div>
+          <div style={{ width: '45%' }}>
+            <p style={{ fontWeight: 'bold', margin: '0 0 2px 0' }}>Nhà cung cấp</p>
+            <p style={{ margin: '0 0 2px 0', fontStyle: 'italic', fontSize: '9px' }}>(Ký, họ tên)</p>
+            <div style={{ height: '40px' }} />
+          </div>
         </div>
       </div>
     </div>
-  ),
-)
+  )
+})
 
-PrintPurchaseOrderView.displayName = 'PrintableContent'
+PrintableContent.displayName = 'PrintableContent'
 
 export default PrintPurchaseOrderView

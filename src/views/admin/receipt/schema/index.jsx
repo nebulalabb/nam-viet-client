@@ -13,6 +13,7 @@ import { z } from 'zod'
 // })
 const createReceiptSchema = z
   .object({
+    receiptType: z.string().min(1, 'Bắt buộc chọn loại phiếu thu'),
     totalAmount: z
       .union([z.string(), z.number()])
       .transform((val) => (typeof val === 'string' ? parseFloat(val) : val))
@@ -45,6 +46,7 @@ const createReceiptSchema = z
 
 const createPaymentSchema = z
   .object({
+    voucherType: z.string().min(1, 'Bắt buộc chọn loại phiếu chi'),
     paymentMethod: z.string().nonempty('Bắt buộc'),
     paymentAmount: z
       .union([z.string(), z.number()])
