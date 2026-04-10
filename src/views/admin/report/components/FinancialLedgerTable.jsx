@@ -115,7 +115,8 @@ const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onP
                 <th className="px-3 py-3 border-r text-right font-bold w-28">GIÁ TRỊ</th>
                 <th className="px-3 py-3 border-r text-left w-32">NV NỘP TIỀN</th>
                 <th className="px-3 py-3 border-r text-left w-32">PHỤ TRÁCH BỞI</th>
-                <th className="px-3 py-3 text-left w-24">TỈNH/THÀNH</th>
+                <th className="px-3 py-3 border-r text-left w-24">TỈNH/THÀNH</th>
+                <th className="px-3 py-3 text-right font-bold w-32 text-blue-800">TỒN QUỸ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -141,6 +142,10 @@ const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onP
                 const amountText = tx.isReceipt 
                   ? `+ ${moneyFmt(tx.amount)}` 
                   : `- ${moneyFmt(tx.amount)}`
+
+                const rb = tx.runningBalance || 0
+                const rbColorClass = rb >= 0 ? 'text-blue-700' : 'text-red-600'
+
 
                 return (
                   <tr key={`${tx.type}-${tx.id}`} className="hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors odd:bg-white even:bg-gray-50/50">
@@ -202,6 +207,10 @@ const FinancialLedgerTable = ({ data, loading, page, pageSize, onPageChange, onP
 
                     <td className="px-3 py-2 text-left text-xs text-gray-600 align-top pt-3">
                       {tx.province || 'Thành phố Hồ Chí Minh'}
+                    </td>
+
+                    <td className={`px-3 py-2 text-right font-bold text-sm whitespace-nowrap align-top pt-3 ${rbColorClass}`}>
+                      {moneyFmt(Math.abs(rb))}
                     </td>
                   </tr>
                 )
