@@ -3,10 +3,10 @@ import { dateFormat } from '@/utils/date-format'
 import { Badge } from '@/components/ui/badge'
 import { deliveryStatuses, settlementStatuses } from '../data'
 import { Checkbox } from '@/components/ui/checkbox'
-import { DataTableRowActions } from './DataTableRowAction'
 import { formatCurrency } from "@/utils/number-format";
 import { useState } from 'react'
 import ViewInvoiceDialog from '../../invoice/components/ViewInvoiceDialog'
+import ViewDeliveryDialog from './ViewDeliveryDialog'
 
 export const columns = [
   {
@@ -38,9 +38,26 @@ export const columns = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Mã phiếu giao" />
     ),
-    cell: ({ row }) => {
+    cell: function Cell({ row }) {
+      const [open, setOpen] = useState(false)
       const code = row.getValue('deliveryCode')
-      return <div className="font-medium text-blue-600">{code}</div>
+      return (
+        <>
+          <div 
+            className="cursor-pointer font-medium text-blue-600 hover:underline"
+            onClick={() => setOpen(true)}
+          >
+            {code}
+          </div>
+          {open && (
+            <ViewDeliveryDialog
+              open={open}
+              onOpenChange={setOpen}
+              delivery={row.original}
+            />
+          )}
+        </>
+      )
     },
   },
   {
@@ -137,9 +154,5 @@ export const columns = [
       <DataTableColumnHeader column={column} title="Ngày giao" />
     ),
     cell: ({ row }) => <div>{dateFormat(row.getValue('deliveryDate'))}</div>,
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ]

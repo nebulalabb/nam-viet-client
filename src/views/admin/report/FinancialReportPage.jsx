@@ -16,6 +16,7 @@ import FinancialCharts from './components/FinancialCharts'
 import FinancialTopPartners from './components/FinancialTopPartners'
 import FinancialLedgerTable from './components/FinancialLedgerTable'
 import ExportFinancialLedgerPreviewDialog from './components/ExportFinancialLedgerPreviewDialog'
+import ExportExcelDialog from './components/ExportExcelDialog'
 
 const formatCurrency = (v) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(v || 0)
@@ -42,6 +43,7 @@ const FinancialReportPage = () => {
   const [error, setError] = useState(null)
   
   const [isPreviewPrintOpen, setIsPreviewPrintOpen] = useState(false)
+  const [isExcelDialogOpen, setIsExcelDialogOpen]   = useState(false)
 
   // ── Fetch sổ quỹ (cash-book) ───────────────────────────────────────────────
   const fetchCashBook = useCallback(async (currentFilters, currentPage, currentPageSize) => {
@@ -104,40 +106,23 @@ const FinancialReportPage = () => {
     setPage(1)
   }
 
-  // ── Export ─────────────────────────────────────────────────────────────────
-  const handleExport = async () => {
-    try {
-      const params = { fromDate: filters.fromDate, toDate: filters.toDate }
-      // Call the new export route for cash book details
-      const response = await api.get('/reports/financial/export-cash-book', { params, responseType: 'blob' })
-      const contentType = (response.headers?.['content-type'] || '').toLowerCase()
-      if (!contentType.includes('spreadsheet') && !contentType.includes('octet-stream')) {
-        alert('Không thể xuất file Excel.')
-        return
-      }
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `SoQuy_${filters.fromDate}_${filters.toDate}.xlsx`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
-    } catch (err) {
-      console.error('Export error:', err)
-      alert('Không thể xuất file Excel. Vui lòng thử lại.')
-    }
-  }
+  // ── Export — handled by ExportExcelDialog ─────────────────────────────────
 
   return (
     <Layout>
       <LayoutBody className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 pt-6 h-[calc(100vh-var(--header-height))] pb-10">
         
         {/* Print Preview Dialog */}
-        <ExportFinancialLedgerPreviewDialog 
-            isOpen={isPreviewPrintOpen} 
-            onClose={() => setIsPreviewPrintOpen(false)} 
-            filters={filters} 
+        <ExportFinancialLedgerPreviewDialog
+            isOpen={isPreviewPrintOpen}
+            onClose={() => setIsPreviewPrintOpen(false)}
+            filters={filters}
+        />
+
+        {/* Excel Export Dialog */}
+        <ExportExcelDialog
+            isOpen={isExcelDialogOpen}
+            onClose={() => setIsExcelDialogOpen(false)}
         />
 
         {/* Page header */}
@@ -158,7 +143,7 @@ const FinancialReportPage = () => {
             </Button>
             <Button
               type="button"
-              onClick={handleExport}
+              onClick={() => setIsExcelDialogOpen(true)}
               className="flex items-center gap-2 bg-white text-green-700 border-2 border-green-600 hover:bg-green-600 hover:text-white font-medium"
             >
               <Download className="h-4 w-4" />

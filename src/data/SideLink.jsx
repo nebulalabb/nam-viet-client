@@ -74,12 +74,12 @@ export const sideLinks = [
       //   icon: <ReceiptText size={18} strokeWidth={1.5} />,
       //   permission: 'GET_RECEIPT_USER',
       // },
-      {
-        title: 'Giao hàng',
-        href: '/delivery',
-        icon: <Truck size={18} strokeWidth={1.5} />,
-        permission: 'VIEW_DELIVERIES',
-      },
+      // {
+      //   title: 'Giao hàng',
+      //   href: '/delivery',
+      //   icon: <Truck size={18} strokeWidth={1.5} />,
+      //   permission: 'VIEW_DELIVERIES',
+      // },
     ],
   },
   {
@@ -101,19 +101,19 @@ export const sideLinks = [
       },
     ],
   },
-  {
-    title: 'Sau bán hàng',
-    icon: <img src="/icons/sau bán hàng.png" className="w-[20px] h-[20px] " alt="Sau bán hàng" />,
-    permission: ['GET_WARRANTY'],
-    sub: [
-      {
-        title: 'Bảo hành',
-        href: '/warranty',
-        icon: <img src="/icons/bảo hành.png" className="w-[18px] h-[18px] " alt="Bảo hành" />,
-        permission: 'GET_WARRANTY',
-      },
-    ],
-  },
+  // {
+  //   title: 'Sau bán hàng',
+  //   icon: <HeartHandshake size={20} strokeWidth={1.5} />,
+  //   permission: ['GET_WARRANTY'],
+  //   sub: [
+  //     {
+  //       title: 'Bảo hành',
+  //       href: '/warranty',
+  //       icon: <Shield size={18} strokeWidth={1.5} />,
+  //       permission: 'GET_WARRANTY',
+  //     },
+  //   ],
+  // },
   {
     title: 'Tài chính',
     icon: <img src="/icons/tài chính.png" className="w-[20px] h-[20px] " alt="Tài chính" />,
