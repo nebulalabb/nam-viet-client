@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useReactToPrint } from 'react-to-print'
+import InventoryPrintTemplate from './components/InventoryPrintTemplate'
 import { Layout, LayoutBody } from '@/components/custom/Layout'
 import { getInventorySummary } from '@/stores/WarehouseReportSlice'
 import { startOfMonth, endOfMonth, format } from 'date-fns'
@@ -16,9 +18,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { getWarehouses } from '@/stores/WarehouseSlice'
 import { Button } from '@/components/custom/Button'
 import { cn } from '@/lib/utils'
-import { CalendarIcon, FileSpreadsheet } from 'lucide-react'
+import { CalendarIcon, FileSpreadsheet, Printer } from 'lucide-react'
 import { DatePicker } from '@/components/custom/DatePicker'
 import {
   Table,
@@ -34,13 +44,45 @@ import ExportInventorySummaryPreviewDialog from './components/ExportInventorySum
 const InventorySummaryPage = () => {
   const dispatch = useDispatch()
   const { inventorySummary, loading } = useSelector((state) => state.warehouseReport)
+  const { setting } = useSelector((state) => state.setting)
   const current = new Date()
 
   const [filters, setFilters] = useState({
+    warehouseId: '',
     fromDate: startOfMonth(current),
     toDate: endOfMonth(current),
   })
   const [showExportPreview, setShowExportPreview] = useState(false)
+
+  const { warehouses } = useSelector((state) => state.warehouse)
+
+  const printRef = useRef(null)
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: 'Bao_Cao_Ton_Kho',
+  })
+
+  const aggregatedData = useMemo(() => {
+    if (filters.warehouseId && filters.warehouseId !== 'all') return inventorySummary;
+
+    const map = {};
+    inventorySummary.forEach(item => {
+      const pid = item.productId;
+      if (!map[pid]) {
+        map[pid] = { ...item, openingQuantity: 0, openingAmount: 0, quantityIn: 0, amountIn: 0, quantityOut: 0, amountOut: 0, closingQuantity: 0, closingAmount: 0 };
+      }
+      map[pid].openingQuantity += (item.openingQuantity || 0);
+      map[pid].openingAmount += (item.openingAmount || 0);
+      map[pid].quantityIn += (item.quantityIn || 0);
+      map[pid].amountIn += (item.amountIn || 0);
+      map[pid].quantityOut += (item.quantityOut || 0);
+      map[pid].amountOut += (item.amountOut || 0);
+      map[pid].closingQuantity += (item.closingQuantity || 0);
+      map[pid].closingAmount += (item.closingAmount || 0);
+    });
+    return Object.values(map);
+  }, [inventorySummary, filters.warehouseId])
+
 
   // Calculate totals
   const totals = inventorySummary.reduce((acc, item) => {
@@ -63,6 +105,7 @@ const InventorySummaryPage = () => {
 
   const form = useForm({
     defaultValues: {
+      warehouseId: filters.warehouseId,
       fromDate: filters.fromDate,
       toDate: filters.toDate,
     },
@@ -70,10 +113,15 @@ const InventorySummaryPage = () => {
 
   const onSubmit = (data) => {
     setFilters({
+      warehouseId: data.warehouseId === 'all' ? '' : (data.warehouseId || filters.warehouseId),
       fromDate: data.fromDate || filters.fromDate,
       toDate: data.toDate || filters.toDate,
     })
   }
+
+  useEffect(() => {
+    dispatch(getWarehouses({ page: 1, pageSize: 100 }))
+  }, [dispatch])
 
   useEffect(() => {
     document.title = 'Báo cáo tổng hợp nhập xuất tồn'
@@ -181,8 +229,48 @@ const InventorySummaryPage = () => {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="warehouseId"
+                  render={({ field }) => (
+                    <FormItem className="space-y-0 w-[180px]">
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          onSubmit({ ...form.getValues(), warehouseId: value })
+                        }}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Tất cả kho" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="all">Tất cả kho</SelectItem>
+                          {warehouses?.map((wh) => (
+                            <SelectItem key={wh.id} value={wh.id.toString()}>
+                              {wh.warehouseName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
               </form>
             </Form>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handlePrint}
+            >
+              <Printer className="h-4 w-4" />
+              In Báo Cáo
+            </Button>
 
             <Button
               variant="outline"
@@ -258,35 +346,35 @@ const InventorySummaryPage = () => {
                 <TableRow>
                   <TableCell colSpan={12} className="h-24 text-center">Đang tải...</TableCell>
                 </TableRow>
-              ) : inventorySummary.length === 0 ? (
+              ) : aggregatedData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={12} className="h-24 text-center">Không có dữ liệu</TableCell>
                 </TableRow>
               ) : (
-                inventorySummary.map((item, index) => (
-                  <TableRow key={index}>
+                aggregatedData.map((item, index) => (
+                  <TableRow key={index} className="hover:bg-muted/50">
                     <TableCell className="border-r text-center">{index + 1}</TableCell>
                     <TableCell className="border-r font-medium">{item.product?.name}</TableCell>
                     <TableCell className="border-r text-center">{item.product?.unit?.name}</TableCell>
 
                     {/* Opening */}
-                    <TableCell className="text-right border-r">{item.openingQuantity || 0}</TableCell>
-                    <TableCell className="text-right border-r">{moneyFormat(item.openingAmount || 0)}</TableCell>
+                    <TableCell className="text-right border-r">{item.openingQuantity || '-'}</TableCell>
+                    <TableCell className="text-right border-r">{item.openingAmount ? moneyFormat(item.openingAmount) : '-'}</TableCell>
 
                     {/* In */}
-                    <TableCell className="text-right border-r">{item.quantityIn || 0}</TableCell>
-                    <TableCell className="text-right border-r">{moneyFormat(item.amountIn || 0)}</TableCell>
+                    <TableCell className="text-right border-r">{item.quantityIn || '-'}</TableCell>
+                    <TableCell className="text-right border-r">{item.amountIn ? moneyFormat(item.amountIn) : '-'}</TableCell>
 
                     {/* Out */}
-                    <TableCell className="text-right border-r">{item.quantityOut || 0}</TableCell>
-                    <TableCell className="text-right border-r">{moneyFormat(item.amountOut || 0)}</TableCell>
+                    <TableCell className="text-right border-r">{item.quantityOut || '-'}</TableCell>
+                    <TableCell className="text-right border-r">{item.amountOut ? moneyFormat(item.amountOut) : '-'}</TableCell>
 
                     {/* Closing */}
-                    <TableCell className="text-right border-r font-medium">{item.closingQuantity || 0}</TableCell>
-                    <TableCell className="text-right border-r font-medium">{moneyFormat(item.closingAmount || 0)}</TableCell>
+                    <TableCell className="text-right border-r font-medium">{item.closingQuantity || '-'}</TableCell>
+                    <TableCell className="text-right border-r font-medium">{item.closingAmount ? moneyFormat(item.closingAmount) : '-'}</TableCell>
 
                     {/* Unit Price */}
-                    <TableCell className="text-right">{moneyFormat(item.averageUnitPrice || 0)}</TableCell>
+                    <TableCell className="text-right">{item.averageUnitPrice ? moneyFormat(item.averageUnitPrice) : '-'}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -294,6 +382,13 @@ const InventorySummaryPage = () => {
           </Table>
         </div>
       </LayoutBody>
+
+      <InventoryPrintTemplate
+        ref={printRef}
+        reportData={aggregatedData}
+        filters={filters}
+        setting={setting}
+      />
     </Layout>
   )
 }
