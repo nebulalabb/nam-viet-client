@@ -29,20 +29,18 @@ const AdminLayout = () => {
       />
       <main
         id="content"
-        className={`overflow-x-hidden pt-16 pb-16 transition-[margin] md:overflow-y-hidden md:pt-0 md:pb-0 ${isCollapsed ? 'md:ml-14' : 'md:ml-64'} h-full`}
+        className={`overflow-x-hidden pt-16 pb-16 transition-[margin] md:overflow-y-hidden md:pt-0 md:pb-0 ${isCollapsed ? 'md:ml-20' : 'md:ml-64'} h-full`}
       >
         <Layout>
-          <LayoutHeader className="sticky top-0 z-40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 text-foreground border-b border-border min-h-[var(--header-height)] shadow-sm">
-            <div className="flex flex-1 items-center justify-between md:justify-end">
-              <div className="flex items-center mx-4 md:mr-auto">
+          <LayoutHeader className="sticky top-0 z-40 bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white border-b border-emerald-600/50 min-h-[var(--header-height)] shadow-md">
+            <div className="flex flex-1 items-center justify-end w-full">
+              <div className="ml-auto flex items-center space-x-4 max-md:space-x-2 text-white">
                 <GlobalSearch />
-              </div>
-              <div className="ml-auto flex items-center space-x-6">
-                <div className="hidden md:flex items-center space-x-4">
-                  <NotificationBell />
-                  <ThemeSwitch />
+                <NotificationBell />
+                <ThemeSwitch />
+                <div className="pl-2 border-l border-emerald-700/50">
+                  <UserNav />
                 </div>
-                <UserNav />
               </div>
             </div>
           </LayoutHeader>

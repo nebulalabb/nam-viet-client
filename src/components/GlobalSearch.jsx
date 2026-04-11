@@ -74,13 +74,13 @@ export function GlobalSearch() {
         <>
             <button
                 onClick={() => setOpen(true)}
-                className="hidden md:flex items-center justify-between gap-4 px-3 py-1.5 text-sm text-muted-foreground bg-muted border border-border rounded-lg hover:border-primary/50 transition-colors w-64"
+                className="hidden md:flex items-center justify-between gap-4 px-3 py-2 text-sm text-emerald-50 bg-white/10 border border-emerald-400/20 rounded-lg hover:bg-white/20 transition-colors w-64 shadow-sm"
             >
                 <span className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+                    <Search className="h-4 w-4" />
                     Tìm kiếm tính năng...
                 </span>
-                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium opacity-100">
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-emerald-400/30 bg-white/10 px-1.5 font-mono text-[10px] font-medium opacity-100">
                     <span className="text-xs">⌘</span>K
                 </kbd>
             </button>

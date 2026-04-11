@@ -149,7 +149,7 @@ const DashboardPage = () => {
     // Determine grid span based on widget type
     let colSpanClass = 'col-span-12'
     if (widget.id === 'revenue-target') colSpanClass = 'col-span-12 sm:col-span-6 lg:col-span-4'
-    else if (widget.type === 'kpi') colSpanClass = 'col-span-12 sm:col-span-6 lg:col-span-2'
+    else if (widget.type === 'kpi') colSpanClass = 'col-span-12 sm:col-span-6 lg:col-span-3'
     else if (widget.id === 'revenue-chart') colSpanClass = 'col-span-12 lg:col-span-8'
     else if (widget.id === 'sales-channel-chart') colSpanClass = 'col-span-12 lg:col-span-4'
     else if (widget.id === 'inventory-chart') colSpanClass = 'col-span-12 xl:col-span-4'
@@ -182,7 +182,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="p-2 md:p-6 w-full mx-auto max-w-[1600px] h-full overflow-auto bg-muted/30 scrollbar-hide pb-20">
+    <div className="p-2 md:p-6 w-full mx-auto max-w-[1600px] h-full overflow-auto bg-[#f6fbf2] dark:bg-[#090b0a] scrollbar-hide pb-20">
       <DashboardHeader
         onRefresh={() => dispatch(getDashboardStats({ period, warehouseId }))}
         loading={loading}
@@ -208,7 +208,7 @@ const DashboardPage = () => {
         </>
       )}
 
-      <TodayStatsBar stats={stats} loading={loading} />
+    
 
       <DndContext
         sensors={sensors}

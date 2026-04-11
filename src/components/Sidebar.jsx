@@ -13,7 +13,7 @@ const Sidebar = ({ className, isCollapsed, setIsCollapsed }) => {
   return (
     <aside
       className={cn(
-        `fixed left-0 right-0 top-0 z-[500] w-full bg-background text-foreground transition-[width] md:z-50 md:bottom-0 md:right-auto md:h-svh ${isCollapsed ? 'md:w-14' : 'md:w-64'}`,
+        `fixed left-0 right-0 top-0 z-[500] w-full bg-slate-50 dark:bg-zinc-950 text-foreground transition-[width] md:z-30 md:bottom-0 md:right-auto md:h-svh ${isCollapsed ? 'md:w-20' : 'md:w-64'}`,
         className,
       )}
     >
@@ -25,22 +25,25 @@ const Sidebar = ({ className, isCollapsed, setIsCollapsed }) => {
 
       <Layout>
         {/* Header */}
-        <LayoutHeader className="sticky top-0 justify-between px-4 py-3 bg-background border-b border-border md:px-4 min-h-[var(--header-height)] shadow-sm">
+        <LayoutHeader className="sticky top-0 z-40 justify-between px-3 md:px-4 py-3 bg-gradient-to-r from-emerald-800 to-emerald-700 border-b border-emerald-600/50 min-h-[var(--header-height)] shadow-sm">
           <Link to={'/dashboard'} className="overflow-hidden">
             <div className={`flex items-center ${!isCollapsed ? 'gap-3' : 'gap-0'}`}>
-              <div className="flex flex-shrink-0 items-center justify-center p-1">
+              <div className="flex flex-shrink-0 items-center justify-center p-1.5 bg-white rounded-xl shadow-md shadow-emerald-900/30">
                 <img
                   src="/images/logo/logo-nobackground.png"
                   alt="Nam Viet Logo"
-                  className={`transition-all duration-300 object-contain ${isCollapsed ? 'block h-8 w-8' : 'block h-10 w-auto'}`}
+                  className={`transition-all duration-300 object-contain drop-shadow-sm ${isCollapsed ? 'block h-7 w-7' : 'block h-9 w-9'}`}
                 />
               </div>
               <span className="sr-only">NAM VIỆT</span>
               <div
-                className={`flex flex-col justify-end truncate transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}
+                className={`flex flex-col justify-center truncate transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}
               >
-                <span className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-500 uppercase drop-shadow-sm">
+                <span className="text-[19px] font-black tracking-tight text-white uppercase leading-tight pt-1">
                   Nam Việt
+                </span>
+                <span className="text-[10px] font-bold tracking-[0.2em] text-emerald-200 uppercase mt-0.5">
+                  Hóa Sinh Nam Việt
                 </span>
               </div>
             </div>
@@ -49,21 +52,21 @@ const Sidebar = ({ className, isCollapsed, setIsCollapsed }) => {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden text-white hover:bg-white/10"
             aria-label="Toggle Navigation"
             aria-controls="sidebar-menu"
             aria-expanded={navOpened}
             onClick={() => setNavOpened((prev) => !prev)}
           >
             {navOpened ? (
-              <X className="text-foreground h-5 w-5" strokeWidth={2} />
+              <X className="h-5 w-5" strokeWidth={2.5} />
             ) : (
-              <Menu className="text-foreground h-5 w-5" strokeWidth={2} />
+              <Menu className="h-5 w-5" strokeWidth={2.5} />
             )}
           </Button>
         </LayoutHeader>
 
-        <LayoutBody className="h-full flex-1 border-r border-border p-0 md:px-0 bg-background/50 backdrop-blur-sm">
+        <LayoutBody className="h-full flex-1 border-r border-border p-0 md:px-0 bg-transparent backdrop-blur-sm">
           <Nav
             id="sidebar-menu"
             className={`h-full flex-1 overflow-y-auto overflow-x-hidden transition-all ${navOpened
@@ -81,7 +84,7 @@ const Sidebar = ({ className, isCollapsed, setIsCollapsed }) => {
           onClick={() => setIsCollapsed((prev) => !prev)}
           size="icon"
           variant="outline"
-          className="absolute -right-4 top-1/2 hidden h-8 w-8 rounded-full border border-border bg-background text-foreground shadow-sm md:inline-flex hover:bg-accent hover:text-accent-foreground z-50 transition-transform hover:scale-105"
+          className="absolute -right-4 top-1/2 hidden h-8 w-8 rounded-full border border-border bg-background text-foreground shadow-sm md:inline-flex hover:bg-primary hover:text-white hover:border-primary z-50 transition-all hover:scale-110"
         >
           <ChevronsLeft
             strokeWidth={2}

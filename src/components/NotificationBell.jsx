@@ -105,10 +105,10 @@ const NotificationBell = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-8 w-8 rounded-full p-0"
+          className="relative h-9 w-9 rounded-full p-0 text-emerald-50 hover:bg-white/20 hover:text-white transition-all"
           aria-label="Thông báo"
         >
-          <Bell className="h-5 w-5" />
+          <img src="/icons/notification.png" alt="Notification" className="h-[22px] w-[22px] brightness-0 invert opacity-95" />
           {unreadCount > 0 && (
             <span
               className="absolute -right-0.5 -top-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse"

@@ -2,49 +2,58 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { selectIsEditMode, toggleEditMode, resetLayout } from '../../../stores/DashboardSlice'
 import { CalendarIcon, SlidersHorizontal, Settings2, RotateCcw } from 'lucide-react'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../../../components/ui/select'
 
 export const DashboardFilters = ({ period, setPeriod, warehouseId, setWarehouseId }) => {
     const dispatch = useDispatch()
     const isEditMode = useSelector(selectIsEditMode)
 
     return (
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-background borderb shadow-sm mb-6 rounded-xl gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div className="flex flex-wrap items-center gap-4">
                 {/* Date Filter */}
-                <div className="relative">
-                    <select
-                        value={period}
-                        onChange={(e) => setPeriod(e.target.value)}
-                        className="flex items-center gap-2 px-8 py-2 bg-secondary text-secondary-foreground rounded-md text-sm font-medium hover:bg-secondary/80 appearance-none outline-none cursor-pointer"
-                    >
-                        <option value="today">Hôm nay</option>
-                        <option value="week">Tuần này</option>
-                        <option value="month">Tháng này</option>
-                        <option value="custom">Tùy chọn...</option>
-                    </select>
-                    <CalendarIcon className="h-4 w-4 absolute left-3 top-2.5 pointer-events-none text-muted-foreground" />
-                </div>
+                <Select value={period} onValueChange={setPeriod}>
+                    <SelectTrigger className="w-[160px] h-[42px] bg-white dark:bg-card border-none shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow rounded-xl font-semibold text-[14px]">
+                        <div className="flex items-center gap-2">
+                            <CalendarIcon className="h-4 w-4 text-emerald-700" />
+                            <SelectValue placeholder="Chọn thời gian" />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-xl">
+                        <SelectItem value="today" className="font-medium cursor-pointer">Hôm nay</SelectItem>
+                        <SelectItem value="week" className="font-medium cursor-pointer">Tuần này</SelectItem>
+                        <SelectItem value="month" className="font-medium cursor-pointer">Tháng này</SelectItem>
+                        <SelectItem value="custom" className="font-medium cursor-pointer">Tùy chọn...</SelectItem>
+                    </SelectContent>
+                </Select>
 
                 {/* Warehouse Filter */}
-                <div className="relative">
-                    <select
-                        value={warehouseId}
-                        onChange={(e) => setWarehouseId(e.target.value)}
-                        className="flex items-center gap-2 px-8 py-2 border rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground appearance-none outline-none cursor-pointer bg-background"
-                    >
-                        <option value="all">Tất cả Kho hàng</option>
-                        <option value="HQ">Kho Tổng - HCM</option>
-                        <option value="W1">Kho Chi nhánh 1</option>
-                    </select>
-                    <SlidersHorizontal className="h-4 w-4 absolute left-3 top-2.5 pointer-events-none text-muted-foreground" />
-                </div>
+                <Select value={warehouseId} onValueChange={setWarehouseId}>
+                    <SelectTrigger className="min-w-[180px] h-[42px] bg-white dark:bg-card border-none shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-md transition-shadow rounded-xl font-semibold text-[14px]">
+                        <div className="flex items-center gap-2">
+                            <SlidersHorizontal className="h-4 w-4 text-emerald-700" />
+                            <SelectValue placeholder="Chọn kho hàng" />
+                        </div>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-xl">
+                        <SelectItem value="all" className="font-medium cursor-pointer">Tất cả Kho hàng</SelectItem>
+                        <SelectItem value="HQ" className="font-medium cursor-pointer">Kho Tổng - HCM</SelectItem>
+                        <SelectItem value="W1" className="font-medium cursor-pointer">Kho Chi nhánh 1</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
             <div className="flex items-center gap-3">
                 {isEditMode && (
                     <button
                         onClick={() => dispatch(resetLayout())}
-                        className="flex items-center gap-2 px-4 py-2 border border-destructive/50 text-destructive rounded-md text-sm font-medium hover:bg-destructive/10"
+                        className="flex items-center gap-2 px-5 py-2.5 border border-destructive/50 text-destructive rounded-xl text-sm font-semibold hover:bg-destructive/10 transition-colors"
                     >
                         <RotateCcw className="h-4 w-4" />
                         Reset Layout
@@ -52,12 +61,13 @@ export const DashboardFilters = ({ period, setPeriod, warehouseId, setWarehouseI
                 )}
                 <button
                     onClick={() => dispatch(toggleEditMode())}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${isEditMode
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md'
-                        : 'border hover:bg-accent hover:text-accent-foreground'
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-semibold transition-all shadow-sm
+                        ${isEditMode
+                        ? 'bg-[#37664D] text-white hover:bg-[#2b513c] shadow-md ring-2 ring-emerald-500/20'
+                        : 'bg-[#407659] text-white hover:bg-[#346149] hover:shadow-md'
                         }`}
                 >
-                    <Settings2 className="h-4 w-4" />
+                    <Settings2 className="h-[18px] w-[18px]" />
                     {isEditMode ? 'Hoàn tất Chỉnh sửa' : 'Tùy chỉnh Dashboard'}
                 </button>
             </div>

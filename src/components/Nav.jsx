@@ -66,7 +66,7 @@ const Nav = ({ links, isCollapsed, className, closeNav }) => {
     <div
       data-collapsed={isCollapsed}
       className={cn(
-        'group border-b bg-background py-2 transition-[max-height,padding] duration-150 data-[collapsed=true]:py-2 md:border-none',
+        'group border-b bg-transparent py-2 transition-[max-height,padding] duration-150 data-[collapsed=true]:py-2 md:border-none',
         className,
       )}
     >
@@ -87,8 +87,12 @@ const Nav = ({ links, isCollapsed, className, closeNav }) => {
   )
 }
 
+export const ACTIVE_CLASS = 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-semibold shadow-md shadow-emerald-500/20 ring-1 ring-emerald-700/50 dark:from-emerald-600/80 dark:to-teal-700/80'
+export const INACTIVE_CLASS = 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 dark:text-zinc-400 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400'
+
 const NavLink = ({ title, icon, label, href, closeNav, subLink = false, onClick }) => {
   const { checkActiveNav } = useCheckActiveNav()
+  const isActive = checkActiveNav(href)
 
   return (
     <Link
@@ -99,18 +103,20 @@ const NavLink = ({ title, icon, label, href, closeNav, subLink = false, onClick 
       }}
       className={cn(
         buttonVariants({
-          variant: checkActiveNav(href) ? 'secondary' : 'ghost',
+          variant: 'ghost',
           size: 'sm',
         }),
-        'h-[3.25rem] w-full justify-start text-wrap rounded-lg px-4 font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
-        subLink && 'h-11 w-full border-l-2 border-slate-200 dark:border-slate-800 px-4 rounded-none rounded-r-lg text-muted-foreground hover:text-foreground',
+        'h-[3.25rem] w-full justify-start text-wrap rounded-lg px-4 font-medium transition-all group',
+        isActive ? ACTIVE_CLASS : INACTIVE_CLASS,
+        subLink && 'h-11 w-full border-l-2 border-slate-100 dark:border-slate-800 px-4 rounded-none rounded-r-lg',
+        subLink && isActive && 'border-emerald-500 shadow-none ring-0 from-emerald-50 to-emerald-100 text-emerald-700 dark:from-emerald-500/10 dark:to-emerald-500/5 dark:text-emerald-400'
       )}
-      aria-current={checkActiveNav(href) ? 'page' : undefined}
+      aria-current={isActive ? 'page' : undefined}
     >
-      <div className="mr-2">{icon}</div>
+      <div className={cn("mr-2 transition-transform group-hover:scale-110", isActive && !subLink ? "text-emerald-50 drop-shadow-sm" : "")}>{icon}</div>
       {title}
       {label && (
-        <div className="ml-2 rounded-lg bg-primary px-1 text-[0.625rem] text-primary-foreground">
+        <div className={cn("ml-2 rounded-md px-1.5 py-0.5 text-[0.625rem]", isActive && !subLink ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700")}>
           {label}
         </div>
       )}
@@ -120,7 +126,7 @@ const NavLink = ({ title, icon, label, href, closeNav, subLink = false, onClick 
 
 const NavLinkIcon = ({ title, icon, label, href }) => {
   const { checkActiveNav } = useCheckActiveNav()
-
+  const isActive = checkActiveNav(href)
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
@@ -128,13 +134,14 @@ const NavLinkIcon = ({ title, icon, label, href }) => {
           to={href}
           className={cn(
             buttonVariants({
-              variant: checkActiveNav(href) ? 'secondary' : 'ghost',
+              variant: 'ghost',
               size: 'icon',
             }),
-            'h-12 w-12',
+            'h-12 w-12 transition-all group',
+            isActive ? ACTIVE_CLASS : INACTIVE_CLASS
           )}
         >
-          {icon}
+          <div className={cn("transition-transform group-hover:scale-110", isActive ? "text-emerald-50 drop-shadow-sm" : "")}>{icon}</div>
           <span className="sr-only">{title}</span>
         </Link>
       </TooltipTrigger>
@@ -166,13 +173,14 @@ const NavLinkDropdown = ({ title, icon, label, sub, closeNav, isOpen, userIntera
       <CollapsibleTrigger
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
-          'group h-[3.25rem] w-full justify-start rounded-lg px-4 font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+          'group h-[3.25rem] w-full justify-start rounded-lg px-4 font-medium transition-all outline-none',
+          isChildActive ? ACTIVE_CLASS : INACTIVE_CLASS
         )}
       >
-        <div className="mr-2">{icon}</div>
+        <div className={cn("mr-2 transition-transform group-hover:scale-110", isChildActive ? "text-emerald-50" : "")}>{icon}</div>
         {title}
         {label && (
-          <div className="ml-2 rounded-lg bg-primary px-1 text-[0.625rem] text-primary-foreground">
+           <div className={cn("ml-2 rounded-md px-1.5 py-0.5 text-[0.625rem]", isChildActive ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700")}>
             {label}
           </div>
         )}
@@ -181,11 +189,11 @@ const NavLinkDropdown = ({ title, icon, label, sub, closeNav, isOpen, userIntera
             'ml-auto transition-transform duration-200 group-data-[state="open"]:rotate-180',
           )}
         >
-          <ChevronDown className="h-4 w-4" strokeWidth={2} />
+          <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="collapsibleDropdown" asChild>
-        <ul className="mt-1 pl-4">
+        <ul className="mt-1.5 pl-4 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-zinc-800">
           {sub &&
             sub.map((subLink) => (
               <Can
@@ -193,7 +201,7 @@ const NavLinkDropdown = ({ title, icon, label, sub, closeNav, isOpen, userIntera
                 key={subLink.href}
                 option="some"
               >
-                <li key={subLink.title} className="my-1">
+                <li key={subLink.title} className="my-1 relative z-10 w-[calc(100%-8px)] ml-auto">
                   <NavLink {...subLink} subLink closeNav={closeNav} />
                 </li>
               </Can>
@@ -215,11 +223,11 @@ const NavLinkIconDropdown = ({ title, icon, label, sub }) => {
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <Button
-              variant={isChildActive ? 'secondary' : 'ghost'}
+              variant="ghost"
               size="icon"
-              className="h-12 w-12"
+              className={cn("h-12 w-12 transition-all group", isChildActive ? ACTIVE_CLASS : INACTIVE_CLASS)}
             >
-              {icon}
+              <div className={cn("transition-transform group-hover:scale-110", isChildActive ? "text-emerald-50" : "")}>{icon}</div>
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>

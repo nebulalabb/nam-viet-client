@@ -58,90 +58,89 @@ const UserNav = () => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-            <Avatar className="h-8 w-8">
-              <AvatarImage
-                src={`https://ui-avatars.com/api/?bold=true&background=random&name=${authUserWithRoleHasPermissions?.fullName}`}
-                alt={authUserWithRoleHasPermissions?.fullName}
-              />
-              <AvatarFallback>{avatarFallback}</AvatarFallback>
-            </Avatar>
+          <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 text-emerald-50 hover:bg-white/20 hover:text-white transition-all">
+            <img src="/icons/people.png" alt="User" className="h-5 w-5 brightness-0 invert opacity-95" />
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className="w-56" align="end" forceMount>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">
-                {authUserWithRoleHasPermissions?.fullName}
-              </p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {authUserWithRoleHasPermissions.username}
-              </p>
+        <DropdownMenuContent className="w-64 p-2" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal p-3 bg-primary/5 rounded-md mb-2">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border-2 border-primary/20">
+                <AvatarImage src={`https://ui-avatars.com/api/?bold=true&background=random&name=${fullName}`} alt={fullName} />
+                <AvatarFallback>{avatarFallback}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col space-y-1 overflow-hidden">
+                <p className="text-sm font-bold leading-none text-primary truncate">
+                  {fullName}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground truncate">
+                  {authUserWithRoleHasPermissions.email || authUserWithRoleHasPermissions.username}
+                </p>
+              </div>
             </div>
           </DropdownMenuLabel>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="mb-2" />
 
-          <DropdownMenuGroup onClick={() => setIsOpenProfileDialog(true)}>
-            <DropdownMenuItem>
-              Thông tin cá nhân
-              <DropdownMenuShortcut>
-                <UserCircle className="h-4 w-4" />
-              </DropdownMenuShortcut>
+          <DropdownMenuGroup className="space-y-1">
+            <DropdownMenuItem 
+              onClick={() => setIsOpenProfileDialog(true)}
+              className="gap-3 cursor-pointer p-2.5 rounded-md focus:bg-primary/10 focus:text-primary transition-colors"
+            >
+              <UserCircle className="h-4 w-4 text-emerald-500" />
+              <span className="font-medium">Thông tin cá nhân</span>
             </DropdownMenuItem>
-          </DropdownMenuGroup>
 
-          <DropdownMenuGroup
-            onClick={() => setIsOpenChangePasswordDialog(true)}
-          >
-            <DropdownMenuItem>
-              Đổi mật khẩu
-              <DropdownMenuShortcut>
-                <Key className="h-4 w-4" />
-              </DropdownMenuShortcut>
+            <DropdownMenuItem 
+              onClick={() => setIsOpenChangePasswordDialog(true)}
+              className="gap-3 cursor-pointer p-2.5 rounded-md focus:bg-primary/10 focus:text-primary transition-colors"
+            >
+              <Key className="h-4 w-4 text-amber-500" />
+              <span className="font-medium">Đổi mật khẩu</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
 
           <div className="md:hidden">
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuGroup className="space-y-1">
               <DropdownMenuItem
                 onClick={(e) => {
                   e.preventDefault()
                   setShowMobileNotifications(true)
                 }}
+                className="gap-3 cursor-pointer p-2.5 rounded-md focus:bg-primary/10 transition-colors"
               >
-                <Bell className="mr-2 h-4 w-4" />
-                <span>Thông báo</span>
+                <Bell className="h-4 w-4 text-blue-500" />
+                <span className="font-medium">Thông báo</span>
                 {unreadCount > 0 && (
-                  <span className="ml-auto mr-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                     {unreadCount}
                   </span>
                 )}
               </DropdownMenuItem>
 
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger className="gap-3 cursor-pointer p-2.5 rounded-md focus:bg-primary/10 transition-colors">
                   {theme === 'dark' ? (
-                    <Moon className="mr-2 h-4 w-4" />
+                    <Moon className="h-4 w-4 text-purple-500" />
                   ) : (
-                    <Sun className="mr-2 h-4 w-4" />
+                    <Sun className="h-4 w-4 text-orange-500" />
                   )}
-                  <span>Giao diện</span>
+                  <span className="font-medium">Giao diện</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => setTheme('light')}>
-                      <Sun className="mr-2 h-4 w-4" />
+                  <DropdownMenuSubContent className="p-2">
+                    <DropdownMenuItem onClick={() => setTheme('light')} className="gap-2 cursor-pointer rounded-md">
+                      <Sun className="h-4 w-4" />
                       <span>Sáng</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme('dark')}>
-                      <Moon className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem onClick={() => setTheme('dark')} className="gap-2 cursor-pointer rounded-md">
+                      <Moon className="h-4 w-4" />
                       <span>Tối</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme('system')}>
-                      <Monitor className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem onClick={() => setTheme('system')} className="gap-2 cursor-pointer rounded-md">
+                      <Monitor className="h-4 w-4" />
                       <span>Hệ thống</span>
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
@@ -150,16 +149,14 @@ const UserNav = () => {
             </DropdownMenuGroup>
           </div>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-2" />
 
           <DropdownMenuItem
-            className="text-destructive"
+            className="text-destructive gap-3 cursor-pointer p-2.5 rounded-md focus:bg-destructive/10 focus:text-destructive transition-colors"
             onClick={() => setIsOpenLogoutAlertDialog(true)}
           >
-            Đăng xuất
-            <DropdownMenuShortcut>
-              <LogOut className="h-4 w-4" />
-            </DropdownMenuShortcut>
+            <LogOut className="h-4 w-4" />
+            <span className="font-medium">Đăng xuất</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

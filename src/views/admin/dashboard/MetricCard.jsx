@@ -23,12 +23,12 @@ const InlineSparkline = ({ data, color }) => {
 
 // Color config per widget id
 const CARD_COLORS = {
-    'revenue-kpi': { bg: 'bg-blue-50 dark:bg-blue-950/30', icon: 'bg-blue-500', text: 'text-blue-500' },
-    'orders-kpi': { bg: 'bg-indigo-50 dark:bg-indigo-950/30', icon: 'bg-indigo-500', text: 'text-indigo-500' },
-    'debts-kpi': { bg: 'bg-orange-50 dark:bg-orange-950/30', icon: 'bg-orange-500', text: 'text-orange-500' },
-    'production-kpi': { bg: 'bg-emerald-50 dark:bg-emerald-950/30', icon: 'bg-emerald-500', text: 'text-emerald-500' },
+    'revenue-kpi': { iconBg: 'bg-emerald-50 dark:bg-emerald-500/10', iconText: 'text-emerald-600 dark:text-emerald-400' },
+    'orders-kpi': { iconBg: 'bg-blue-50 dark:bg-blue-500/10', iconText: 'text-blue-500 dark:text-blue-400' },
+    'debts-kpi': { iconBg: 'bg-orange-50 dark:bg-orange-500/10', iconText: 'text-orange-500 dark:text-orange-400' },
+    'production-kpi': { iconBg: 'bg-purple-50 dark:bg-purple-500/10', iconText: 'text-purple-600 dark:text-purple-400' },
 }
-const DEFAULT_COLOR = { bg: 'bg-violet-50 dark:bg-violet-950/30', icon: 'bg-violet-500', text: 'text-violet-500' }
+const DEFAULT_COLOR = { iconBg: 'bg-gray-100 dark:bg-gray-800', iconText: 'text-gray-600 dark:text-gray-400' }
 
 export const MetricCard = ({ title, value, trend, trendValue, icon: Icon, loading, onClick, widgetId, sparkData }) => {
     const isPositive = trend === 'up'
@@ -36,61 +36,52 @@ export const MetricCard = ({ title, value, trend, trendValue, icon: Icon, loadin
     const colors = CARD_COLORS[widgetId] || DEFAULT_COLOR
 
     const trendIcon = isPositive
-        ? <TrendingUp className="h-3 w-3" />
+        ? <TrendingUp className="h-4 w-4" strokeWidth={2.5} />
         : isNegative
-            ? <TrendingDown className="h-3 w-3" />
-            : <Minus className="h-3 w-3" />
+            ? <TrendingDown className="h-4 w-4" strokeWidth={2.5} />
+            : <Minus className="h-4 w-4" strokeWidth={2.5} />
 
     return (
         <div
-            className={`relative p-5 flex flex-col justify-between h-full rounded-xl border shadow-sm transition-all duration-200 overflow-hidden
-                ${colors.bg}
-                ${onClick ? 'cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99]' : ''}
+            className={`relative p-5 lg:p-6 flex flex-col justify-between h-full rounded-[24px] border border-gray-100 dark:border-zinc-800 bg-white dark:bg-card shadow-[0_4px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-lg transition-all duration-300 group
+                ${onClick ? 'cursor-pointer hover:-translate-y-1 active:scale-[0.98]' : ''}
                 ${loading ? 'opacity-70 pointer-events-none' : ''}
             `}
             onClick={onClick}
         >
-            {/* Header row */}
-            <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-muted-foreground leading-tight">{title}</h3>
+            <div className="flex items-start justify-between z-10 relative">
+                {/* Left side: Title and Value */}
+                <div className="flex flex-col flex-1 min-w-0 pr-2">
+                    <h3 className="text-[11px] sm:text-[12px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-tight mb-2 truncate">
+                        {title}
+                    </h3>
+                    <div className="text-[26px] sm:text-[30px] xl:text-[32px] font-extrabold text-slate-800 dark:text-gray-100 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis mb-1 drop-shadow-sm">
+                        {loading ? <div className="h-8 w-24 bg-muted/50 rounded animate-pulse" /> : value}
+                    </div>
+                </div>
+
+                {/* Right side: Circular Icon */}
                 {loading ? (
-                    <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                    <Loader2 className="h-4 w-4 text-muted-foreground animate-spin shrink-0" />
                 ) : Icon && (
-                    <div className={`h-8 w-8 rounded-lg ${colors.icon} flex items-center justify-center shadow-sm`}>
-                        <Icon className="h-4 w-4 text-white" />
+                    <div className={`shrink-0 h-[46px] w-[46px] rounded-full ${colors.iconBg} ${colors.iconText} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                        <Icon className="h-[22px] w-[22px]" strokeWidth={2.5} />
                     </div>
                 )}
             </div>
 
-            {/* Value */}
-            <div className="text-2xl font-bold text-foreground tracking-tight mb-1">
-                {loading ? <div className="h-7 w-24 bg-muted/50 rounded animate-pulse" /> : value}
+            {/* Bottom side: Trend */}
+            <div className="relative z-10 mt-3 pt-1">
+                {(trendValue || trendValue === 0) && !loading && (
+                    <p className={`text-[13px] flex items-center font-bold whitespace-nowrap overflow-hidden
+                        ${isPositive ? 'text-emerald-500 dark:text-emerald-400' : isNegative ? 'text-rose-500 dark:text-rose-400' : 'text-muted-foreground'}`}>
+                        <span className="truncate flex items-center gap-1.5">
+                           {trendIcon} {isPositive ? '+' : ''}{trendValue}% 
+                           <span className="text-gray-400 dark:text-gray-500 font-medium ml-1 text-[12px]">so với tháng trước</span>
+                        </span>
+                    </p>
+                )}
             </div>
-
-            {/* Trend */}
-            {(trendValue || trendValue === 0) && !loading && (
-                <p className={`text-xs flex items-center gap-1 font-medium mb-2
-                    ${isPositive ? 'text-emerald-600' : isNegative ? 'text-red-500' : 'text-muted-foreground'}`}>
-                    {trendIcon}
-                    {isPositive ? '+' : ''}{trendValue}% so với kỳ trước
-                </p>
-            )}
-
-            {/* Sparkline mini chart */}
-            {sparkData?.length > 1 && !loading && (
-                <div className="absolute bottom-0 right-0 left-0 h-12 opacity-25">
-                    <Sparklines data={sparkData} margin={0}>
-                        <SparklinesLine
-                            style={{ stroke: isPositive ? '#22c55e' : '#ef4444', fill: 'none', strokeWidth: 2 }}
-                        />
-                    </Sparklines>
-                </div>
-            )}
-
-            {/* Click hint */}
-            {onClick && !loading && (
-                <p className="text-[10px] text-muted-foreground/60 mt-1">Nhấn để xem chi tiết →</p>
-            )}
         </div>
     )
 }
