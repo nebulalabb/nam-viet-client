@@ -294,7 +294,7 @@ export const sideLinks = [
       {
         title: 'Sổ chi tiết',
         href: '/warehouse-report/detail',
-        icon: <ClipboardList size={18} strokeWidth={1.5} />,
+        icon: <img src="/icons/sổ chi tiết .png" className="w-[18px] h-[18px] " alt="Sổ chi tiết" />,
         permission: 'INVENTORY_LEDGER_VIEW',
       },
       {
@@ -306,14 +306,8 @@ export const sideLinks = [
       {
         title: 'Cảnh báo tồn kho',
         href: '/inventory-warning',
-        icon: <BellRing size={18} strokeWidth={1.5} />,
+        icon: <img src="/icons/cảnh báo tồn kho .png" className="w-[18px] h-[18px] " alt="Cảnh báo tồn kho" />,
         permission: 'GET_STOCK',
-      },
-      {
-        title: 'Báo cáo tồn kho',
-        href: '/inventory-report',
-        icon: <img src="/icons/Báo cáo tồn kho.png" className="w-[18px] h-[18px] " alt="Báo cáo tồn kho" />,
-        permission: 'GET_INVENTORY_REPORT',
       },
     ],
   },
