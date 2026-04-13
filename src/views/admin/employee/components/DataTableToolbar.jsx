@@ -26,12 +26,12 @@ const DataTableToolbar = ({ table }) => {
         <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
             <div className="flex flex-1 items-center space-x-2">
                 <Input
-                    placeholder="Tìm kiếm tên, SĐT, Email..."
+                    placeholder="Tìm kiếm: Tên, SĐT, Email..."
                     value={table.getState().globalFilter || ''}
                     onChange={(event) =>
                         table.setGlobalFilter(String(event.target.value))
                     }
-                    className="h-8 w-[150px] lg:w-[250px]"
+                    className="h-10 w-[200px] lg:w-[320px] rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] border-gray-200/80 bg-white"
                 />
 
                 <div className="flex gap-x-2">
@@ -48,7 +48,7 @@ const DataTableToolbar = ({ table }) => {
                     <Button
                         variant="ghost"
                         onClick={() => table.resetColumnFilters()}
-                        className="h-8 px-2 lg:px-3"
+                        className="h-10 px-2 lg:px-3 text-red-500 hover:text-red-600 hover:bg-red-50"
                     >
                         Đặt lại
                         <Cross2Icon className="ml-2 h-4 w-4" />
@@ -74,7 +74,7 @@ const DataTableToolbar = ({ table }) => {
             <Can permission={'CREATE_USER'}>
                 <Button
                     onClick={() => setShowCreateUserDialog(true)}
-                    className="mx-2 bg-green-600 hover:bg-green-700 text-white"
+                    className="mx-2 bg-emerald-600 hover:bg-emerald-700 text-white h-10 rounded-xl shadow-sm"
                     size="sm"
                 >
                     <PlusIcon className="mr-2 size-4" aria-hidden="true" />

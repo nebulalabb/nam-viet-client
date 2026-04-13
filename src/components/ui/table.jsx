@@ -2,8 +2,12 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
-const Table = React.forwardRef(({ className, ...props }, ref) => (
-  <div className="relative max-h-[70vh] w-full overflow-auto">
+const Table = React.forwardRef(({ className, wrapperClassName, ...props }, ref) => (
+  <div className={cn(
+    "relative w-full h-full overflow-auto",
+    "[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300/80 [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:bg-clip-padding [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400/80 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700",
+    wrapperClassName
+  )}>
     <table
       ref={ref}
       className={cn('w-full caption-bottom text-sm', className)}
@@ -43,7 +47,7 @@ const TableRow = React.forwardRef(({ className, ...props }, ref) => (
   <tr
     ref={ref}
     className={cn(
-      'border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
+      'border-b border-gray-100/80 dark:border-zinc-800 transition-colors hover:bg-emerald-50/40 dark:hover:bg-zinc-800/50 data-[state=selected]:bg-emerald-50 dark:data-[state=selected]:bg-zinc-800',
       className,
     )}
     {...props}
@@ -55,7 +59,7 @@ const TableHead = React.forwardRef(({ className, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      'h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+      'h-12 px-4 text-left align-middle font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 [&:has([role=checkbox])]:pr-0',
       className,
     )}
     {...props}
@@ -67,7 +71,7 @@ const TableCell = React.forwardRef(({ className, ...props }, ref) => (
   <td
     ref={ref}
     className={cn(
-      'p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+      'p-4 align-middle text-gray-700 dark:text-gray-300 [&:has([role=checkbox])]:pr-0',
       className,
     )}
     {...props}
