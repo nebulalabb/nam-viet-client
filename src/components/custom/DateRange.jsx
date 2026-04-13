@@ -19,6 +19,8 @@ export function DateRange({ className, onChange, defaultValue }) {
   useEffect(() => {
     if (defaultValue?.from && defaultValue?.to) {
       setDate(defaultValue)
+    } else if (!defaultValue?.from && !defaultValue?.to) {
+      setDate({ from: undefined, to: undefined })
     }
   }, [defaultValue])
 
