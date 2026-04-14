@@ -63,7 +63,7 @@ export const RevenueChart = ({ initialData = [] }) => {
                     Chưa có dữ liệu biểu đồ trong kỳ này
                 </div>
             ) : (
-                <div className="flex-1 w-full min-h-[250px] mt-2">
+                <div className="w-full h-[250px] mt-2">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <defs>
@@ -80,8 +80,8 @@ export const RevenueChart = ({ initialData = [] }) => {
                             <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={vnd} width={55} />
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                             <Tooltip content={<CustomTooltip />} />
-                            <Area type="monotone" dataKey="revenue" name="Doanh thu" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
-                            <Area type="monotone" dataKey="expense" name="Chi phí" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
+                            <Area type="monotone" dataKey="revenue" name="Doanh thu" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" dot={displayData.length === 1 ? { r: 4, fill: '#3b82f6' } : false} activeDot={{ r: 6 }} />
+                            <Area type="monotone" dataKey="expense" name="Chi phí" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" dot={displayData.length === 1 ? { r: 4, fill: '#ef4444' } : false} activeDot={{ r: 6 }} />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

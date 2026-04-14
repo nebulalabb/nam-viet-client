@@ -50,7 +50,7 @@ export const SalesChannelChart = ({ data = [] }) => {
                 <h3 className="text-base font-semibold text-foreground">Phân bổ kênh bán hàng</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Theo doanh thu thực tế</p>
             </div>
-            <div className="flex-1 w-full min-h-[250px] flex items-center justify-center">
+            <div className="w-full h-[250px] mt-2 flex items-center justify-center">
                 {normalized.length === 0 ? (
                     <span className="text-sm text-muted-foreground">Chưa có dữ liệu kênh bán hàng</span>
                 ) : (
@@ -64,6 +64,7 @@ export const SalesChannelChart = ({ data = [] }) => {
                                 outerRadius={85}
                                 paddingAngle={3}
                                 dataKey="value"
+                                nameKey="name"
                                 labelLine={false}
                                 label={renderCustomLabel}
                             >

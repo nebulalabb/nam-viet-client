@@ -31,9 +31,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 export const InventoryByTypeChart = ({ data = [] }) => {
     const normalized = data.map((d) => ({
         ...d,
-        name: d.name || d.type || d.product_type || 'Khác',
+        name: d.name || d.type || d.product_type || d.productType || 'Chưa phân loại',
         value: Number(d.value || d.total_value || 0),
-        count: Number(d.count || d.total_count || 0),
+        count: Number(d.count || d.total_count || d.itemCount || 0),
     }))
 
     return (
@@ -42,7 +42,7 @@ export const InventoryByTypeChart = ({ data = [] }) => {
                 <h3 className="text-base font-semibold text-foreground">Tỷ trọng Tồn kho theo loại</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Giá trị & số lượng theo nhóm sản phẩm</p>
             </div>
-            <div className="flex-1 w-full min-h-[250px] flex items-center justify-center">
+            <div className="w-full h-[250px] flex items-center justify-center mt-2">
                 {normalized.length === 0 ? (
                     <span className="text-sm text-muted-foreground">Chưa có dữ liệu tồn kho</span>
                 ) : (

@@ -69,11 +69,13 @@ export const getDashboardStats = createAsyncThunk(
                 alerts: {
                     low_stock: serverData.alerts?.low_stock || [],
                     overdue_debts: serverData.alerts?.overdue_debts || [],
-                    // These fields are provided from the server stats but might not have dedicated API
-                    pending_orders: [],
-                    expiring: [],
+                    // pending_orders: build a count-based array to show in AlertsSection
+                    pending_orders: serverData.alerts?.pending_orders_count > 0
+                        ? Array(serverData.alerts.pending_orders_count).fill({ placeholder: true })
+                        : [],
+                    expiring: serverData.alerts?.expiring || [],
                     delayed_production: [],
-                    cash_fund: 0,
+                    cash_fund: serverData.alerts?.cash_fund || 0,
                 },
                 recent: {
                     orders: serverData.recent?.orders || [],
