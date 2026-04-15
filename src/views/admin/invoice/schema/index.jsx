@@ -14,6 +14,7 @@ const createInvoiceSchema = z
         }),
       ])
       .optional(),
+    warehouseId: z.number().int().positive().optional().nullable(),
     isPickupOrder: z.boolean().default(true),
     dueDate: z.string().nullable().optional(),
     orderDate: z.string().nullable().optional(),
@@ -40,6 +41,7 @@ const updateInvoiceSchema = z.object({
     .optional(),
   dueDate: z.string().nullable().optional(),
   orderDate: z.string().nullable().optional(),
+  warehouseId: z.number().int().positive().optional().nullable(),
   isPickupOrder: z.boolean().default(true),
   recipientName: z.string().optional().nullable(),
   recipientPhone: z.string().optional().nullable(),

@@ -48,6 +48,7 @@ import { MoneyInputQuick } from '@/components/custom/MoneyInputQuick'
 const InvoiceSidebar = ({
   form,
   customers,
+  warehouses = [],
   selectedCustomer,
   customerEditData,
   onCustomerEditDataChange,
@@ -672,6 +673,32 @@ const InvoiceSidebar = ({
                   <SelectContent>
                     <SelectItem value="true">Đơn bán tại chỗ</SelectItem>
                     <SelectItem value="false">Đơn bán cần vận chuyển</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="warehouseId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Kho xuất kho mặc định</FormLabel>
+                <Select onValueChange={(val) => field.onChange(val === 'unselected' ? undefined : parseInt(val))} value={field.value ? field.value.toString() : 'unselected'}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn kho xuất hàng mặc định (Tùy chọn)" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="unselected">Không chọn</SelectItem>
+                    {warehouses?.map((w) => (
+                      <SelectItem key={w.id} value={w.id.toString()}>
+                        {w.warehouseName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
