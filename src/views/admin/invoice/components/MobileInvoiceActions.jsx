@@ -54,27 +54,6 @@ const MobileInvoiceActions = ({
             <SheetTitle>Thao tác đơn hàng</SheetTitle>
           </SheetHeader>
           <div className="flex flex-col gap-3">
-            {/* Receipt & Warehouse Actions */}
-            {(!['pending', 'cancelled', 'completed'].includes(invoice?.orderStatus) && invoice?.paymentStatus !== 'paid') && (
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  className="bg-green-600 text-white hover:bg-green-700 h-auto py-3 flex-col gap-1"
-                  onClick={() => handleAction(handleCreateReceipt)}
-                >
-                  <PlusIcon className="h-5 w-5" />
-                  <span className="text-xs">Tạo Phiếu Thu</span>
-                </Button>
-                {invoice?.orderStatus === 'preparing' && (
-                  <Button
-                    className="bg-orange-600 text-white hover:bg-orange-700 h-auto py-3 flex-col gap-1"
-                    onClick={() => handleAction(handleCreateWarehouseReceipt)}
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                    <span className="text-xs">Tạo Phiếu Xuất Kho</span>
-                  </Button>
-                )}
-              </div>
-            )}
 
             {/* Delivery Action */}
             {(!invoice.isPickupOrder && ['preparing', 'delivering'].includes(invoice?.orderStatus)) && (
@@ -86,6 +65,7 @@ const MobileInvoiceActions = ({
                 <span className="text-sm font-semibold">Giao hàng</span>
               </Button>
             )}
+
 
             <Separator />
 

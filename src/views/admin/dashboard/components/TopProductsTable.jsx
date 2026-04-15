@@ -42,17 +42,17 @@ export const TopProductsTable = ({ products = [], onOpenDialog }) => {
                             </tr>
                         ) : (
                             products.map((product, idx) => (
-                                <tr key={product.id || product.product_id || `product-${idx}`} className="border-b last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedProduct(product)}>
+                                <tr key={product.id || product.productId || product.product_id || `product-${idx}`} className="border-b last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedProduct(product)}>
                                     <td className="px-4 py-3 font-medium text-muted-foreground">{idx + 1}</td>
                                     <td className="px-4 py-3 font-medium">
-                                        <span className="line-clamp-1">{product.name || product.product_name}</span>
+                                        <span className="line-clamp-1">{product.name || product.productName || product.product_name}</span>
                                     </td>
-                                    <td className="px-4 py-3 text-muted-foreground">{product.sku || '-'}</td>
-                                    <td className="px-4 py-3 text-center font-medium">{product.sold || product.total_quantity || 0}</td>
-                                    <td className="px-4 py-3 text-right text-primary">{moneyFormat(product.revenue || product.total_revenue || 0)}</td>
+                                    <td className="px-4 py-3 text-muted-foreground">{product.sku || product.productCode || '-'}</td>
+                                    <td className="px-4 py-3 text-center font-medium">{product.sold || product.quantitySold || product.total_quantity || 0}</td>
+                                    <td className="px-4 py-3 text-right text-primary">{moneyFormat(product.revenue || product.totalRevenue || product.total_revenue || 0)}</td>
                                     <td className="px-4 py-3 text-right text-muted-foreground">
-                                        {product.average_price ? moneyFormat(product.average_price) :
-                                            ((product.revenue || product.total_revenue || 0) / (product.sold || product.total_quantity || 1)).toFixed(0) + ' ₫'}
+                                        {product.averagePrice || product.average_price ? moneyFormat(product.averagePrice || product.average_price) :
+                                            ((product.revenue || product.totalRevenue || product.total_revenue || 0) / (product.sold || product.quantitySold || product.total_quantity || 1)).toFixed(0) + ' ₫'}
                                     </td>
                                 </tr>
                             ))

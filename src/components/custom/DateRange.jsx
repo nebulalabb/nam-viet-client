@@ -17,11 +17,12 @@ export function DateRange({ className, onChange, defaultValue }) {
   })
 
   useEffect(() => {
-    setDate({
-      from: defaultValue?.from || undefined,
-      to: defaultValue?.to || undefined,
-    })
-  }, [defaultValue?.from, defaultValue?.to])
+    if (defaultValue?.from && defaultValue?.to) {
+      setDate(defaultValue)
+    } else if (!defaultValue?.from && !defaultValue?.to) {
+      setDate({ from: undefined, to: undefined })
+    }
+  }, [defaultValue])
 
   const handleDateChange = (selectedDate) => {
     setDate(selectedDate)

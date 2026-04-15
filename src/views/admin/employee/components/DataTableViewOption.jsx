@@ -26,9 +26,9 @@ const DataTableViewOptions = ({ table }) => {
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="ml-auto h-8 lg:flex">
+                    <Button variant="outline" size="sm" className="ml-auto h-10 rounded-xl bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] border-gray-200/80 lg:flex">
                         <MixerHorizontalIcon className="mr-2 h-4 w-4" />
-                        Xem
+                        Cột hiển thị
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[150px]">

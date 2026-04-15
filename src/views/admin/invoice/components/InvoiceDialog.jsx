@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { getCustomers } from '@/stores/CustomerSlice'
+import { getWarehouses } from '@/stores/WarehouseSlice'
 import UpdateCustomerDialog from '../../customer/components/UpdateCustomerDialog'
 import CreateCustomerDialog from '../../customer/components/CreateCustomerDialog'
 import { createInvoiceSchema } from '../schema'
@@ -104,6 +105,7 @@ const InvoiceDialog = ({
   }, [flatCategories])
 
   const customers = useSelector((state) => state.customer.customers)
+  const warehouses = useSelector((state) => state.warehouse.warehouses) || []
   const loading = useSelector((state) => state.invoice.loading)
   const authUserWithRoleHasPermissions =
     useSelector((state) => state.auth.authUserWithRoleHasPermissions) || {}
@@ -193,6 +195,7 @@ const InvoiceDialog = ({
     dispatch(getCategories({ type: 'PRODUCT' }))
     dispatch(getSetting('sharing_ratio'))
     dispatch(getUsers())
+    dispatch(getWarehouses({ limit: 100 }))
   }, [dispatch])
   useEffect(() => {
     if (!open) return
@@ -912,6 +915,7 @@ const InvoiceDialog = ({
       totalAmount: calculateTotalAmount(),
       expectedDeliveryDate: data.expectedDeliveryDate || null,
       requireApproval: data.requireApproval,
+      warehouseId: data.warehouseId || null,
       ...(appliedPromotion && { promotionId: appliedPromotion.id }),
       ...(otherExpenses?.price > 0 && { otherExpenses: [otherExpenses] }),
 
@@ -1972,6 +1976,7 @@ const InvoiceDialog = ({
                 <InvoiceSidebar
                   form={form}
                   customers={customers}
+                  warehouses={warehouses.filter(w => w.warehouseType === 'product')}
                   selectedCustomer={selectedCustomer}
                   customerEditData={customerEditData}
                   customerErrors={customerErrors}

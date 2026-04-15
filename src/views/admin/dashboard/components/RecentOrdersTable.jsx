@@ -40,18 +40,18 @@ export const RecentOrdersTable = ({ orders = [], onOpenDialog }) => {
                         ) : (
                             orders.map((order) => (
                                 <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                                    <td className="px-4 py-3 font-medium whitespace-nowrap">{order.order_code || order.id}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">{order.customer?.name || order.customer_name}</td>
-                                    <td className="px-4 py-3 text-center text-muted-foreground">{order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : order.date}</td>
-                                    <td className="px-4 py-3 text-right font-medium">{moneyFormat(order.final_amount || order.total)}</td>
-                                    <td className="px-4 py-3 text-center text-muted-foreground">{order.payment_status || 'Chưa TT'}</td>
+                                    <td className="px-4 py-3 font-medium whitespace-nowrap">{order.orderCode || order.order_code || order.id}</td>
+                                    <td className="px-4 py-3 text-muted-foreground">{order.customer?.customerName || order.customer?.name || order.customer_name || 'Khách lẻ'}</td>
+                                    <td className="px-4 py-3 text-center text-muted-foreground">{order.createdAt || order.orderDate ? new Date(order.createdAt || order.orderDate).toLocaleDateString('vi-VN') : order.date}</td>
+                                    <td className="px-4 py-3 text-right font-medium">{moneyFormat(order.totalAmount || order.final_amount || order.total)}</td>
+                                    <td className="px-4 py-3 text-center text-muted-foreground">{order.paymentStatus || order.payment_status || 'Chưa TT'}</td>
                                     <td className="px-4 py-3 text-right">
                                         <span className={`px-2 py-1 rounded-full text-[11px] font-medium 
-                                            ${order.status === 'completed' || order.status === 'Đã giao' ? 'bg-green-100 text-green-700' :
-                                                order.status === 'processing' || order.status === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' :
-                                                    order.status === 'pending' || order.status === 'Chờ duyệt' ? 'bg-yellow-100 text-yellow-700' :
+                                            ${order.orderStatus === 'completed' || order.status === 'completed' || order.status === 'Đã giao' ? 'bg-green-100 text-green-700' :
+                                                order.orderStatus === 'preparing' || order.status === 'processing' || order.status === 'Đang xử lý' ? 'bg-blue-100 text-blue-700' :
+                                                    order.orderStatus === 'pending' || order.status === 'pending' || order.status === 'Chờ duyệt' ? 'bg-yellow-100 text-yellow-700' :
                                                         'bg-red-100 text-red-700'}`}>
-                                            {order.status}
+                                            {order.orderStatus || order.status}
                                         </span>
                                     </td>
                                 </tr>

@@ -95,26 +95,6 @@ export const AlertsSection = ({ alerts, loading, onAlertClick }) => {
                 </div>
             </div>
 
-            {/* Box 5: Lệnh SX trễ tiến độ */}
-            <div
-                onClick={() => onAlertClick ? onAlertClick('delayed_production') : navigate('/production-report')}
-                className="bg-card border rounded-xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md transition-all group"
-            >
-                <div className="flex items-center gap-2 mb-4">
-                    <TrendingDown className="h-5 w-5 text-purple-600" />
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">Lệnh SX trễ tiến độ</h3>
-                </div>
-                <div className="flex justify-center flex-1 items-center pb-2">
-                    {productionAlertsCount > 0 ? (
-                        <span className="text-purple-600 font-medium">{productionAlertsCount} lệnh SX trễ tiến độ</span>
-                    ) : (
-                        <span className="text-muted-foreground text-sm flex items-center gap-1">
-                            ✓ Tất cả lệnh SX đúng tiến độ
-                        </span>
-                    )}
-                </div>
-            </div>
-
             {/* Box 6: Quỹ tiền mặt hiện tại */}
             <div
                 onClick={() => navigate('/financial-report')}

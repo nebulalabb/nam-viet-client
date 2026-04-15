@@ -15,7 +15,7 @@ import { PagePreviewDialog } from './PagePreviewDialog'
 import InvoicePage from '../../../../views/admin/invoice/InvoicePage'
 import CustomerDebtPage from '../../../../views/admin/debt/CustomerDebtPage'
 import RevenueReportPage from '../../../../views/admin/report/RevenuePage'
-// ProductionReportPage không tồn tại trong thư mục report mới - cần tạo hoặc xóa reference
+// ProductionReportPage removed
 import WarehousePage from '../../../../views/admin/warehouse/WarehousePage'
 
 // Safe Vietnamese money formatter (handles Prisma Decimal / BigInt)
@@ -144,7 +144,8 @@ export const KPIDetailDialog = ({ open, type, onClose }) => {
                 setPreviewPage({ component: CustomerDebtPage, title: 'Công nợ Khách hàng', route: '/customer-debt' }); break;
             case 'production':
             case 'delayed_production':
-                setPreviewPage({ component: ProductionReportPage, title: 'Báo cáo Sản xuất', route: '/production-report' }); break;
+                // Removed production component
+                break;
             case 'low_stock':
             case 'expiring':
                 setPreviewPage({ component: WarehousePage, title: 'Quản lý Kho', route: '/warehouse-list' }); break;

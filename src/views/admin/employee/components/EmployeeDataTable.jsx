@@ -56,12 +56,12 @@ const EmployeeDataTable = ({ columns, data, loading = false }) => {
     })
 
     return (
-        <div className="space-y-4">
+        <div className="flex flex-col h-full space-y-4">
             <DataTableToolbar table={table} />
 
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader className="sticky top-0 z-10 bg-secondary">
+            <div className="flex-1 overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-sm ring-1 ring-gray-900/5 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-white/10">
+                <Table wrapperClassName="h-full">
+                    <TableHeader className="sticky top-0 z-10 bg-[#fafcf8] shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] border-b border-emerald-100/50 dark:bg-zinc-900">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {

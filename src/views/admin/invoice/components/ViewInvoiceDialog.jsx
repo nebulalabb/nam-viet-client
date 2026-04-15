@@ -1369,26 +1369,15 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Phiếu xuất kho / Trả hàng</h3>
-                            {(invoice?.orderStatus === 'preparing' || invoice?.orderStatus === 'delivering' || invoice?.orderStatus === 'completed') ? (
-                              isFullyExported ? (
-                                <Button
-                                  size="sm"
-                                  className="h-8 gap-1 bg-orange-500 text-white hover:bg-orange-600 border-transparent shadow-sm"
-                                  onClick={() => setShowReturnWarehouseReceiptDialog(true)}
-                                >
-                                  <IconPlus className="h-4 w-4" />
-                                  <span>Trả hàng</span>
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  className="h-8 gap-1 bg-green-600 text-white hover:bg-green-700 border-transparent"
-                                  onClick={handleCreateWarehouseReceipt}
-                                >
-                                  <IconPlus className="h-4 w-4" />
-                                  <span>Thêm phiếu xuất</span>
-                                </Button>
-                              )
+                            {(invoice?.orderStatus === 'preparing' || invoice?.orderStatus === 'delivering' || invoice?.orderStatus === 'completed') && isFullyExported ? (
+                              <Button
+                                size="sm"
+                                className="h-8 gap-1 bg-orange-500 text-white hover:bg-orange-600 border-transparent shadow-sm"
+                                onClick={() => setShowReturnWarehouseReceiptDialog(true)}
+                              >
+                                <IconPlus className="h-4 w-4" />
+                                <span>Trả hàng</span>
+                              </Button>
                             ) : (
                               invoice?.orderStatus === 'pending' ? (
                                 <span className="text-[12px] text-gray-500">Đơn hàng chưa được duyệt</span>
@@ -1926,36 +1915,6 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
           )}>
             {invoice && (
               <>
-                {(!['pending', 'cancelled', 'completed'].includes(invoice?.orderStatus) && invoice?.paymentStatus !== 'paid') && (
-                  <Button
-                    size="sm"
-                    className={cn("gap-2 bg-green-600 text-white hover:bg-green-700", !isDesktop && "w-full")}
-                    onClick={handleCreateReceipt}
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    Tạo Phiếu Thu
-                  </Button>
-                )}
-                {(!invoice.isPickupOrder && ['preparing', 'delivering'].includes(invoice?.orderStatus)) && (
-                  <Button
-                    size="sm"
-                    className={cn("gap-2 bg-blue-600 text-white hover:bg-blue-700", !isDesktop && "w-full")}
-                    onClick={handleCreateDelivery}
-                  >
-                    <Truck className="h-4 w-4" />
-                    Giao hàng
-                  </Button>
-                )}
-                {(invoice?.orderStatus === 'preparing' || invoice?.orderStatus === 'delivering') && (
-                  <Button
-                    size="sm"
-                    className={cn("gap-2 bg-orange-600 text-white hover:bg-orange-700", !isDesktop && "w-full")}
-                    onClick={handleCreateWarehouseReceipt}
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    Tạo Phiếu xuất kho
-                  </Button>
-                )}
 
                 {invoice?.orderStatus !== 'cancelled' && (
                   <Button

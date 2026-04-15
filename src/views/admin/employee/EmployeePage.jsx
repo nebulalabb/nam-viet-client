@@ -17,15 +17,15 @@ const EmployeePage = () => {
 
     return (
         <Layout>
-            <LayoutBody className="flex flex-col" fixedHeight>
+            <LayoutBody className="flex flex-col bg-[#f6fbf2] dark:bg-[#090b0a] !pb-0" fixedHeight>
                 <div className="mb-2 flex items-center justify-between space-y-2">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">
+                    <div className="flex flex-col gap-1">
+                        <h2 className="text-2xl font-bold tracking-tight text-emerald-950 dark:text-emerald-50">
                             Danh sách nhân viên
                         </h2>
                     </div>
                 </div>
-                <div className="-mx-4 flex-1 overflow-hidden px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">
+                <div className="-mx-4 flex-1 overflow-hidden px-4 pt-1 pb-0 lg:flex-row lg:space-x-12 lg:space-y-0">
                     {users && (
                         <EmployeeDataTable
                             data={users}

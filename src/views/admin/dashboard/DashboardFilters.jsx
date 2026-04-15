@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { selectIsEditMode, toggleEditMode, resetLayout } from '../../../stores/DashboardSlice'
 import { CalendarIcon, SlidersHorizontal, Settings2, RotateCcw } from 'lucide-react'
@@ -9,10 +9,24 @@ import {
     SelectTrigger,
     SelectValue,
 } from '../../../components/ui/select'
+import api from '../../../utils/axios'
 
 export const DashboardFilters = ({ period, setPeriod, warehouseId, setWarehouseId }) => {
     const dispatch = useDispatch()
     const isEditMode = useSelector(selectIsEditMode)
+    const [warehouses, setWarehouses] = useState([])
+
+    useEffect(() => {
+        const fetchWarehouses = async () => {
+            try {
+                const res = await api.get('/warehouses')
+                setWarehouses(res.data?.data?.items || res.data?.data || [])
+            } catch (error) {
+                console.error('Failed to fetch warehouses:', error)
+            }
+        }
+        fetchWarehouses()
+    }, [])
 
     return (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -43,8 +57,11 @@ export const DashboardFilters = ({ period, setPeriod, warehouseId, setWarehouseI
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-none shadow-xl">
                         <SelectItem value="all" className="font-medium cursor-pointer">Tất cả Kho hàng</SelectItem>
-                        <SelectItem value="HQ" className="font-medium cursor-pointer">Kho Tổng - HCM</SelectItem>
-                        <SelectItem value="W1" className="font-medium cursor-pointer">Kho Chi nhánh 1</SelectItem>
+                        {warehouses.map(w => (
+                            <SelectItem key={w.id} value={w.id.toString()} className="font-medium cursor-pointer">
+                                {w.warehouse_name || w.warehouseName}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
             </div>

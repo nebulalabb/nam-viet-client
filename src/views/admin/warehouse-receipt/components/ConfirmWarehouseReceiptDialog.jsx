@@ -235,6 +235,10 @@ const ConfirmWarehouseReceiptDialog = ({
       if (invoice) {
         setReason('')
         setNotes('')
+        
+        if (invoice.warehouseId && !selectedWarehouseId) {
+          setSelectedWarehouseId(invoice.warehouseId.toString())
+        }
       }
     }
   }, [mergedItems, isMergedItemSelectable, invoice])

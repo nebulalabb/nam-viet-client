@@ -51,7 +51,7 @@ const SystemLogPage = () => {
     limit: 20,
     userId: 'all',
     action: 'all',
-    entity: 'all',
+    tableName: 'all', // Changed from entity to tableName
     ipAddress: '',
     fromDate: undefined,
     toDate: undefined,
@@ -89,7 +89,7 @@ const SystemLogPage = () => {
       // Handle 'all' values
       userId: filters.userId !== 'all' ? filters.userId : undefined,
       action: filters.action !== 'all' ? filters.action : undefined,
-      entity: filters.entity !== 'all' ? filters.entity : undefined,
+      tableName: filters.tableName !== 'all' ? filters.tableName : undefined, // Change entity to tableName
       ipAddress: filters.ipAddress || undefined,
       // Format dates to ISO/YYYY-MM-DD
       startDate: filters.fromDate ? format(filters.fromDate, 'yyyy-MM-dd') : undefined,
@@ -97,6 +97,17 @@ const SystemLogPage = () => {
     }
     dispatch(getSystemLogs(params))
   }, [dispatch, filters])
+
+  // Debounced IP Address filter
+  const [debouncedIp, setDebouncedIp] = useState(filters.ipAddress)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (debouncedIp !== filters.ipAddress) {
+        setFilters((prev) => ({ ...prev, ipAddress: debouncedIp, page: 1 }))
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [debouncedIp, filters.ipAddress])
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
@@ -116,11 +127,12 @@ const SystemLogPage = () => {
       limit: 20,
       userId: 'all',
       action: 'all',
-      entity: 'all',
+      tableName: 'all',
       ipAddress: '',
       fromDate: undefined,
       toDate: undefined,
     })
+    setDebouncedIp('') // Reset debounced IP too
   }
 
   const openDetail = (log) => {
@@ -159,19 +171,19 @@ const SystemLogPage = () => {
   }
 
   const ENTITIES_CONFIG = {
-    users: { label: 'Người dùng', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-    customers: { label: 'Khách hàng', color: 'bg-pink-100 text-pink-700 border-pink-200' },
-    suppliers: { label: 'Nhà cung cấp', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    products: { label: 'Sản phẩm', color: 'bg-teal-100 text-teal-700 border-teal-200' },
-    sales_orders: { label: 'Đơn bán hàng', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-    purchase_orders: { label: 'Đơn mua hàng', color: 'bg-sky-100 text-sky-700 border-sky-200' },
-    invoices: { label: 'Hóa đơn', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-    payment_vouchers: { label: 'Phiếu chi', color: 'bg-rose-100 text-rose-700 border-rose-200' },
-    payment_receipts: { label: 'Phiếu thu', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-    stock_transactions: { label: 'Giao dịch kho', color: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200' },
-    roles: { label: 'Vai trò', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
-    permissions: { label: 'Quyền hạn', color: 'bg-violet-100 text-violet-700 border-violet-200' },
-    warehouses: { label: 'Kho hàng', color: 'bg-lime-100 text-lime-700 border-lime-200' },
+    user: { label: 'Người dùng', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+    customer: { label: 'Khách hàng', color: 'bg-pink-100 text-pink-700 border-pink-200' },
+    supplier: { label: 'Nhà cung cấp', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    product: { label: 'Sản phẩm', color: 'bg-teal-100 text-teal-700 border-teal-200' },
+    sales_order: { label: 'Đơn bán hàng', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+    purchase_order: { label: 'Đơn mua hàng', color: 'bg-sky-100 text-sky-700 border-sky-200' },
+    invoice: { label: 'Hóa đơn', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    payment_voucher: { label: 'Phiếu chi', color: 'bg-rose-100 text-rose-700 border-rose-200' },
+    payment_receipt: { label: 'Phiếu thu', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+    stock_transaction: { label: 'Giao dịch kho', color: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200' },
+    role: { label: 'Vai trò', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+    permission: { label: 'Quyền hạn', color: 'bg-violet-100 text-violet-700 border-violet-200' },
+    warehouse: { label: 'Kho hàng', color: 'bg-lime-100 text-lime-700 border-lime-200' },
   }
 
   return (
@@ -184,14 +196,14 @@ const SystemLogPage = () => {
         </div>
 
         {/* Toolbar */}
-        <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
-          <div className="flex flex-1 items-center space-x-2">
+        <div className="flex w-full flex-col lg:flex-row lg:items-center justify-between gap-y-3 p-1">
+          <div className="flex flex-1 flex-wrap items-center gap-2">
             {/* User Select */}
             <Select
               value={filters.userId?.toString()}
               onValueChange={(val) => handleFilterChange('userId', val)}
             >
-              <SelectTrigger className="h-8 w-[150px] lg:w-[200px]">
+              <SelectTrigger className="h-8 w-full md:w-[180px]">
                 <SelectValue placeholder="Người dùng" />
               </SelectTrigger>
               <SelectContent>
@@ -211,7 +223,7 @@ const SystemLogPage = () => {
               value={filters.action}
               onValueChange={(val) => handleFilterChange('action', val)}
             >
-              <SelectTrigger className="h-8 w-[150px]">
+              <SelectTrigger className="h-8 w-full md:w-[150px]">
                 <SelectValue placeholder="Hành động" />
               </SelectTrigger>
               <SelectContent>
@@ -219,7 +231,7 @@ const SystemLogPage = () => {
                   <SelectItem value="all">Tất cả hành động</SelectItem>
                   {ACTIONS.map((act) => (
                     <SelectItem key={act} value={act}>
-                      {act}
+                      {act.charAt(0).toUpperCase() + act.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -228,22 +240,23 @@ const SystemLogPage = () => {
 
             {/* Entity Select */}
             <Select
-              value={filters.entity}
-              onValueChange={(val) => handleFilterChange('entity', val)}
+              value={filters.tableName}
+              onValueChange={(val) => handleFilterChange('tableName', val)}
             >
-              <SelectTrigger className="h-8 w-[150px] lg:w-[200px]">
+              <SelectTrigger className="h-8 w-full md:w-[180px]">
                 <SelectValue placeholder="Đối tượng..." />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="all">Tất cả đối tượng</SelectItem>
-                  <SelectItem value="User">Người dùng</SelectItem>
-                  <SelectItem value="Customer">Khách hàng</SelectItem>
-                  <SelectItem value="Supplier">Nhà cung cấp</SelectItem>
-
-                  <SelectItem value="Invoice">Hóa đơn</SelectItem>
-                  <SelectItem value="PaymentVoucher">Phiếu thu/chi</SelectItem>
-                  <SelectItem value="WarehouseReceipt">Phiếu nhập/xuất kho</SelectItem>
+                  <SelectItem value="user">Người dùng</SelectItem>
+                  <SelectItem value="customer">Khách hàng</SelectItem>
+                  <SelectItem value="supplier">Nhà cung cấp</SelectItem>
+                  <SelectItem value="invoice">Hóa đơn</SelectItem>
+                  <SelectItem value="payment_voucher">Phiếu chi</SelectItem>
+                  <SelectItem value="payment_receipt">Phiếu thu</SelectItem>
+                  <SelectItem value="warehouse_receipt">Phiếu nhập/xuất kho</SelectItem>
+                  <SelectItem value="product">Sản phẩm</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -251,13 +264,13 @@ const SystemLogPage = () => {
             {/* IP Input */}
             <Input
               placeholder="IP Address..."
-              value={filters.ipAddress}
-              onChange={(e) => handleFilterChange('ipAddress', e.target.value)}
-              className="h-8 w-[150px]"
+              value={debouncedIp}
+              onChange={(e) => setDebouncedIp(e.target.value)}
+              className="h-8 w-full md:w-[150px]"
             />
 
             {/* Date Range */}
-            <div className="w-[250px]">
+            <div className="w-full md:w-[260px]">
               <DateRange
                 className="h-8"
                 defaultValue={{ from: filters.fromDate, to: filters.toDate }}
@@ -276,7 +289,7 @@ const SystemLogPage = () => {
             {/* Reset Button */}
             {(filters.userId !== 'all' ||
               filters.action !== 'all' ||
-              filters.entity !== 'all' ||
+              filters.tableName !== 'all' ||
               filters.ipAddress ||
               filters.fromDate ||
               filters.toDate) && (
