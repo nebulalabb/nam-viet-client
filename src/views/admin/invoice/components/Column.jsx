@@ -85,25 +85,13 @@ export const columns = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Khách hàng" />
     ),
-    cell: function Cell({ row, table }) {
-      const { customer, createdAt, id } = row.original
-      const rows = table.getPrePaginationRowModel().rows.map((r) => r.original)
-      const isDuplicate = rows.some(
-        (r) =>
-          r.customer.phone === customer.phone &&
-          new Date(r.createdAt).getMonth() === new Date(createdAt).getMonth() &&
-          new Date(r.createdAt).getFullYear() ===
-          new Date(createdAt).getFullYear() &&
-          r.id !== id,
-      )
+    cell: ({ row }) => {
+      const { customer } = row.original
 
       return (
         <div
-          className={`${isDuplicate
-            ? 'flex w-40 flex-col break-words bg-yellow-200 p-2'
-            : 'flex w-40 flex-col break-words'
-            }`}
-          title={customer.customerName}
+          className="flex w-40 flex-col break-words"
+          title={customer?.customerName}
         >
           <span className="font-semibold">{customer.customerName}</span>
 
@@ -225,11 +213,15 @@ export const columns = [
       const paymentStatus = invoice?.paymentStatus
       const totalAmount = parseFloat(invoice?.totalAmount || 0)
       const paidAmount = parseFloat(invoice?.paidAmount || 0)
-      const remainingAmount = totalAmount - paidAmount
+      const refundedAmount = parseFloat(invoice?.refundedAmount || 0)
+      const remainingAmount = totalAmount - paidAmount - refundedAmount
+      
+      const customerDebt = Number(invoice?.customer?.currentDebt || 0)
+      const hasPrepaidCredit = customerDebt < 0
 
-      // If fully paid
-      if (paymentStatus === 'paid' || remainingAmount <= 0) {
-        return <span className="text-green-500">Thanh toán toàn bộ</span>
+      // If fully paid or has prepaid credit
+      if (paymentStatus === 'paid' || remainingAmount <= 0 || hasPrepaidCredit) {
+        return <span className="text-green-500">{hasPrepaidCredit ? 'Đã trả trước' : 'Thanh toán toàn bộ'}</span>
       }
 
       // If partially paid
@@ -271,7 +263,11 @@ export const columns = [
       const [openUpdateStatus, setOpenUpdateStatus] = useState(false)
       const currentStatus = row.original.orderStatus
       const statusObj = statuses.find((s) => s.value === currentStatus)
-      const paymentStatus = row.original.paymentStatus || 'unpaid'
+      
+      const customerDebt = Number(row.original.customer?.currentDebt || 0)
+      const hasPrepaidCredit = customerDebt < 0
+      
+      const paymentStatus = hasPrepaidCredit ? 'paid' : (row.original.paymentStatus || 'unpaid')
       const paymentStatusObj = paymentStatuses.find(
         (s) => s.value === paymentStatus
       )
@@ -347,7 +343,7 @@ export const columns = [
                   <paymentStatusObj.icon className="h-4 w-4" />
                 ) : null}
               </span>
-              {paymentStatusObj?.label || 'Không xác định'}
+              {hasPrepaidCredit ? 'Đã trả trước' : (paymentStatusObj?.label || 'Không xác định')}
             </Badge>
 
 

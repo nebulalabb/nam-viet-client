@@ -164,7 +164,7 @@ export const supplierSlice = createSlice({
       })
       .addCase(deleteSupplier.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload || 'Lỗi không xác định'
+        state.error = action.payload?.message || action.payload || 'Lỗi không xác định'
         toast.error(state.error)
       })
       .addCase(deleteMultipleSuppliers.pending, (state) => {
@@ -176,7 +176,7 @@ export const supplierSlice = createSlice({
       })
       .addCase(deleteMultipleSuppliers.rejected, (state, action) => {
         state.loading = false
-        state.error = action.payload || 'Lỗi không xác định'
+        state.error = action.payload?.message || action.payload || 'Lỗi không xác định'
         toast.error(state.error)
       })
       .addCase(updateSupplier.pending, (state) => {

@@ -80,14 +80,14 @@ const ConfirmImportWarehouseDialog = ({
             setPurchaseOrder(actualPO)
             
             // Set default reason and notes
-            setReason(`Nhập kho từ đơn mua hàng ${actualPO.code || 'không xác định'}`)
+            setReason(`Nhập kho từ đơn mua hàng ${actualPO.poCode || actualPO.code || 'không xác định'}`)
             setNotes(actualPO.note || 'Nhập kho từ đơn mua')
             
             const initialDetailNotes = {}
             const items = actualPO.details || actualPO.items || []
             if (items) {
               items.forEach(item => {
-                initialDetailNotes[item.id] = `Nhập kho theo đơn mua ${actualPO.code || ''}`
+                initialDetailNotes[item.id] = `Nhập kho theo đơn mua ${actualPO.poCode || actualPO.code || ''}`
               })
             }
             setDetailNotes(initialDetailNotes)
@@ -227,7 +227,7 @@ const ConfirmImportWarehouseDialog = ({
           return {
             ...item,
             quantity: remaining,
-            notes: detailNotes[item.id] || reason || `Nhập kho theo đơn mua ${purchaseOrder.code}`
+            notes: detailNotes[item.id] || reason || `Nhập kho theo đơn mua ${purchaseOrder.poCode || purchaseOrder.code}`
           }
         })
 
@@ -513,15 +513,7 @@ const ConfirmImportWarehouseDialog = ({
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Ghi chú</label>
-            <Textarea 
-              placeholder="Nhập ghi chú thêm..." 
-              value={notes} 
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-            />
-          </div>
+
 
           {/* Warning for existing receipts */}
           {

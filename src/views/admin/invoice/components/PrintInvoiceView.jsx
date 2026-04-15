@@ -111,11 +111,11 @@ const PrintableContent = React.forwardRef(({ setting, invoice }, ref) => {
             <p style={{ margin: '0 0 1px 0' }}>{setting?.address || 'QL30/ấp Đông Mỹ, Mỹ Hội, Cao Lãnh, Đồng Tháp'}</p>
             {setting?.bankAccount1
               ? <p style={{ margin: '0 0 1px 0' }}>{setting.bankAccount1}</p>
-              : <p style={{ margin: '0 0 1px 0' }}>TK cá nhân - 975767788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</p>
+              : <p style={{ margin: '0 0 1px 0' }}>TK cá nhân: 975767788 - Ngân hàng ACB Chi nhánh Phòng GD Cao Lãnh</p>
             }
             {setting?.bankAccount2
               ? <p style={{ margin: '0 0 1px 0' }}>{setting.bankAccount2}</p>
-              : <p style={{ margin: '0 0 1px 0' }}>TK công ty - 08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</p>
+              : <p style={{ margin: '0 0 1px 0' }}>TK công ty: 08290639 - Ngân hàng ACB Chi nhánh Phòng GD Cao Lãnh</p>
             }
             <p style={{ margin: '0 0 1px 0', color: '#0070c0', fontWeight: 'bold' }}>
               Điện thoại: {setting?.phone || '0886357788 - 0868 759 588'}

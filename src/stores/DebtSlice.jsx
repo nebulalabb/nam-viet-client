@@ -47,9 +47,9 @@ export const extendDebt = createAsyncThunk(
 
 export const getDebtDetail = createAsyncThunk(
     'debt/getDetail',
-    async ({ id, type, year }, { rejectWithValue }) => {
+    async ({ id, type, year, from, to }, { rejectWithValue }) => {
         try {
-            const response = await api.get(`/smart-debt/${id}`, { params: { type, year } })
+            const response = await api.get(`/smart-debt/${id}`, { params: { type, year, from, to } })
             return response.data?.data || response.data
         } catch (error) {
             const message = handleError(error)

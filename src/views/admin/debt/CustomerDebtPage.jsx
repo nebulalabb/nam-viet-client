@@ -9,6 +9,9 @@ import IntegrityWidget from './components/IntegrityWidget'
 import { Button } from '@/components/custom/Button'
 import { formatCurrency } from '@/utils/number-format'
 import { exportDebtToExcel } from '@/utils/list-debt-excel-export'
+import { formatISO } from 'date-fns'
+import { SingleDatePicker } from '@/components/custom/SingleDatePicker'
+import { DatePresetFilter } from '@/components/custom/DatePresetFilter'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -45,7 +48,11 @@ const CustomerDebtPage = () => {
     const [filters, setFilters] = useState({
         page: 1,
         limit: 20,
-        year: new Date().getFullYear(),
+        year: new Date().getFullYear(), // Fallback or monthly
+        dateRange: {
+            from: undefined,
+            to: undefined
+        },
         type: 'customer',
         status: undefined,
         assignedUserId: undefined,
@@ -53,12 +60,18 @@ const CustomerDebtPage = () => {
     })
 
     // Dialog State
-    const [viewData, setViewData] = useState({ id: null, type: 'customer', year: new Date().getFullYear() })
+    const [viewData, setViewData] = useState({ id: null, type: 'customer', year: new Date().getFullYear(), from: undefined, to: undefined })
     const [isViewOpen, setIsViewOpen] = useState(false)
     const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false)
 
     const handleView = (id, type, year) => {
-        setViewData({ id: Number(id), type, year: Number(year) })
+        setViewData({ 
+            id: Number(id), 
+            type, 
+            year: filters.dateRange?.from ? filters.dateRange.from.getFullYear() : (year || new Date().getFullYear()),
+            from: filters.dateRange?.from,
+            to: filters.dateRange?.to 
+        })
         setIsViewOpen(true)
     }
 
@@ -100,6 +113,9 @@ const CustomerDebtPage = () => {
         const timer = setTimeout(() => {
             dispatch(getDebts({
                 ...filters,
+                year: filters.dateRange?.from ? filters.dateRange.from.getFullYear() : (filters.year || new Date().getFullYear()),
+                from: filters.dateRange?.from ? formatISO(filters.dateRange.from) : undefined,
+                to: filters.dateRange?.to ? formatISO(filters.dateRange.to) : undefined,
                 search: searchTerm,
                 address: addressTerm,
                 blacklist: activeTab === 'blacklist' ? 'true' : 'false'
@@ -131,7 +147,11 @@ const CustomerDebtPage = () => {
             page: 1,
             limit: 20,
             year: new Date().getFullYear(),
-            type: 'customer',
+            dateRange: {
+                from: undefined,
+                to: undefined
+            },
+            type: activeTab === 'blacklist' ? 'customer' : 'customer',
             status: undefined,
             assignedUserId: undefined,
             address: undefined
@@ -228,8 +248,8 @@ const CustomerDebtPage = () => {
                     {isAdmin && activeTab === 'aggregate' && (
                         <div className="rounded-xl border border-blue-200 bg-white shadow-sm overflow-hidden relative">
                             <div className="bg-blue-50 text-blue-800 text-xs font-bold px-4 py-2 border-b border-blue-100 flex justify-between items-center">
-                                <span>TỔNG HỢP NĂM {filters.year || new Date().getFullYear()}</span>
-                                <span className="bg-blue-100 px-2 py-0.5 rounded-full text-[10px]">Toàn kỳ</span>
+                                <span>TỔNG HỢP {filters.dateRange?.from || filters.dateRange?.to ? 'THEO KỲ' : `TẤT CẢ ({filters.year || new Date().getFullYear()})`}</span>
+                                <span className="bg-blue-100 px-2 py-0.5 rounded-full text-[10px]">{filters.dateRange?.from || filters.dateRange?.to ? 'Kỳ tùy chọn' : 'Toàn thời gian'}</span>
                             </div>
                             <div className={`grid ${filters.type === 'supplier' ? 'grid-cols-5' : 'grid-cols-6'} divide-x divide-blue-50 py-2`}>
                                 <StripCell label="NỢ ĐẦU KỲ" value={finalSummary.opening} />
@@ -264,7 +284,7 @@ const CustomerDebtPage = () => {
                     {/* Khối 2: Tháng hiện tại — tất cả đều thấy (hiển thị ở cả 2 tab) */}
                     <div className="rounded-xl border border-green-200 bg-white shadow-sm overflow-hidden relative">
                         <div className="bg-green-50 text-green-800 text-xs font-bold px-4 py-2 border-b border-green-100 flex justify-between items-center">
-                            <span>TỔNG HỢP THÁNG {monthNow}/{filters.year || new Date().getFullYear()}</span>
+                            <span>TỔNG HỢP THÁNG {monthNow}/{filters.dateRange?.from ? filters.dateRange.from.getFullYear() : (filters.year || new Date().getFullYear())}</span>
                             <span className="bg-green-100 px-2 py-0.5 rounded-full text-[10px]">hiện tại</span>
                         </div>
                         <div className={`grid ${filters.type === 'supplier' ? 'grid-cols-5' : 'grid-cols-6'} divide-x divide-green-50 py-2`}>
@@ -320,18 +340,10 @@ const CustomerDebtPage = () => {
                 {(activeTab === 'aggregate' || activeTab === 'blacklist') && (
                     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
                         <div className="flex flex-col md:flex-row gap-4">
-                            <div className="w-full md:w-[180px] relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Calendar className="h-4 w-4 text-gray-400" />
-                                </div>
-                                <input
-                                    type="number"
-                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm hover:bg-gray-50 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 block w-full pl-9 pr-8"
-                                    placeholder="Năm"
-                                    value={filters.year || ""}
-                                    onChange={(e) => updateFilter('year', e.target.value ? Number(e.target.value) : undefined)}
-                                />
-                            </div>
+                            <DatePresetFilter 
+                                dateRange={filters.dateRange}
+                                onChange={(range) => updateFilter('dateRange', range)}
+                            />
 
                             <div className="flex-1 relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -462,6 +474,8 @@ const CustomerDebtPage = () => {
                         id={viewData.id}
                         type={viewData.type}
                         year={viewData.year}
+                        from={viewData.from}
+                        to={viewData.to}
                     />
                 )}
 

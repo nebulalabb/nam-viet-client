@@ -401,7 +401,9 @@ const InvoiceSidebar = ({
                             <CommandEmpty>Không tìm thấy</CommandEmpty>
                             <CommandGroup>
                               <CommandList>
-                                {customers.map((customer) => (
+                                {customers
+                                  .filter((c) => c.status !== 'blacklisted')
+                                  .map((customer) => (
                                   <CommandItem
                                     value={`${customer.customerName || customer.name || ''} ${customer.phone || ''} ${customer.cccd || customer.identityCard || ''}`.trim()}
                                     key={customer.id}

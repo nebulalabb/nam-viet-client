@@ -98,6 +98,7 @@ const CreateManualWarehouseReceiptDialog = ({
   const [openPartnerPopover, setOpenPartnerPopover] = useState(false)
   const [inventoryMap, setInventoryMap] = useState({}) // productId -> quantity
   const [openTargetWarehousePopover, setOpenTargetWarehousePopover] = useState(false)
+  const [supplierAutoFilled, setSupplierAutoFilled] = useState(false) // Track if supplier was auto-filled from product
   const isMobile = useMediaQuery('(max-width: 768px)')
 
   const form = useForm({
@@ -117,6 +118,7 @@ const CreateManualWarehouseReceiptDialog = ({
   const receiptType = form.watch('receiptType')
   const selectedWarehouseId = form.watch('warehouseId')
   const businessType = form.watch('businessType')
+  const selectedPartnerId = form.watch('partnerId')
   const isTransferType = businessType === 'transfer_in' || businessType === 'transfer_out'
 
   // Filter business types based on receipt type
@@ -179,25 +181,58 @@ const CreateManualWarehouseReceiptDialog = ({
 
   // Filter products for dropdown
   const displayProducts = useMemo(() => {
+    let filtered = products
+    // For export: only show products with stock
     if (receiptType === 2 && selectedWarehouseId) {
-      return products.filter(p => (inventoryMap[p.id] ?? 0) > 0)
+      filtered = filtered.filter(p => (inventoryMap[p.id] ?? 0) > 0)
     }
-    return products
-  }, [products, receiptType, selectedWarehouseId, inventoryMap])
+    // For import: filter by selected supplier if one is chosen
+    if (receiptType === 1 && selectedPartnerId) {
+      const supplierIdNum = Number(selectedPartnerId)
+      filtered = filtered.filter(p => p.supplierId === supplierIdNum || p.supplier?.id === supplierIdNum)
+    }
+    return filtered
+  }, [products, receiptType, selectedWarehouseId, inventoryMap, selectedPartnerId])
 
   useEffect(() => {
     if (open) {
+      // Reset all state when dialog opens to start fresh
+      form.reset({
+        receiptType: defaultReceiptType,
+        businessType: '',
+        warehouseId: '',
+        receiptDate: new Date(),
+        actualReceiptDate: new Date(),
+        reason: '',
+        note: '',
+        partnerId: '',
+      })
+      setSelectedProducts([])
+      setSupplierAutoFilled(false)
+      setInventoryMap({})
+      setOpenProductSearch(false)
+      setOpenPartnerPopover(false)
+      setOpenTargetWarehousePopover(false)
+
+      // Fetch data if not loaded
       if (products.length === 0) dispatch(getProducts())
       if (customers.length === 0) dispatch(getCustomers())
       if (suppliers.length === 0) dispatch(getSuppliers())
       if (!warehouses || warehouses.length === 0) dispatch(getWarehouses({ limit: 1000 }))
     }
-  }, [open, dispatch, products.length, customers.length, suppliers.length])
+  }, [open])
 
   const handleAddProduct = (product) => {
     if (selectedProducts.some(p => p.productId === product.id)) {
       toast.warning('Sản phẩm này đã được chọn')
       return
+    }
+
+    // Auto-fill supplier from product if no supplier is selected (import only)
+    if (receiptType === 1 && !selectedPartnerId && product.supplierId) {
+      form.setValue('partnerId', product.supplierId.toString())
+      setSupplierAutoFilled(true)
+      toast.info(`Đã tự động chọn nhà cung cấp: ${product.supplier?.supplierName || 'NCC'}. Lần thêm tiếp theo sẽ chỉ hiện sản phẩm của nhà cung cấp này.`)
     }
 
     // Backend trả về product.unit (relation), không phải baseUnit/baseUnitId
@@ -207,8 +242,6 @@ const CreateManualWarehouseReceiptDialog = ({
     // Default movement based on receipt type
     let defaultMovement = 'in'
     if (receiptType === 2) defaultMovement = 'out' // Export
-
-
 
     setSelectedProducts(prev => [
       ...prev,
@@ -301,6 +334,7 @@ const CreateManualWarehouseReceiptDialog = ({
       // Reset & Refresh
       form.reset()
       setSelectedProducts([])
+      setSupplierAutoFilled(false)
       onOpenChange(false)
       if (onSuccess) onSuccess()
     } catch (error) {
@@ -651,7 +685,12 @@ const CreateManualWarehouseReceiptDialog = ({
                                 </div>
                                 <div className="flex flex-col flex-1 min-w-0">
                                   <span className="font-medium text-sm truncate">{product.productName || product.name}</span>
-                                  <span className="text-xs text-muted-foreground">{product.productCode || product.code} · Tồn: {(selectedWarehouseId ? inventoryMap[product.id] : product.productStocks?.[0]?.quantity) ?? 0}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {product.productCode || product.code} · Tồn: {(selectedWarehouseId ? inventoryMap[product.id] : product.productStocks?.[0]?.quantity) ?? 0}
+                                    {receiptType === 1 && !selectedPartnerId && product.supplier?.supplierName && (
+                                      <> · <span className="text-blue-600 font-medium">{product.supplier.supplierName}</span></>
+                                    )}
+                                  </span>
                                 </div>
                                 <Check
                                   className={cn(
@@ -743,9 +782,9 @@ const CreateManualWarehouseReceiptDialog = ({
 
                             {/* Row 3: Note */}
                             <div className="space-y-1 mt-2">
-                              <label className="text-[10px] text-muted-foreground uppercase">Ghi chú</label>
+                              <label className="text-[10px] font-bold text-amber-700 uppercase">Ghi chú SP</label>
                               <Input
-                                className="h-8 text-sm"
+                                className="h-8 text-sm bg-amber-50 border-amber-300 focus-visible:ring-amber-500 transition-colors"
                                 value={item.note}
                                 onChange={(e) => handleProductChange(index, 'note', e.target.value)}
                                 placeholder="Ghi chú chi tiết..."
@@ -831,7 +870,7 @@ const CreateManualWarehouseReceiptDialog = ({
                                 </TableCell>
                                 <TableCell>
                                   <Input
-                                    className="h-8"
+                                    className="h-8 bg-amber-50 border-amber-300 focus-visible:ring-amber-500 transition-colors"
                                     value={item.note}
                                     onChange={(e) => handleProductChange(index, 'note', e.target.value)}
                                     placeholder="Ghi chú..."
@@ -853,18 +892,7 @@ const CreateManualWarehouseReceiptDialog = ({
                 </div>
               </div>
 
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ghi chú</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Ghi chú thêm..." />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+
             </div>
 
             <DialogFooter className="mt-4 shrink-0">

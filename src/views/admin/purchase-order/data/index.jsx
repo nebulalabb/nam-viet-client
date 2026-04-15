@@ -12,8 +12,8 @@ const purchaseOrderStatuses = [
     value: 'pending',
     label: 'Chờ xác nhận',
     icon: Circle,
-    color: 'text-gray-500',
-    bgColor: 'bg-gray-500 text-white',
+    color: 'text-yellow-500',
+    bgColor: 'bg-yellow-500 text-white',
   },
   {
     value: 'approved',

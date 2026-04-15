@@ -236,7 +236,6 @@ const ViewWarehouseReceiptDialog = ({
       details: details // Thay thế details bằng local state đang chỉnh sửa
     }
     setPrintData(currentPrintData)
-    setTimeout(() => setPrintData(null), 100)
   }
 
 
@@ -390,30 +389,8 @@ const ViewWarehouseReceiptDialog = ({
                         </div>
                       )}
                     </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">Lý do:</span>
-                      <p className="font-medium">{receipt?.reason || 'Không có'}</p>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <span className="text-sm text-muted-foreground">Ghi chú:</span>
-                      {receipt?.status === 'draft' ? (
-                        <Textarea
-                          className="mt-1 text-sm"
-                          placeholder="Nhập ghi chú cho phiếu kho..."
-                          value={receiptNotes}
-                          onChange={(e) => setReceiptNotes(e.target.value)}
-                          rows={2}
-                        />
-                      ) : (
-                        <Textarea
-                          className="mt-1 text-sm"
-                          placeholder="Nhập ghi chú cho phiếu kho..."
-                          value={receiptNotes}
-                          onChange={(e) => setReceiptNotes(e.target.value)}
-                          rows={2}
-                        />
-                      )}
-                    </div>
+
+
                   </div>
 
                   {/* Product Details List */}
@@ -480,12 +457,13 @@ const ViewWarehouseReceiptDialog = ({
                                       />
                                     </div>
                                     <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-auto mt-1">
-                                      <label className="text-xs text-muted-foreground">Ghi chú:</label>
+                                      <label className="text-xs font-semibold text-amber-700 whitespace-nowrap">Ghi chú SP:</label>
                                       <input
                                         type="text"
-                                        className="w-32 h-8 rounded-md border text-sm text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className="w-32 md:w-48 h-8 rounded-md border-amber-300 bg-amber-50 px-2 text-xs text-right focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm transition-colors"
                                         value={detail.notes || ''}
                                         onChange={(e) => handleDetailChange(index, 'notes', e.target.value)}
+                                        placeholder="Ghi chú SP..."
                                       />
                                     </div>
                                     {(detail.product?.currentStock !== undefined && detail.product?.currentStock !== null) && (
@@ -516,10 +494,10 @@ const ViewWarehouseReceiptDialog = ({
                                         </div>
                                       )}
                                       <div className="flex items-center justify-between md:justify-end gap-2 w-full mt-1">
-                                        <label className="text-xs text-muted-foreground whitespace-nowrap">Ghi chú SP:</label>
+                                        <label className="text-xs font-semibold text-amber-700 whitespace-nowrap">Ghi chú SP:</label>
                                         <input
                                           type="text"
-                                          className="flex-1 md:w-48 h-8 rounded-md border text-xs px-2 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                                          className="flex-1 md:w-48 h-8 rounded-md border-amber-300 bg-amber-50 text-xs px-2 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm transition-colors"
                                           value={detail.notes || ''}
                                           onChange={(e) => handleDetailChange(index, 'notes', e.target.value)}
                                           placeholder="Ghi chú cho sản phẩm này..."
@@ -872,6 +850,7 @@ const ViewWarehouseReceiptDialog = ({
           displayTransferWarehouse={displayTransferWarehouse}
           isTransferIn={isTransferIn}
           isTransferOut={isTransferOut}
+          onAfterPrint={() => setPrintData(null)}
         />
 
       )}

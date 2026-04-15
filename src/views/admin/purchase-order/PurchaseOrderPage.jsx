@@ -1,4 +1,6 @@
 import { Layout, LayoutBody } from '@/components/custom/Layout'
+import { Button } from '@/components/custom/Button'
+import { Cross2Icon } from '@radix-ui/react-icons'
 import { getPurchaseOrders } from '@/stores/PurchaseOrderSlice'
 import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -24,8 +26,8 @@ const PurchaseOrderPage = () => {
   const current = new Date()
 
   const [filters, setFilters] = useState({
-    fromDate: addHours(startOfDay(startOfMonth(current)), 12),
-    toDate: addHours(endOfDay(endOfMonth(current)), 0),
+    fromDate: null,
+    toDate: null,
   })
 
   // Pagination state
@@ -89,7 +91,7 @@ const PurchaseOrderPage = () => {
               Danh sách đơn đặt hàng
             </h2>
           </div>
-          <div className="w-full sm:w-auto">
+          <div className="w-full sm:w-auto flex items-center gap-2">
             <DateRange
               defaultValue={{
                 from: filters?.fromDate,
@@ -101,13 +103,29 @@ const PurchaseOrderPage = () => {
                   ...prev,
                   fromDate: range?.from
                     ? addHours(startOfDay(range.from), 12)
-                    : addHours(startOfDay(startOfMonth(current)), 12),
+                    : null,
                   toDate: range?.to
                     ? addHours(endOfDay(range.to), 0)
-                    : addHours(endOfDay(endOfMonth(current)), 0),
+                    : null,
                 }))
               }}
             />
+            {/* Show clear filter button if any filters are active */}
+            {(filters?.fromDate != null || filters?.toDate != null || search || columnFilters.length > 0) && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setFilters({ fromDate: null, toDate: null })
+                  setSearch('')
+                  setColumnFilters([])
+                  setPageIndex(0)
+                }}
+                className="h-10 px-2 lg:px-3 whitespace-nowrap"
+              >
+                Bỏ lọc
+                <Cross2Icon className="ml-2 h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
         <div className="-mx-4 flex-1 overflow-auto px-1 sm:px-4 py-1 lg:flex-row lg:space-x-12 lg:space-y-0">

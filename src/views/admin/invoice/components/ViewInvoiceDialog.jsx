@@ -166,6 +166,26 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
     return isFully;
   }, [invoice]);
 
+  const refundedAmount = useMemo(() => {
+    const postedRefundReceipts = invoice?.warehouseReceipts?.filter(
+      r => r.isPosted && r.receiptType === 1 && r.referenceType === 'sale_refunds'
+    ) || []
+
+    if (!postedRefundReceipts.length || !invoice?.details?.length) return 0;
+    
+    let total = 0;
+    postedRefundReceipts.forEach(receipt => {
+      receipt.details?.forEach(rd => {
+        const invoiceItem = invoice.details.find(id => String(id.productId) === String(rd.productId));
+        if (invoiceItem && Number(invoiceItem.quantity) > 0) {
+          const itemEffectivePrice = Number(invoiceItem.total || invoiceItem.totalAmount || 0) / Number(invoiceItem.quantity);
+          total += Number(rd.qtyActual || rd.quantity || 0) * itemEffectivePrice;
+        }
+      });
+    });
+    return total;
+  }, [invoice]);
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
@@ -884,12 +904,13 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                             const postedReceipts = invoice?.paymentReceipts?.filter(r => r.isPosted) || []
                             const totalPaidPosted = postedReceipts.reduce((sum, r) => sum + Number(r.amount || 0), 0)
                             const invoiceTotal = Number(invoice?.totalAmount || 0)
-                            const unpaidThisInvoice = invoiceTotal - totalPaidPosted
+                            const unpaidThisInvoice = invoiceTotal - totalPaidPosted - refundedAmount
                             const oldDebt = customerDebt - unpaidThisInvoice
                             const prepaidCredit = oldDebt < 0 ? Math.abs(oldDebt) : 0
                             const displayOldDebt = oldDebt > 0 ? oldDebt : 0
                             const effectiveTotalPaid = totalPaidPosted + prepaidCredit
-                            const totalDebt = displayOldDebt + invoiceTotal - effectiveTotalPaid
+                            const totalDebt = displayOldDebt + invoiceTotal - effectiveTotalPaid - refundedAmount
+                            const displayRemaining = invoiceTotal - (Number(invoice?.paidAmount || 0) + refundedAmount);
                             return (
                           <div className="space-y-3">
                             <div className="flex justify-between">
@@ -925,6 +946,15 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                               </div>
                             )}
 
+                            {refundedAmount > 0 && (
+                              <div className="flex justify-between">
+                                <strong>Đã hoàn trả:</strong>
+                                <span className="font-medium text-purple-600">
+                                  {moneyFormat(refundedAmount)}
+                                </span>
+                              </div>
+                            )}
+
                             {hasPrepaidCredit ? (
                               <>
                                 <div className="flex justify-between">
@@ -940,14 +970,21 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                                   </span>
                                 </div>
                               </>
-                            ) : invoice?.remainingAmount > 0 && (
+                            ) : displayRemaining > 0 ? (
                               <div className="flex justify-between">
                                 <strong>Còn lại:</strong>
                                 <span className="font-medium text-red-600">
-                                  {moneyFormat(invoice.remainingAmount || 0)}
+                                  {moneyFormat(displayRemaining)}
                                 </span>
                               </div>
-                            )}
+                            ) : displayRemaining < 0 ? (
+                              <div className="flex justify-between">
+                                <strong>Còn lại (thừa):</strong>
+                                <span className="font-medium text-green-600">
+                                  +{moneyFormat(Math.abs(displayRemaining))}
+                                </span>
+                              </div>
+                            ) : null}
 
                             {invoice?.paymentMethod && (
                               <div className="flex justify-between">

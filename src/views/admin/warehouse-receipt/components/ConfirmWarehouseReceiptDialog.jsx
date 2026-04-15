@@ -375,11 +375,33 @@ const ConfirmWarehouseReceiptDialog = ({
     )
     const distinctProductsInStock = [...new Set(productsInStock.map(p => p.productId || p.product?.id))].filter(id => !!id).length
 
+    // Build the string to display actual products and quantities
+    const itemsDisplay = []
+    invoiceProducts.forEach(item => {
+      const pId = item.productId || item.product?.id
+      if (!pId) return
+
+      const inv = warehouseInv.find(i => (i.productId || i.product?.id) === Number(pId))
+      if (inv) {
+        const qty = Number(inv.quantity) - Number(inv.reservedQuantity)
+        if (qty > 0) {
+          if (!itemsDisplay.some(d => d.id === pId)) {
+            itemsDisplay.push({
+              id: pId,
+              name: item.product?.productName || item.productName || 'Sản phẩm',
+              qty: qty
+            })
+          }
+        }
+      }
+    })
+
     return {
       availableCount: distinctProductsInStock,
       totalCount: totalDistinctProducts,
       hasSome: distinctProductsInStock > 0,
       isFullyAvailable: distinctProductsInStock === totalDistinctProducts && totalDistinctProducts > 0,
+      itemsDisplay
     }
   }
 
@@ -453,10 +475,12 @@ const ConfirmWarehouseReceiptDialog = ({
                         {stockStatus ? (
                           <div className={`mt-0.5 flex items-center gap-1.5 text-[11px] ${stockStatus.availableCount > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
                             {stockStatus.availableCount > 0 ? (
-                              <>
-                                <Check className="h-3 w-3" />
-                                <span>Sẵn có {stockStatus.availableCount}/{stockStatus.totalCount} loại sản phẩm</span>
-                              </>
+                              <div className="flex items-start gap-1.5 max-w-[500px]">
+                                <Check className="h-3 w-3 shrink-0 mt-0.5" />
+                                <span className="truncate whitespace-normal leading-tight">
+                                  Sẵn có: {stockStatus.itemsDisplay.map(d => `${d.name} (${d.qty})`).join(', ')}
+                                </span>
+                              </div>
                             ) : (
                               <span>Không có sẵn sản phẩm nào trong đơn hàng</span>
                             )}
@@ -766,15 +790,7 @@ const ConfirmWarehouseReceiptDialog = ({
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Ghi chú</label>
-            <Textarea
-              placeholder="Nhập ghi chú thêm..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-            />
-          </div>
+
 
           <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
             <p className="font-medium text-xs">⚠️ Lưu ý:</p>

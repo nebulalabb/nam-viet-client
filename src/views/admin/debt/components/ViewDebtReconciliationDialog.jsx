@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { format } from 'date-fns'
+import { format, formatISO } from 'date-fns'
 import {
     Mail, User, Phone, MapPin,
     RefreshCw, DatabaseZap, Calendar,
@@ -25,6 +25,9 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogClose } fr
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table'
 import { Button } from '@/components/custom/Button'
+import { SingleDatePicker } from '@/components/custom/SingleDatePicker'
+import { DatePresetFilter } from '@/components/custom/DatePresetFilter'
+import { getPublicUrl } from '@/utils/file'
 
 import { getDebtDetail, syncSnapBatch, syncFullBatch, clearDebtDetail } from '@/stores/DebtSlice'
 import ViewInvoiceDialog from '@/views/admin/invoice/components/ViewInvoiceDialog'
@@ -34,10 +37,15 @@ export function ViewDebtReconciliationDialog({
     onClose,
     id,
     type,
-    year
+    year,
+    from,
+    to
 }) {
     const dispatch = useDispatch()
-    const [selectedYear, setSelectedYear] = useState(year || new Date().getFullYear())
+    const [dateRange, setDateRange] = useState({
+        from: from ? new Date(from) : undefined,
+        to: to ? new Date(to) : undefined
+    })
 
     const debtDetail = useSelector(state => state.debt.debtDetail)
     const isLoading = useSelector(state => state.debt.loading)
@@ -45,28 +53,45 @@ export function ViewDebtReconciliationDialog({
     const [viewInvoiceId, setViewInvoiceId] = useState(null)
 
     useEffect(() => {
-        if (year) setSelectedYear(year)
-    }, [year])
+        if (isOpen) {
+            setDateRange({
+                from: from ? new Date(from) : undefined,
+                to: to ? new Date(to) : undefined
+            })
+        }
+    }, [isOpen, from, to])
 
     useEffect(() => {
         if (isOpen && id && type) {
-            dispatch(getDebtDetail({ id, type, year: selectedYear }))
+            dispatch(getDebtDetail({ 
+                id, 
+                type, 
+                year: dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear()),
+                from: dateRange?.from ? formatISO(dateRange.from) : undefined,
+                to: dateRange?.to ? formatISO(dateRange.to) : undefined
+            }))
         } else {
             dispatch(clearDebtDetail())
         }
-    }, [isOpen, id, type, selectedYear, dispatch])
+    }, [isOpen, id, type, dateRange, dispatch])
 
     const data = debtDetail?.info ? debtDetail : null
 
     const handleSyncSnap = () => {
         if (!data || !id) return
-        if (confirm(`Tính lại số liệu NĂM ${selectedYear} cho khách hàng này?`)) {
+        if (confirm(`Tính lại số liệu cho khách hàng này?`)) {
             dispatch(syncSnapBatch({
-                year: selectedYear,
+                year: dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear()),
                 customerId: type === 'customer' ? id : undefined,
                 supplierId: type === 'supplier' ? id : undefined,
             })).then(() => {
-                dispatch(getDebtDetail({ id, type, year: selectedYear }))
+                dispatch(getDebtDetail({ 
+                    id, 
+                    type, 
+                    year: dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear()),
+                    from: dateRange?.from ? formatISO(dateRange.from) : undefined,
+                    to: dateRange?.to ? formatISO(dateRange.to) : undefined
+                }))
             })
         }
     }
@@ -75,34 +100,48 @@ export function ViewDebtReconciliationDialog({
         if (!data || !id) return
         if (confirm(`⚠️ QUÉT LẠI TOÀN BỘ LỊCH SỬ?\n\nHành động này sẽ tính toán lại từ đầu. Có thể mất thời gian.`)) {
             dispatch(syncFullBatch({
-                year: selectedYear,
+                year: dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear()),
                 customerId: type === 'customer' ? id : undefined,
                 supplierId: type === 'supplier' ? id : undefined,
             })).then(() => {
-                dispatch(getDebtDetail({ id, type, year: selectedYear }))
+                dispatch(getDebtDetail({ 
+                    id, 
+                    type, 
+                    year: dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear()),
+                    from: dateRange?.from ? formatISO(dateRange.from) : undefined,
+                    to: dateRange?.to ? formatISO(dateRange.to) : undefined 
+                }))
             })
         }
     }
 
     const refetch = () => {
-        if (id && type) dispatch(getDebtDetail({ id, type, year: selectedYear }))
+        if (id && type) dispatch(getDebtDetail({ 
+            id, 
+            type, 
+            year: dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear()),
+            from: dateRange?.from ? formatISO(dateRange.from) : undefined,
+            to: dateRange?.to ? formatISO(dateRange.to) : undefined 
+        }))
     }
 
     const handleExportExcel = () => {
         if (!data) return;
-        const fileName = `DoiChieuCongNo_${data.info?.name || ''}_${selectedYear}`.replace(/\s+/g, '_');
+        const currentYear = dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear());
+        const fileName = `DoiChieuCongNo_${data.info?.name || ''}_${currentYear}`.replace(/\s+/g, '_');
         exportToExcel(data, fileName);
     }
 
     const handleExportWord = () => {
         if (!data) return;
-        const fileName = `DoiChieuCongNo_${data.info?.name || ''}_${selectedYear}`.replace(/\s+/g, '_');
+        const currentYear = dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear());
+        const fileName = `DoiChieuCongNo_${data.info?.name || ''}_${currentYear}`.replace(/\s+/g, '_');
         exportToWord(data, fileName);
     }
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
-        documentTitle: `DoiChieuCongNo_${data?.info?.name || ''}_${selectedYear}`
+        documentTitle: `DoiChieuCongNo_${data?.info?.name || ''}_${dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear())}`
     })
 
     return (
@@ -180,19 +219,13 @@ export function ViewDebtReconciliationDialog({
                             {/* ROW 2: CUSTOMER INFO & METADATA */}
                             <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
                                 <div className="absolute top-4 right-5 flex items-center gap-2">
-                                    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5">
+                                    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-md px-2 py-1">
                                         <Calendar className="h-4 w-4 text-gray-500" />
                                         <span className="text-sm font-medium text-gray-600">Kỳ dữ liệu:</span>
-                                        <select
-                                            value={selectedYear}
-                                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                            className="bg-transparent text-sm font-bold text-gray-900 focus:outline-none cursor-pointer hover:text-blue-600"
-                                        >
-                                            {Array.from({ length: 5 }).map((_, i) => {
-                                                const y = new Date().getFullYear() - i
-                                                return <option key={y} value={y}>{y}</option>
-                                            })}
-                                        </select>
+                                        <DatePresetFilter 
+                                            dateRange={dateRange}
+                                            onChange={(range) => setDateRange(range)}
+                                        />
                                     </div>
                                 </div>
 
@@ -285,7 +318,7 @@ export function ViewDebtReconciliationDialog({
                     <ReconciliationPrintTemplate
                         ref={componentRef}
                         data={data}
-                        year={selectedYear}
+                        year={dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear())}
                     />
                 </div>
 
@@ -300,7 +333,13 @@ export function ViewDebtReconciliationDialog({
                         showTrigger={false}
                         onSuccess={() => {
                             // Refresh debt detail sau khi thay đổi
-                            if (id && type) dispatch(getDebtDetail({ id, type, year: selectedYear }))
+                            if (id && type) dispatch(getDebtDetail({ 
+                                id, 
+                                type, 
+                                year: dateRange?.from ? dateRange.from.getFullYear() : (year || new Date().getFullYear()),
+                                from: dateRange?.from ? formatISO(dateRange.from) : undefined,
+                                to: dateRange?.to ? formatISO(dateRange.to) : undefined
+                            }))
                         }}
                     />
                 )}
@@ -352,38 +391,59 @@ function TabItem({ value, label, icon: Icon, count }) {
 function ProductHistoryTable({ data }) {
     if (!data || data.length === 0) return <EmptyState />
 
+    const aggregated = data.reduce((acc, item) => {
+        const key = item.productId;
+        if (!acc[key]) {
+            acc[key] = {
+                productId: item.productId,
+                productName: item.productName,
+                sku: item.sku,
+                image: item.image,
+                quantity: 0,
+                price: item.price,
+                totalAmount: 0 
+            };
+        }
+        acc[key].quantity += item.quantity;
+        acc[key].totalAmount += (item.quantity * item.price);
+        return acc;
+    }, {});
+
+    const aggregatedArray = Object.values(aggregated).sort((a, b) => b.totalAmount - a.totalAmount);
+
     return (
         <div className="overflow-x-auto">
             <Table>
                 <TableHeader className="bg-gray-50/50">
                     <TableRow>
                         <TableHead className="pl-6 w-[300px]">Sản phẩm</TableHead>
-                        <TableHead>Ngày mua</TableHead>
-                        <TableHead>Mã đơn</TableHead>
-                        <TableHead className="text-right">SL</TableHead>
+                        <TableHead className="text-right">Số lượng</TableHead>
                         <TableHead className="text-right">Đơn giá</TableHead>
                         <TableHead className="text-right pr-6">Thành tiền</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {data.map((item, idx) => (
+                    {aggregatedArray.map((item, idx) => (
                         <TableRow key={idx} className="hover:bg-gray-50/50">
                             <TableCell className="pl-6 align-top">
-                                <div className="font-medium text-gray-900">{item.productName}</div>
-                                <div className="text-xs text-gray-500 font-mono mt-0.5">{item.sku}</div>
-                            </TableCell>
-                            <TableCell className="text-gray-600 text-xs">
-                                {format(new Date(item.date), "dd/MM/yyyy")}
-                            </TableCell>
-                            <TableCell>
-                                <div className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-                                    {item.orderCode}
+                                <div className="flex items-start gap-3">
+                                    <div className="h-10 w-10 rounded-md border border-gray-200 bg-white grid place-items-center shrink-0 overflow-hidden">
+                                        {item.image ? (
+                                            <img src={getPublicUrl(item.image)} alt={item.sku} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <ShoppingBag className="h-4 w-4 text-gray-300" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-gray-900 line-clamp-2" title={item.productName}>{item.productName}</div>
+                                        <div className="text-xs text-gray-500 font-mono mt-0.5">{item.sku}</div>
+                                    </div>
                                 </div>
                             </TableCell>
                             <TableCell className="text-right font-medium">{item.quantity}</TableCell>
                             <TableCell className="text-right text-gray-600 text-xs">{formatCurrency(item.price)}</TableCell>
                             <TableCell className="text-right font-bold text-gray-900 pr-6">
-                                {formatCurrency(item.quantity * item.price)}
+                                {formatCurrency(item.totalAmount)}
                             </TableCell>
                         </TableRow>
                     ))}

@@ -70,9 +70,9 @@ const PrintableContent = React.forwardRef(({ setting, receipt, isTransferType, d
         <div className="flex-1">
           <h1 className="text-xl font-bold uppercase mb-1 text-red-600">{setting?.brandName || 'CÔNG TY CỔ PHẦN HÓA SINH NAM VIỆT'}</h1>
           <p className="mb-0.5 leading-tight text-green-700 font-semibold text-[13px]">{setting?.address || 'Quốc Lộ 30, ấp Đông Mỹ, xã Mỹ Thọ, tỉnh Đồng Tháp.'}</p>
-          <div className="mb-0.5 text-blue-700 font-bold text-[11px] leading-[1.1] flex flex-col items-center italic">
-            <div className="mb-[1px]">TK cá nhân - 975767788 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
-            <div>TK công ty - 08290639 - ngân hàng ACB chi nhánh phòng GD cao lãnh</div>
+          <div className="mb-0.5 text-blue-700 font-semibold text-[13px] leading-tight">
+            <div className="mb-[1px]">TK cá nhân: 975767788 - Ngân hàng ACB Chi nhánh Phòng GD Cao Lãnh</div>
+            <div>TK công ty: 08290639 - Ngân hàng ACB Chi nhánh Phòng GD Cao Lãnh</div>
           </div>
           <p className="mb-0.5 leading-tight text-blue-700 font-semibold text-[13px]">
             Điện thoại: {setting?.phone ? (setting.phone.includes("0868") ? setting.phone : setting.phone + " - 0868 759 588") : "088 635 7788 - 0868 759 588"} 
@@ -93,7 +93,7 @@ const PrintableContent = React.forwardRef(({ setting, receipt, isTransferType, d
       <div className="mb-4">
         <div className="flex text-fuchsia-600 font-semibold">
           <span className="w-40">{isTransferIn ? 'Kho xuất:' : isTransferOut ? 'Kho nhận:' : isImport ? 'Nhà cung cấp:' : 'Cty/Hộ kinh doanh:'}</span>
-          <span className="uppercase">{isTransferType ? displayTransferWarehouse?.warehouseName : receipt?.partnerName || receipt?.supplier?.name || receipt?.customer?.customerName || ''}</span>
+          <span className="uppercase">{isTransferType ? displayTransferWarehouse?.warehouseName : receipt?.partnerName || receipt?.supplier?.supplierName || receipt?.supplier?.name || receipt?.customer?.customerName || ''}</span>
         </div>
         <div className="flex mt-1 text-green-600 font-semibold">
           <span className="w-40">Địa chỉ:</span>
@@ -113,7 +113,7 @@ const PrintableContent = React.forwardRef(({ setting, receipt, isTransferType, d
             <th className="border border-black p-1 text-center font-bold">Tên sản phẩm</th>
             <th className="border border-black p-1 text-center font-bold w-20">ĐVT</th>
             <th className="border border-black p-1 text-center font-bold w-24">SL</th>
-            <th className="border border-black p-1 text-center font-bold w-28">Ghi chú</th>
+            <th className="border border-black p-1 text-center font-bold w-28">Ghi chú SP</th>
           </tr>
         </thead>
         <tbody>
@@ -137,12 +137,7 @@ const PrintableContent = React.forwardRef(({ setting, receipt, isTransferType, d
         </tbody>
       </table>
 
-      {/* Ghi chú Invoice */}
-      <div className="mb-8">
-        <p className="text-red-600 italic text-sm font-semibold">
-          Ghi chú: {receipt?.notes || receipt?.note || 'Hóa đơn sẽ được xuất khi khách nhận đủ và thanh toán hết đơn hàng.'}
-        </p>
-      </div>
+
 
       {/* Date & Signatures */}
       <div className="flex justify-end mb-2">

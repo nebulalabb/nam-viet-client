@@ -95,8 +95,9 @@ const UpdateInvoiceStatusDialog = ({
       // Luôn cho phép hiển thị trạng thái hiện tại để Select UI ăn đúng defaultValue 
       if (s.value === currentStatus) return true
 
-      // Hide 'completed' status as it is automated
-      if (s.value === 'completed') return false
+      // Hide 'completed' status only if not currently 'completed'
+      // Removing this restriction allows users to manually trigger the complete check
+      // if (s.value === 'completed') return false
 
       // Hidden status "delivering" if "isPickupOrder" is true
       if (isPickupOrder && s.value === 'delivering') return false

@@ -28,7 +28,8 @@ import { ActivityLogWidget } from './components/ActivityLogWidget'
 import { useDashboardSocket } from '../../../hooks/useDashboardSocket'
 import { KPIDetailDialog } from './components/KPIDetailDialog'
 import { TodayStatsBar } from './components/TodayStatsBar'
-import { RevenueTargetWidget } from './components/RevenueTargetWidget'
+import { TopProductsPieWidget } from './components/TopProductsPieWidget'
+import { TopExportedWidget } from './components/TopExportedWidget'
 import { DashboardHeader } from './components/DashboardHeader'
 
 // Map of Widget IDs to their component renders, now accepting data props
@@ -42,12 +43,12 @@ const renderWidgetContent = (widgetId, { kpi, charts, recent, alerts, loading, o
       return <MetricCard title="Công nợ phải thu" value={`${new Intl.NumberFormat('vi-VN').format(kpi?.debt?.receivables || 0)} ₫`} trend={kpi?.debt?.growth_percent >= 0 ? "up" : "down"} trendValue={Math.abs(kpi?.debt?.growth_percent || 0)} icon={CreditCard} loading={loading} onClick={() => onOpenDialog('debt')} widgetId="debts-kpi" />
     case 'production-kpi':
       return <MetricCard title="Lệnh SX đang chạy" value={kpi?.production?.active || 0} trend={kpi?.production?.growth_percent >= 0 ? "up" : "down"} trendValue={Math.abs(kpi?.production?.growth_percent || 0)} icon={Activity} loading={loading} onClick={() => onOpenDialog('production')} widgetId="production-kpi" />
-    case 'revenue-target':
-      return <RevenueTargetWidget currentRevenue={kpi?.revenue?.current} loading={loading} />
+    case 'top-products-pie':
+      return <TopProductsPieWidget />
     case 'revenue-chart':
       return <RevenueChart initialData={charts?.revenue_trend} />
-    case 'sales-channel-chart':
-      return <SalesChannelChart data={charts?.sales_channels} />
+    case 'top-exported-chart':
+      return <TopExportedWidget />
     case 'inventory-chart':
       return <InventoryByTypeChart data={charts?.inventory_share} />
     case 'activity-log':
@@ -148,10 +149,10 @@ const DashboardPage = () => {
   const renderWidget = (widget) => {
     // Determine grid span based on widget type
     let colSpanClass = 'col-span-12'
-    if (widget.id === 'revenue-target') colSpanClass = 'col-span-12 sm:col-span-6 lg:col-span-4'
+    if (widget.id === 'top-products-pie') colSpanClass = 'col-span-12 sm:col-span-6 lg:col-span-4'
     else if (widget.type === 'kpi') colSpanClass = 'col-span-12 sm:col-span-6 lg:col-span-3'
     else if (widget.id === 'revenue-chart') colSpanClass = 'col-span-12 lg:col-span-8'
-    else if (widget.id === 'sales-channel-chart') colSpanClass = 'col-span-12 lg:col-span-4'
+    else if (widget.id === 'top-exported-chart') colSpanClass = 'col-span-12 lg:col-span-4'
     else if (widget.id === 'inventory-chart') colSpanClass = 'col-span-12 xl:col-span-4'
     else if (widget.id === 'activity-log') colSpanClass = 'col-span-12 lg:col-span-4 xl:col-span-4'
     else if (widget.id === 'alerts-section') colSpanClass = 'col-span-12 lg:col-span-8 xl:col-span-8'

@@ -118,11 +118,11 @@ const FinancialLedgerPrintTemplate = React.forwardRef(
                                             <p style={{ margin: '0 0 1px 0' }}>{setting?.address || 'QL30/ấp Đông Mỹ, Mỹ Hội, Cao Lãnh, Đồng Tháp'}</p>
                                             {setting?.bankAccount1
                                                 ? <p style={{ margin: '0 0 1px 0' }}>{setting.bankAccount1}</p>
-                                                : <p style={{ margin: '0 0 1px 0' }}>TK cá nhân: 975767788 - ACB Cao Lãnh</p>
+                                                : <p style={{ margin: '0 0 1px 0' }}>TK cá nhân: 975767788 - Ngân hàng ACB Chi nhánh Phòng GD Cao Lãnh</p>
                                             }
                                             {setting?.bankAccount2
                                                 ? <p style={{ margin: '0 0 1px 0' }}>{setting.bankAccount2}</p>
-                                                : <p style={{ margin: '0 0 1px 0' }}>TK CT: 08290639 - ACB Cao Lãnh</p>
+                                                : <p style={{ margin: '0 0 1px 0' }}>TK công ty: 08290639 - Ngân hàng ACB Chi nhánh Phòng GD Cao Lãnh</p>
                                             }
                                             <p style={{ margin: 0, color: '#0070c0', fontWeight: 'bold' }}>
                                                 ĐT: {setting?.phone || '0886 357 788 — 0868 759 588'}

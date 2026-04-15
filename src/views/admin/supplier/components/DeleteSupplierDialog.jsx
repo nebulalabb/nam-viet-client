@@ -39,7 +39,13 @@ const DeleteSupplierDialog = ({ supplier, showTrigger = true, contentClassName, 
           <DialogTitle>Bạn chắc chắn thực hiện hành động này?</DialogTitle>
           <DialogDescription>
             Hành động này không thể hoàn tác. Nhà cung cấp:{' '}
-            <strong>{supplier.name}</strong> sẽ bị xóa
+            <strong>{supplier.name || supplier.supplierName}</strong> sẽ bị xóa.
+            {supplier?._count?.products > 0 && (
+              <div className="mt-2 text-destructive">
+                Nhà cung cấp này đang có <strong>{supplier._count.products}</strong> sản phẩm.
+                Nếu ấn xác nhận, hệ thống sẽ xóa nhà cung cấp và các sản phẩm của họ (sản phẩm còn tồn kho sẽ được giữ lại).
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:space-x-0">

@@ -44,7 +44,7 @@ export function DeleteMultipleWarehousesDialog({
     selectedRows = [],
 }) {
     const dispatch = useDispatch()
-    const [step, setStep] = useState('idle') // idle | checking | hasInventory | noInventory
+    const [step, setStep] = useState('idle') // idle | checking | hasInventory | hasTransactions | noInventory
     const [inventoryData, setInventoryData] = useState([])
     const [loading, setLoading] = useState(false)
     const [deleting, setDeleting] = useState(false)
@@ -71,7 +71,8 @@ export function DeleteMultipleWarehousesDialog({
             setInventoryData(data)
 
             const hasInventory = data.some((w) => w.hasInventory)
-            setStep(hasInventory ? 'hasInventory' : 'noInventory')
+            const hasTransactions = data.some((w) => w.hasTransactions)
+            setStep(hasInventory ? 'hasInventory' : (hasTransactions ? 'hasTransactions' : 'noInventory'))
         } catch (error) {
             toast.error('Không thể kiểm tra tồn kho: ' + (error?.message || 'Lỗi không xác định'))
             onOpenChange(false)
@@ -85,7 +86,7 @@ export function DeleteMultipleWarehousesDialog({
         try {
             const ids = selectedRows.map((row) => row.original.id)
             await dispatch(deleteMultipleWarehouses({ ids, force: true })).unwrap()
-            toast.success(`Đã xóa thành công ${ids.length} kho hàng (bao gồm tồn kho)`)
+            toast.success(`Đã xóa thành công ${ids.length} kho hàng (bao gồm dữ liệu liên quan)`)
             dispatch(getWarehouses({ page: 1, limit: 10 }))
             onConfirm?.()
             onOpenChange(false)
@@ -313,7 +314,54 @@ export function DeleteMultipleWarehousesDialog({
         )
     }
 
-    // Step: No inventory - simple confirmation
+    // Step: Has transactions - show warning
+    if (step === 'hasTransactions') {
+        const warehousesWithTransactions = inventoryData.filter((w) => w.hasTransactions)
+
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader className="pb-2">
+                        <DialogTitle className="flex items-center gap-2 text-amber-600">
+                            <IconAlertTriangle className="h-6 w-6 text-amber-500" />
+                            Cảnh báo: Kho có lịch sử giao dịch!
+                        </DialogTitle>
+                        <DialogDescription className="text-sm pt-1">
+                            Có <span className="font-semibold text-amber-600">{warehousesWithTransactions.length}</span> kho
+                            đang có <span className="font-semibold">lịch sử giao dịch, nhập/xuất hoặc hóa đơn</span> liên quan.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 my-2">
+                        <p className="text-sm text-red-700 font-medium leading-relaxed">
+                            Việc xóa các kho này sẽ <span className="font-bold underline">XÓA VĨNH VIỄN</span> toàn bộ
+                            lịch sử giao dịch tồn kho, luân chuyển và các hóa đơn liên đới. Bạn có chắc chắn muốn buộc xóa (Force Delete)?
+                        </p>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            disabled={deleting}
+                        >
+                            Hủy bỏ
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleForceDelete}
+                            loading={deleting}
+                        >
+                            <IconTrash className="mr-2 h-4 w-4" />
+                            Xác nhận buộc xóa
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+    }
+
+    // Step: No inventory and no transactions - simple confirmation
     if (step === 'noInventory') {
         return (
             <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -323,7 +371,7 @@ export function DeleteMultipleWarehousesDialog({
                         <AlertDialogDescription>
                             Bạn đang chuẩn bị xóa{' '}
                             <span className="font-semibold text-foreground">{count}</span> kho hàng đã chọn.
-                            Các kho này hiện không có sản phẩm tồn kho.
+                            Các kho này hiện không có sản phẩm tồn kho hay lịch sử giao dịch.
                             Hành động này không thể hoàn tác.
                         </AlertDialogDescription>
                     </AlertDialogHeader>

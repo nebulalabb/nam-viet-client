@@ -636,10 +636,10 @@ const UpdateWarehouseReceiptDialog = ({
                               </div>
 
                               {/* Row 4: Note */}
-                              <div className="space-y-1">
-                                <label className="text-[10px] text-muted-foreground uppercase">Ghi chú</label>
+                              <div className="space-y-1 mt-2">
+                                <label className="text-[10px] font-bold text-amber-700 uppercase">Ghi chú SP</label>
                                 <Input
-                                  className="h-8 text-sm"
+                                  className="h-8 text-sm bg-amber-50 border-amber-300 focus-visible:ring-amber-500 transition-colors"
                                   value={item.note}
                                   onChange={(e) => handleProductChange(index, 'note', e.target.value)}
                                   placeholder="Ghi chú chi tiết..."
@@ -726,7 +726,7 @@ const UpdateWarehouseReceiptDialog = ({
 
                                   <TableCell>
                                     <Input
-                                      className="h-8"
+                                      className="h-8 bg-amber-50 border-amber-300 focus-visible:ring-amber-500 transition-colors"
                                       value={item.note}
                                       onChange={(e) => handleProductChange(index, 'note', e.target.value)}
                                       placeholder="Ghi chú..."
@@ -747,18 +747,7 @@ const UpdateWarehouseReceiptDialog = ({
                   </div>
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="note"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ghi chú chung</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Ghi chú thêm..." />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+
               </div>
 
               <DialogFooter className="mt-4 shrink-0">
