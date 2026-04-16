@@ -18,7 +18,7 @@ const Table = React.forwardRef(({ className, wrapperClassName, ...props }, ref) 
 Table.displayName = 'Table'
 
 const TableHeader = React.forwardRef(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('[&_tr]:border-b', className)} {...props} />
+  <thead ref={ref} className={cn('[&_tr]:border-b-2 !border-slate-200/70 dark:!border-slate-800 !bg-slate-50/70 dark:!bg-slate-800/40 backdrop-blur-sm', className)} {...props} />
 ))
 TableHeader.displayName = 'TableHeader'
 
@@ -47,7 +47,7 @@ const TableRow = React.forwardRef(({ className, ...props }, ref) => (
   <tr
     ref={ref}
     className={cn(
-      'border-b border-gray-100/80 dark:border-zinc-800 transition-colors hover:bg-emerald-50/40 dark:hover:bg-zinc-800/50 data-[state=selected]:bg-emerald-50 dark:data-[state=selected]:bg-zinc-800',
+      'border-b border-slate-100/80 dark:border-slate-800 transition-all duration-200 hover:bg-blue-50/50 hover:shadow-[inset_4px_0_0_0_rgba(59,130,246,0.5)] dark:hover:bg-slate-800/50 hover:-translate-y-[0.5px] hover:z-10 relative data-[state=selected]:bg-indigo-50/80 dark:data-[state=selected]:bg-indigo-900/30 data-[state=selected]:shadow-[inset_4px_0_0_0_rgba(99,102,241,1)]',
       className,
     )}
     {...props}
@@ -59,7 +59,7 @@ const TableHead = React.forwardRef(({ className, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      'h-12 px-4 text-left align-middle font-semibold uppercase tracking-wider text-xs text-slate-500 dark:text-slate-400 [&:has([role=checkbox])]:pr-0',
+      'h-12 px-4 text-left align-middle font-bold uppercase tracking-widest text-[11px] text-slate-500/90 dark:text-slate-400 [&:has([role=checkbox])]:pr-0',
       className,
     )}
     {...props}
@@ -71,7 +71,7 @@ const TableCell = React.forwardRef(({ className, ...props }, ref) => (
   <td
     ref={ref}
     className={cn(
-      'p-4 align-middle text-gray-700 dark:text-gray-300 [&:has([role=checkbox])]:pr-0',
+      'p-4 align-middle text-[13px] font-medium text-slate-700 dark:text-slate-300 [&:has([role=checkbox])]:pr-0 group-hover:text-slate-900 transition-colors',
       className,
     )}
     {...props}

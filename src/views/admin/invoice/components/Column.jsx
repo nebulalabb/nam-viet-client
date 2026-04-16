@@ -101,7 +101,7 @@ export const columns = [
             </span>
           )}
 
-          <span className="flex items-center gap-1 text-primary underline hover:text-secondary-foreground">
+          <span className="flex items-center gap-1 text-slate-600 underline hover:text-slate-900">
             <Phone className="h-3 w-3" />
             <a href={`tel:${customer.phone}`}>{customer.phone}</a>
           </span>
@@ -136,13 +136,13 @@ export const columns = [
       return (
         <div className="flex flex-col gap-1 min-w-[120px]">
           {isPickupOrder ? (
-            <Badge variant="outline" className="w-fit bg-green-50 text-green-700 border-green-200 font-medium">
+            <Badge variant="outline" className="w-fit bg-purple-50 text-purple-700 border-purple-200 font-medium hover:bg-purple-100">
               <Store className="mr-1 h-3.5 w-3.5" />
               Tại cửa hàng
             </Badge>
           ) : (
             <>
-              <Badge variant="outline" className="w-fit bg-blue-50 text-blue-700 border-blue-200 font-medium">
+              <Badge variant="outline" className="w-fit bg-sky-50 text-sky-700 border-sky-200 font-medium hover:bg-sky-100">
                 <Truck className="mr-1 h-3.5 w-3.5" />
                 Giao hàng
               </Badge>
@@ -221,24 +221,24 @@ export const columns = [
 
       // If fully paid or has prepaid credit
       if (paymentStatus === 'paid' || remainingAmount <= 0 || hasPrepaidCredit) {
-        return <span className="text-green-500">{hasPrepaidCredit ? 'Đã trả trước' : 'Thanh toán toàn bộ'}</span>
+        return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium hover:bg-emerald-100">{hasPrepaidCredit ? 'Đã trả trước' : 'Đã thanh toán'}</Badge>
       }
 
       // If partially paid
       if (paidAmount > 0 && remainingAmount > 0) {
         return (
-          <span className="text-yellow-600">
+          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 font-medium hover:bg-orange-100">
             Còn nợ: {moneyFormat(remainingAmount)}
-          </span>
+          </Badge>
         )
       }
 
       // If not paid at all
       if (paidAmount === 0) {
         return (
-          <span className="text-red-500">
+          <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 font-medium hover:bg-rose-100">
             Còn nợ: {moneyFormat(remainingAmount)}
-          </span>
+          </Badge>
         )
       }
 
@@ -271,6 +271,9 @@ export const columns = [
       const paymentStatusObj = paymentStatuses.find(
         (s) => s.value === paymentStatus
       )
+
+      const hasApprovedWarehouseReceipt = row.original.hasApprovedWarehouseReceipt
+      const isNotDelivered = !hasApprovedWarehouseReceipt && !['cancelled', 'pending'].includes(currentStatus)
 
       const handleSubmit = async (nextStatus, _, reason) => {
         try {
@@ -320,10 +323,10 @@ export const columns = [
           <div className="flex flex-col gap-2">
             <Badge
               className={cn(
-                "select-none",
+                "select-none w-fit font-medium transition-colors border",
                 ['completed', 'cancelled'].includes(currentStatus)
-                  ? `cursor-default p-0 shadow-none border-0 bg-transparent ${currentStatus === 'completed' ? 'text-green-500' : 'text-red-500'} hover:bg-transparent`
-                  : `cursor-pointer ${statusObj?.color || ''}`
+                  ? `cursor-default ${statusObj?.color || ''}`
+                  : `cursor-pointer border-dashed hover:opacity-80 ${statusObj?.color || ''}`
               )}
               onClick={() => !['completed', 'cancelled'].includes(currentStatus) && setOpenUpdateStatus(true)}
               title={!['completed', 'cancelled'].includes(currentStatus) ? "Bấm để cập nhật trạng thái" : ""}
@@ -333,18 +336,29 @@ export const columns = [
               </span>
               {statusObj?.label || 'Không xác định'}
             </Badge>
-            <Badge
-              variant="outline"
-              className={`cursor-default select-none border-0 ${paymentStatusObj?.color || 'text-gray-500'
-                }`}
-            >
-              <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
-                {paymentStatusObj?.icon ? (
-                  <paymentStatusObj.icon className="h-4 w-4" />
-                ) : null}
-              </span>
-              {hasPrepaidCredit ? 'Đã trả trước' : (paymentStatusObj?.label || 'Không xác định')}
-            </Badge>
+            {isNotDelivered ? (
+              <Badge
+                variant="outline"
+                className="cursor-default select-none border-slate-200 text-slate-600 bg-slate-50 w-fit font-medium hover:bg-slate-100"
+              >
+                <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
+                  <Truck className="h-4 w-4" />
+                </span>
+                Chưa giao hàng
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className={cn(`cursor-default select-none w-fit font-medium`, paymentStatusObj?.color || 'border-gray-200 text-gray-500 bg-gray-50 hover:bg-gray-100')}
+              >
+                <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
+                  {paymentStatusObj?.icon ? (
+                    <paymentStatusObj.icon className="h-4 w-4" />
+                  ) : null}
+                </span>
+                {hasPrepaidCredit ? 'Đã trả trước' : (paymentStatusObj?.label || 'Không xác định')}
+              </Badge>
+            )}
 
 
 

@@ -4,7 +4,7 @@ const phoneRegex =
   /^(?:\+84|0)(?:2|3|5|7|8|9)[0-9]{8,9}$/
 
 const createSupplierSchema = z.object({
-  supplierCode: z.string().min(1, { message: 'Mã NCC là bắt buộc' }),
+  supplierCode: z.string().optional().or(z.literal('')),
   supplierName: z.string().min(1, { message: 'Tên NCC là bắt buộc' }),
   email: z.string().optional().or(z.literal('')),
   phone: z
@@ -21,7 +21,7 @@ const createSupplierSchema = z.object({
 })
 
 const updateSupplierSchema = z.object({
-  supplierCode: z.string().min(1, { message: 'Mã NCC là bắt buộc' }),
+  supplierCode: z.string().optional().or(z.literal('')),
   supplierName: z.string().min(1, { message: 'Tên NCC là bắt buộc' }),
   email: z.string().optional().or(z.literal('')),
   phone: z

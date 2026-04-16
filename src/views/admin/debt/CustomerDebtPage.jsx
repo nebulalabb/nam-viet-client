@@ -5,6 +5,7 @@ import { getDebts, getMonthlyDebtObjects, exportDebtList, syncFullBatch, syncSna
 import DebtReconciliationTable from './components/DebtReconciliationTable'
 import { ViewDebtReconciliationDialog } from './components/ViewDebtReconciliationDialog'
 import { ConfirmSyncDialog } from './components/ConfirmSyncDialog'
+import { PrintDebtListTemplate } from './components/PrintDebtListTemplate'
 import IntegrityWidget from './components/IntegrityWidget'
 import { Button } from '@/components/custom/Button'
 import { formatCurrency } from '@/utils/number-format'
@@ -20,9 +21,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
     Search, Calendar, Filter,
-    Users, MapPin,
+    Users, MapPin, Printer, Loader2,
     FileDown, ShieldAlert, Layers
 } from 'lucide-react'
+import { useReactToPrint } from 'react-to-print'
+import { useRef } from 'react'
 import api from '@/utils/axios'
 import { toast } from 'sonner'
 
@@ -63,6 +66,51 @@ const CustomerDebtPage = () => {
     const [viewData, setViewData] = useState({ id: null, type: 'customer', year: new Date().getFullYear(), from: undefined, to: undefined })
     const [isViewOpen, setIsViewOpen] = useState(false)
     const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false)
+
+    // Print State
+    const printRef = useRef(null)
+    const [printData, setPrintData] = useState([])
+    const [isPrinting, setIsPrinting] = useState(false)
+
+    const reactToPrintFn = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: `In_Cong_No_${filters.type === 'supplier' ? 'NCC' : 'KH'}`,
+        pageStyle: `@page { size: A4; margin: 15mm; }`
+    })
+
+    const handlePrintClick = async () => {
+        try {
+            setIsPrinting(true);
+            const res = await api.get('/smart-debt', {
+                params: {
+                    ...filters,
+                    limit: 10000,
+                    page: 1,
+                    year: filters.dateRange?.from ? filters.dateRange.from.getFullYear() : (filters.year || new Date().getFullYear()),
+                    from: filters.dateRange?.from ? formatISO(filters.dateRange.from) : undefined,
+                    to: filters.dateRange?.to ? formatISO(filters.dateRange.to) : undefined,
+                    search: searchTerm,
+                    address: addressTerm,
+                    blacklist: activeTab === 'blacklist' ? 'true' : 'false'
+                }
+            });
+            if (res?.data?.data) {
+                setPrintData(res.data.data);
+                // Allow render time
+                setTimeout(() => {
+                    reactToPrintFn();
+                    setIsPrinting(false);
+                }, 500);
+            } else {
+                toast.error('Lỗi khi lấy dữ liệu in');
+                setIsPrinting(false);
+            }
+        } catch (error) {
+            console.error('Print Error:', error);
+            toast.error('Lỗi khi tải dữ liệu in');
+            setIsPrinting(false);
+        }
+    }
 
     const handleView = (id, type, year) => {
         setViewData({ 
@@ -191,6 +239,14 @@ const CustomerDebtPage = () => {
                     <div className="flex flex-wrap gap-2">
                         {isAdmin && activeTab === 'aggregate' && (
                             <>
+                                <Button 
+                                    className="gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-md transition-all h-9 px-4 rounded-md"
+                                    onClick={handlePrintClick}
+                                    disabled={isPrinting}
+                                >
+                                    {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+                                    In
+                                </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-md transition-all h-9 px-4 rounded-md">
@@ -251,14 +307,11 @@ const CustomerDebtPage = () => {
                                 <span>TỔNG HỢP {filters.dateRange?.from || filters.dateRange?.to ? 'THEO KỲ' : `TẤT CẢ ({filters.year || new Date().getFullYear()})`}</span>
                                 <span className="bg-blue-100 px-2 py-0.5 rounded-full text-[10px]">{filters.dateRange?.from || filters.dateRange?.to ? 'Kỳ tùy chọn' : 'Toàn thời gian'}</span>
                             </div>
-                            <div className={`grid ${filters.type === 'supplier' ? 'grid-cols-5' : 'grid-cols-6'} divide-x divide-blue-50 py-2`}>
+                            <div className={`grid grid-cols-5 divide-x divide-blue-50 py-2`}>
                                 <StripCell label="NỢ ĐẦU KỲ" value={finalSummary.opening} />
                                 <StripCell label="TỔNG MUA" value={finalSummary.increase} color="text-blue-600" />
                                 <StripCell label="TRẢ HÀNG" value={finalSummary.returnAmount} color="text-indigo-600" />
                                 <StripCell label="THANH TOÁN" value={finalSummary.payment} color="text-green-600" />
-                                {filters.type !== 'supplier' && (
-                                    <StripCell label="NỢ ĐEN" value={finalSummary.blacklistDebt || 0} color="text-gray-800" />
-                                )}
                                 <StripCell label={closingLabel} value={finalSummary.closing} color="text-red-600" highlight />
                             </div>
                         </div>
@@ -287,14 +340,11 @@ const CustomerDebtPage = () => {
                             <span>TỔNG HỢP THÁNG {monthNow}/{filters.dateRange?.from ? filters.dateRange.from.getFullYear() : (filters.year || new Date().getFullYear())}</span>
                             <span className="bg-green-100 px-2 py-0.5 rounded-full text-[10px]">hiện tại</span>
                         </div>
-                        <div className={`grid ${filters.type === 'supplier' ? 'grid-cols-5' : 'grid-cols-6'} divide-x divide-green-50 py-2`}>
+                        <div className={`grid grid-cols-5 divide-x divide-green-50 py-2`}>
                             <StripCell label="NỢ ĐẦU KỲ" value={monthlySummary.opening} />
                             <StripCell label="TỔNG MUA" value={monthlySummary.increase} color="text-blue-600" />
                             <StripCell label="TRẢ HÀNG" value={monthlySummary.returnAmount} color="text-indigo-600" />
                             <StripCell label="THANH TOÁN" value={monthlySummary.payment} color="text-green-600" />
-                            {filters.type !== 'supplier' && (
-                                <StripCell label="NỢ ĐEN" value={monthlySummary.blacklistDebt || 0} color="text-gray-800" />
-                            )}
                             <StripCell label={closingLabel} value={monthlySummary.closing} color="text-red-600" highlight />
                         </div>
                     </div>
@@ -487,6 +537,17 @@ const CustomerDebtPage = () => {
                         year={filters.year || new Date().getFullYear()}
                     />
                 )}
+
+                {/* Print Template Hidden */}
+                <div className="hidden">
+                    <PrintDebtListTemplate 
+                        ref={printRef} 
+                        data={printData} 
+                        type={filters.type} 
+                        dateRange={filters.dateRange}
+                        year={filters.year || new Date().getFullYear()}
+                    />
+                </div>
             </LayoutBody>
         </Layout>
     )

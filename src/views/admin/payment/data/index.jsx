@@ -12,19 +12,19 @@ export const paymentMethods = [
     value: 'cash',
     label: 'Tiền mặt',
     icon: IconCash,
-    color: 'text-green-600',
+    color: 'bg-emerald-50 border-emerald-200 text-emerald-700',
   },
   {
     value: 'transfer',
     label: 'Chuyển khoản',
     icon: IconBuildingBank,
-    color: 'text-blue-600',
+    color: 'bg-blue-50 border-blue-200 text-blue-700',
   },
   {
     value: 'bank_transfer',
     label: 'Chuyển khoản',
     icon: IconBuildingBank,
-    color: 'text-blue-600',
+    color: 'bg-blue-50 border-blue-200 text-blue-700',
   },
 ]
 

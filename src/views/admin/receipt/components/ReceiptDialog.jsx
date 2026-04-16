@@ -264,7 +264,12 @@ const ReceiptDialog = ({
         })
       } else if (invoiceData) {
         // Default to remaining amount for payment input
-        form.setValue('totalAmount', remainingAmount > 0 ? remainingAmount : 0)
+        const defaultCode = invoiceData.orderCode || invoiceData.code || ''
+        form.reset({
+          ...form.getValues(),
+          note: defaultCode ? `Thu tiền đơn hàng ${defaultCode}` : 'Thu tiền đơn hàng',
+          totalAmount: remainingAmount > 0 ? remainingAmount : 0
+        })
       }
     }
   }, [open, isEditMode, receipt, invoiceData, form, remainingAmount])
@@ -295,7 +300,9 @@ const ReceiptDialog = ({
     // Build payload matching backend requirements
     const actualType = data.receiptType.startsWith('custom_') ? 'other' : data.receiptType;
     const customTypeName = data.receiptType.startsWith('custom_') ? data.receiptType.replace('custom_', '') : '';
-    const finalNote = customTypeName ? `[Loại: ${customTypeName}] ${data.note || ''}`.trim() : (data.note || (isStandaloneMode ? 'Thu tiền công nợ' : 'Thu tiền bán hàng'));
+    const defaultCode = invoiceData?.orderCode || invoiceData?.code || '';
+    const fallbackNote = isStandaloneMode ? 'Thu tiền công nợ' : (defaultCode ? `Thu tiền đơn hàng ${defaultCode}` : 'Thu tiền bán hàng');
+    const finalNote = customTypeName ? `[Loại: ${customTypeName}] ${data.note || ''}`.trim() : (data.note || fallbackNote);
 
     // For refund type, add supplier name to note
     const refundNote = actualType === 'refund' && selectedRefundSupplier
@@ -406,9 +413,14 @@ const ReceiptDialog = ({
           )}
           overlayClassName={overlayClassName}
         >
-          <DialogHeader className={cn(isMobile && "px-4 pt-4")}>
-            <DialogTitle>{dialogTitle}</DialogTitle>
-            <DialogDescription>
+          <DialogHeader className={cn("px-6 py-5 bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-t-lg shadow-lg relative overflow-hidden", isMobile && "rounded-none")}>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+            <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-emerald-400/10 rounded-full blur-xl" />
+            
+            <DialogTitle className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              <span>{dialogTitle}</span>
+            </DialogTitle>
+            <DialogDescription className="text-emerald-50 opacity-90 font-medium">
               {dialogDesc}
             </DialogDescription>
           </DialogHeader>
@@ -937,25 +949,7 @@ const ReceiptDialog = ({
 
                                 </div>
 
-                                <div className="mb-3">
-                                  <FormField
-                                    control={form.control}
-                                    name="paymentNote"
-                                    render={({ field }) => (
-                                      <FormItem className="mb-2 space-y-1">
-                                        <FormLabel>Ghi chú thanh toán</FormLabel>
-                                        <FormControl>
-                                          <Textarea
-                                            rows={3}
-                                            placeholder="Nhập ghi chú nếu có"
-                                            {...field}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                </div>
+
                               </div>
                             </div>
                           </div>
@@ -1187,7 +1181,7 @@ const ReceiptDialog = ({
               </Button>
             </DialogClose>
 
-            <Button form="create-receipt" loading={loading} className={cn(isMobile && "flex-1")}>
+            <Button form="create-receipt" loading={loading} className={cn("bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all duration-200 text-white shadow-md hover:shadow-lg", isMobile && "flex-1")}>
               {submitLabel}
             </Button>
           </DialogFooter>

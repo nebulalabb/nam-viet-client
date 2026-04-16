@@ -48,8 +48,8 @@ const ProductGrid = ({
                 <Card
                   key={product.id}
                   className={cn(
-                    "group cursor-pointer transition-all hover:shadow-sm",
-                    isSelected && "ring-2 ring-primary bg-primary/5",
+                    "group cursor-pointer transition-all hover:shadow-md border-emerald-50/50",
+                    isSelected && "ring-2 ring-emerald-500 bg-emerald-50/50 border-emerald-200",
                     // isOutOfStock && "opacity-60" // Allow selection even if out of stock
                   )}
                   onClick={(e) => {
@@ -103,7 +103,7 @@ const ProductGrid = ({
                         {/* Desktop Price/Stock Display */}
                         <div className="hidden md:block">
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-sm font-semibold text-primary">
+                            <span className="text-sm font-bold text-emerald-700">
                               {moneyFormat(product[priceKey])}
                             </span>
                             <span className="text-[11px] text-muted-foreground">
@@ -129,7 +129,7 @@ const ProductGrid = ({
                         {/* Mobile Price/Stock Display */}
                         <div className="md:hidden flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span className="text-sm font-semibold text-primary">
+                            <span className="text-sm font-bold text-emerald-700">
                               {moneyFormat(product[priceKey])}
                             </span>
                             <span className="text-[11px] text-muted-foreground">
@@ -154,11 +154,13 @@ const ProductGrid = ({
                           size="sm"
                           variant={isSelected ? "default" : "outline"}
                           className={cn(
-                            "shrink-0 h-7 text-xs md:w-auto",
-                            !isSelected && "border-green-600 text-green-600 hover:text-green-700 hover:border-green-700 hover:bg-green-50 md:border-input md:text-accent-foreground md:hover:bg-accent md:hover:text-accent-foreground md:hover:border-input"
+                            "shrink-0 h-7 text-xs md:w-auto font-bold transition-all",
+                            isSelected 
+                              ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm" 
+                              : "border-emerald-600 text-emerald-600 hover:text-white hover:bg-emerald-600 shadow-sm"
                           )}
                         >
-                          <Plus className="h-3 w-3 mr-1" />
+                          <Plus className={cn("h-3 w-3 mr-1", isSelected && "animate-pulse")} />
                           {isSelected ? 'Đã chọn' : 'Thêm'}
                         </Button>
                       </div>

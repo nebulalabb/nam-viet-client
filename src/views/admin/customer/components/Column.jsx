@@ -87,7 +87,7 @@ export const columns = [
           {phone && (
             <a
               href={`tel:${phone}`}
-              className="text-sm text-primary underline dark:text-secondary-foreground"
+              className="text-sm text-slate-600 underline hover:text-slate-900"
             >
               {phone}
             </a>
@@ -186,7 +186,7 @@ export const columns = [
       return (
         <div className="flex flex-col gap-1 w-36">
           <span
-            className={`font-medium ${hasCredit ? 'text-green-600' : isOverLimit ? 'text-destructive' : 'text-primary'}`}
+            className={`font-medium ${hasCredit ? 'text-emerald-600' : isOverLimit ? 'text-rose-600' : 'text-slate-700'}`}
           >
             {hasCredit ? formatCurrency(Math.abs(currentDebt)) : formatCurrency(currentDebt)}
           </span>

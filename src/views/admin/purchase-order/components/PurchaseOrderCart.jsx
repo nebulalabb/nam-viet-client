@@ -83,12 +83,12 @@ const PurchaseOrderCart = ({
       <div className="absolute bottom-0 right-0 top-0 w-px bg-gradient-to-b from-transparent via-border/40 to-transparent" />
 
       {/* Header */}
-      <div className="space-y-2 border-b bg-background/80 p-4 backdrop-blur-sm">
-        <h3 className="flex items-center gap-2 font-semibold">
-          <CartIcon className="h-4 w-4" />
+      <div className="space-y-2 border-b bg-emerald-50/20 p-4 backdrop-blur-sm">
+        <h3 className="text-sm font-bold flex items-center gap-2 text-emerald-900 uppercase tracking-wider">
+          <CartIcon className="h-4 w-4 text-emerald-600" />
           <span className="hidden md:inline">Chi tiết đơn hàng</span>
           <span className="md:hidden">Chi tiết</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground lowercase font-normal">
             ({selectedProducts.length})
           </span>
         </h3>
@@ -109,8 +109,9 @@ const PurchaseOrderCart = ({
             return (
               <div
                 key={product.id}
-                className="rounded-lg border bg-card p-3 transition-shadow hover:shadow-sm"
+                className="rounded-xl border border-emerald-100/50 bg-white p-4 transition-all hover:shadow-md hover:border-emerald-200 shadow-sm relative overflow-hidden group"
               >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50/50 rounded-full -mr-12 -mt-12 group-hover:bg-emerald-100/50 transition-colors" />
                 {/* Header: Image + Name + Remove */}
                 <div className="flex items-start gap-3">
                   {/* Product Image */}
@@ -132,11 +133,11 @@ const PurchaseOrderCart = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <h4 className="line-clamp-1 text-sm font-medium">
+                        <h4 className="line-clamp-2 text-sm font-bold text-emerald-900 leading-snug">
                           {product.productName || product.name}
                         </h4>
                         {product.code && (
-                          <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          <p className="mt-1 text-[10px] font-mono font-medium text-emerald-600/70 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
                             {product.code}
                           </p>
                         )}
@@ -400,7 +401,7 @@ const PurchaseOrderCart = ({
                         {/* Thành tiền */}
                         <div className="flex items-center justify-between border-t pt-2">
                           <span className="text-xs text-muted-foreground">Thành tiền:</span>
-                          <span className="text-sm font-semibold text-primary">
+                          <span className="text-xs font-bold text-emerald-800">
                             {moneyFormat(subtotal)}
                           </span>
                         </div>
@@ -425,10 +426,10 @@ const PurchaseOrderCart = ({
       </ScrollArea>
 
       {/* Cart Summary */}
-      <div className="border-t bg-muted/30 p-4 space-y-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Tạm tính:</span>
-          <span className="text-sm font-medium">
+      <div className="border-t bg-emerald-50/30 p-5 space-y-3">
+        <div className="flex items-center justify-between group">
+          <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Tạm tính:</span>
+          <span className="text-sm font-bold text-emerald-900">
             {moneyFormat(
               selectedProducts.reduce((total, product) => {
                 const currentPrice = getDisplayPrice(product)
@@ -447,22 +448,27 @@ const PurchaseOrderCart = ({
              return sum + (price * quantity * rate / 100)
            }, 0)
            return totalDiscount > 0 && (
-             <div className="flex items-center justify-between text-destructive">
-               <span className="text-sm">Giảm giá:</span>
-               <span className="text-sm font-medium">-{moneyFormat(totalDiscount)}</span>
+             <div className="flex items-center justify-between text-rose-600 bg-rose-50 px-3 py-1 rounded-lg">
+               <span className="text-xs font-bold flex items-center gap-1.5">
+                 <Tag className="h-3.5 w-3.5" />
+                 Tổng giảm giá trên SP:
+               </span>
+               <span className="text-sm font-black">-{moneyFormat(totalDiscount)}</span>
              </div>
            )
         })()}
 
-        <div className="flex items-center justify-between border-t pt-1.5">
-          <span className="text-sm font-semibold">Tổng:</span>
-          <span className="text-lg font-bold text-primary">
-            {moneyFormat(
-              selectedProducts.reduce((total, product) => {
-                return total + calculateSubTotal(product.id)
-              }, 0)
-            )}
-          </span>
+        <div className="flex items-center justify-between border-t border-emerald-100 pt-3">
+          <span className="text-sm font-black text-emerald-950">Tổng:</span>
+          <div className="flex flex-col items-end">
+             <span className="text-xl font-black text-emerald-600 tracking-tight">
+               {moneyFormat(
+                 selectedProducts.reduce((total, product) => {
+                   return total + calculateSubTotal(product.id)
+                 }, 0)
+               )}
+             </span>
+          </div>
         </div>
       </div>
     </div>

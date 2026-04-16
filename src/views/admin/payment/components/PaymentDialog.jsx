@@ -319,8 +319,9 @@ const PaymentDialog = ({
       } else if (effectivePurchaseOrder) {
         // Create Mode
         const initialAmount = remainingAmount > 0 ? remainingAmount : 0
+        const defaultCode = effectivePurchaseOrder.poCode || effectivePurchaseOrder.orderCode || effectivePurchaseOrder.code || ''
         form.reset({
-          note: '',
+          note: defaultCode ? `Chi trả đơn hàng ${defaultCode}` : '',
           voucherType: isCustomerPO ? 'refund' : 'supplier_payment',
           paymentAmount: initialAmount,
           paymentMethod: 'cash',
@@ -347,7 +348,8 @@ const PaymentDialog = ({
 
     const actualType = data.voucherType.startsWith('custom_') ? 'other' : data.voucherType;
     const customTypeName = data.voucherType.startsWith('custom_') ? data.voucherType.replace('custom_', '') : '';
-    const baseReason = data.note || (effectivePurchaseOrder ? `Chi trả đơn hàng ${effectivePurchaseOrder.code}` : '');
+    const defaultCode = effectivePurchaseOrder?.poCode || effectivePurchaseOrder?.orderCode || effectivePurchaseOrder?.code || '';
+    const baseReason = data.note || (effectivePurchaseOrder ? `Chi trả đơn hàng ${defaultCode}` : '');
     
     let appendedNote = ''
     if (actualType === 'salary' && selectedUser) {
@@ -445,9 +447,14 @@ const PaymentDialog = ({
         )}
         overlayClassName={overlayClassName}
       >
-        <DialogHeader className={cn(isMobile && "px-4 pt-4")}>
-          <DialogTitle>{dialogTitle}</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className={cn("px-6 py-5 bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-t-lg shadow-lg relative overflow-hidden", isMobile && "rounded-none")}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+          <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-emerald-400/10 rounded-full blur-xl" />
+          
+          <DialogTitle className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <span>{dialogTitle}</span>
+          </DialogTitle>
+          <DialogDescription className="text-emerald-50 opacity-90 font-medium">
             {dialogDesc}
           </DialogDescription>
         </DialogHeader>
@@ -843,25 +850,7 @@ const PaymentDialog = ({
                           )}
                         </div>
 
-                        <div className="mb-3">
-                          <FormField
-                            control={form.control}
-                            name="paymentNote"
-                            render={({ field }) => (
-                              <FormItem className="mb-2 space-y-1">
-                                <FormLabel>Ghi chú thanh toán</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    rows={3}
-                                    placeholder="Nhập ghi chú nếu có"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+
                       </div>
                     </div>
                   </div>
@@ -1005,9 +994,14 @@ const PaymentDialog = ({
                                 <Separator />
                                 <div className="rounded-md bg-muted/50 p-2 space-y-1">
                                   <div className="flex items-center justify-between text-xs">
-                                    <span className="text-muted-foreground">Còn nợ:</span>
-                                    <span className="font-bold text-red-600">
-                                      {moneyFormat(supplierDebt?.closingBalance || 0)}
+                                    <span className="text-muted-foreground">
+                                      {Number(supplierDebt?.closingBalance || 0) < 0 ? "Đã trả trước:" : "Còn nợ:"}
+                                    </span>
+                                    <span className={cn(
+                                      "font-bold",
+                                      Number(supplierDebt?.closingBalance || 0) < 0 ? "text-green-600" : Number(supplierDebt?.closingBalance || 0) > 0 ? "text-red-600" : "text-muted-foreground"
+                                    )}>
+                                      {Number(supplierDebt?.closingBalance || 0) < 0 ? `+${moneyFormat(Math.abs(supplierDebt?.closingBalance || 0))}` : moneyFormat(supplierDebt?.closingBalance || 0)}
                                     </span>
                                   </div>
                                 </div>
@@ -1194,7 +1188,7 @@ const PaymentDialog = ({
             </Button>
           </DialogClose>
 
-          <Button form="payment-form" loading={loading} className={cn(isMobile && "flex-1")}>
+          <Button form="payment-form" loading={loading} className={cn("bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all duration-200 text-white shadow-md hover:shadow-lg", isMobile && "flex-1")}>
             {submitLabel}
           </Button>
         </DialogFooter>
