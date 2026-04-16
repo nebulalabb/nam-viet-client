@@ -218,8 +218,8 @@ const RefundReceiptDialog = ({
         : undefined,
       receiptDate: data.receiptDate ? new Date(data.receiptDate).toISOString() : new Date().toISOString(),
       notes: data.reason
-        ? `${data.reason}${data.notes ? ' | ' + data.notes : ''}`
-        : (data.notes || `Hoàn tiền trả hàng cho đơn mua ${purchaseOrder?.poCode || purchaseOrder?.code}`),
+        ? data.reason
+        : `Hoàn tiền trả hàng cho đơn mua ${purchaseOrder?.poCode || purchaseOrder?.code}`,
     }
 
     try {
@@ -620,25 +620,7 @@ const RefundReceiptDialog = ({
                             )}
                           </div>
 
-                          <div className="mb-3">
-                            <FormField
-                              control={form.control}
-                              name="notes"
-                              render={({ field }) => (
-                                <FormItem className="mb-2 space-y-1">
-                                  <FormLabel>Ghi chú thanh toán</FormLabel>
-                                  <FormControl>
-                                    <Textarea
-                                      rows={2}
-                                      placeholder="Ghi chú thêm về phiếu thu hoàn tiền..."
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
+
                         </div>
                       </div>
                     </div>

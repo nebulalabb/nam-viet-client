@@ -5,13 +5,13 @@ const receiptStatus = [
     value: 'draft',
     label: 'Chờ duyệt',
     icon: IconFileText,
-    color: 'bg-yellow-100 text-yellow-700',
+    color: 'bg-amber-100 text-amber-700 border-amber-200',
   },
   {
     value: 'posted',
     label: 'Đã ghi sổ',
     icon: IconCircleCheck,
-    color: 'bg-green-100 text-green-700',
+    color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   },
 ]
 
@@ -20,13 +20,13 @@ const paymentMethods = [
     value: 'cash',
     label: 'Tiền mặt',
     icon: IconCash,
-    color: 'text-green-600',
+    color: 'bg-emerald-50 border-emerald-200 text-emerald-700',
   },
   {
     value: 'transfer',
     label: 'Chuyển khoản',
     icon: IconBuildingBank,
-    color: 'text-blue-600',
+    color: 'bg-blue-50 border-blue-200 text-blue-700',
   },
 ]
 

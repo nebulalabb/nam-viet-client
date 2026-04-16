@@ -125,7 +125,7 @@ export const getColumns = (onView) => [
           )}
 
           {party.phone && (
-            <span className="flex items-center gap-1 text-primary underline hover:text-secondary-foreground">
+            <span className="flex items-center gap-1 text-slate-600 underline hover:text-slate-900">
               <Phone className="h-3 w-3" />
               <a href={`tel:${party.phone}`}>{party.phone}</a>
             </span>
@@ -165,13 +165,13 @@ export const getColumns = (onView) => [
           )}
 
           {row.original.otherCosts > 0 && (
-            <span className="text-xs text-blue-500">
+            <span className="text-xs text-blue-600">
               Chi phí khác: {moneyFormat(row.original.otherCosts)}
             </span>
           )}
 
           {row.original.paidAmount > 0 && (
-            <span className="text-xs text-green-600">
+            <span className="text-xs text-emerald-600">
               Đã trả: {moneyFormat(row.original.paidAmount)}
             </span>
           )}
@@ -204,24 +204,24 @@ export const getColumns = (onView) => [
 
       // If fully paid
       if (paymentStatus === 'paid' || remainingAmount <= 0) {
-        return <span className="text-green-500">Thanh toán toàn bộ</span>
+        return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium hover:bg-emerald-100">Đã thanh toán</Badge>
       }
 
       // If partially paid
       if (paidAmount > 0 && remainingAmount > 0) {
         return (
-          <span className="text-yellow-600">
+          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 font-medium hover:bg-orange-100">
             Còn nợ: {moneyFormat(remainingAmount)}
-          </span>
+          </Badge>
         )
       }
 
       // If not paid at all
       if (paidAmount === 0) {
         return (
-          <span className="text-red-500">
+          <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 font-medium hover:bg-rose-100">
             Còn nợ: {moneyFormat(remainingAmount)}
-          </span>
+          </Badge>
         )
       }
 
@@ -289,10 +289,10 @@ export const getColumns = (onView) => [
           <div className="flex flex-col gap-2">
             <Badge
               className={cn(
-                'select-none',
-                currentStatus === 'completed'
-                  ? 'cursor-default bg-transparent p-0 text-green-500 hover:bg-transparent shadow-none border-0'
-                  : `cursor-pointer ${statusObj?.bgColor || ''}`,
+                'select-none w-fit font-medium transition-colors border',
+                currentStatus === 'completed' || currentStatus === 'cancelled'
+                  ? `cursor-default ${statusObj?.bgColor || ''}`
+                  : `cursor-pointer border-dashed hover:opacity-80 ${statusObj?.bgColor || ''}`,
               )}
               onClick={() => !isTerminalStatus && setOpenUpdateStatus(true)}
               title={!isTerminalStatus ? 'Bấm để cập nhật trạng thái' : ''}
@@ -306,7 +306,7 @@ export const getColumns = (onView) => [
             </Badge>
             <Badge
               variant="outline"
-              className={`cursor-default select-none border-0 ${paymentStatusObj?.color || 'text-gray-500'}`}
+              className={cn(`cursor-default select-none w-fit font-medium hover:opacity-80`, paymentStatusObj?.color || 'border-gray-200 text-gray-500 bg-gray-50 hover:bg-gray-100')}
             >
               <span className="mr-1 inline-flex h-4 w-4 items-center justify-center">
                 {paymentStatusObj?.icon ? (

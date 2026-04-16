@@ -111,31 +111,39 @@ const ShoppingCart = ({
       <div className="absolute bottom-0 right-0 top-0 w-px bg-gradient-to-b from-transparent via-border/40 to-transparent" />
 
       {/* Header with tabs */}
-      <div className="space-y-2 border-b bg-background/80 p-4 backdrop-blur-sm">
-        <div className="flex items-center gap-1">
+      <div className="space-y-4 border-b bg-emerald-50/20 p-4 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+            <CartIcon className="h-4 w-4 text-emerald-600" />
+            Chi tiết đơn hàng
+          </h3>
+        </div>
+        <div className="flex items-center gap-2 p-1 bg-muted/50 rounded-lg w-fit">
           <button
             type="button"
             onClick={() => onActiveTabChange?.('cart')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-              activeTab === 'cart' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+              'flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm',
+              activeTab === 'cart' 
+                ? 'bg-emerald-600 text-white shadow-emerald-200' 
+                : 'text-muted-foreground hover:text-emerald-700 hover:bg-white',
             )}
           >
-            <CartIcon className="h-4 w-4" />
-            Giỏ hàng
-            <span className="text-xs opacity-70">({selectedProducts.length})</span>
+            <CartIcon className="h-3.5 w-3.5" />
+            Sản phẩm ({selectedProducts.length})
           </button>
           <button
             type="button"
             onClick={() => onActiveTabChange?.('gift')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-              activeTab === 'gift' ? 'bg-amber-500 text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+              'flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm',
+              activeTab === 'gift' 
+                ? 'bg-amber-500 text-white shadow-amber-200' 
+                : 'text-muted-foreground hover:text-amber-600 hover:bg-white',
             )}
           >
-            <Gift className="h-4 w-4" />
-            Quà tặng
-            {giftProducts.length > 0 && <span className="text-xs opacity-70">({giftProducts.length})</span>}
+            <Gift className="h-3.5 w-3.5" />
+            Quà tặng ({giftProducts.length})
           </button>
         </div>
       </div>
@@ -162,8 +170,9 @@ const ShoppingCart = ({
               return (
                 <div
                   key={product.id}
-                  className="rounded-lg border bg-card p-3 transition-shadow hover:shadow-sm"
+                  className="rounded-xl border border-emerald-100/50 bg-white p-4 transition-all hover:shadow-md hover:border-emerald-200 shadow-sm relative overflow-hidden group"
                 >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50/50 rounded-full -mr-12 -mt-12 group-hover:bg-emerald-100/50 transition-colors" />
                   {/* Main Product Row Header */}
                   <div className="flex items-start gap-3">
                     {/* Product Image */}
@@ -185,11 +194,11 @@ const ShoppingCart = ({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <h4 className="line-clamp-1 text-sm font-medium">
+                          <h4 className="line-clamp-2 text-sm font-bold text-emerald-900 leading-snug">
                             {product.productName || product.name}
                           </h4>
                           {product.code && (
-                            <p className="mt-0.5 text-[10px] text-muted-foreground">
+                            <p className="mt-1 text-[10px] font-mono font-medium text-emerald-600/70 bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
                               {product.code}
                             </p>
                           )}
@@ -449,7 +458,7 @@ const ShoppingCart = ({
                       <span className="text-xs text-muted-foreground">
                         Thành tiền:
                       </span>
-                      <span className="text-sm font-semibold text-primary">
+                      <span className="text-xs font-bold text-emerald-800">
                         {moneyFormat(subtotal)}
                       </span>
                     </div>
@@ -523,34 +532,39 @@ const ShoppingCart = ({
 
       {/* Cart Summary — only show on cart tab */}
       {activeTab === 'cart' && (
-        <div className="border-t bg-muted/30 p-4 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Tạm tính:</span>
-            <span className="text-sm font-medium">
+        <div className="border-t bg-emerald-50/30 p-5 space-y-3">
+          <div className="flex items-center justify-between group">
+            <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Tạm tính giỏ hàng:</span>
+            <span className="text-sm font-bold text-emerald-900">
               {moneyFormat(calculatePreDiscountTotal ? calculatePreDiscountTotal() : 0)}
             </span>
           </div>
           {calculateTotalDiscount && calculateTotalDiscount() > 0 && (
-            <div className="flex items-center justify-between text-destructive">
-              <span className="text-sm">Giảm giá:</span>
-              <span className="text-sm font-medium">-{moneyFormat(calculateTotalDiscount())}</span>
+            <div className="flex items-center justify-between text-rose-600 bg-rose-50 px-3 py-1 rounded-lg">
+              <span className="text-xs font-bold flex items-center gap-1.5">
+                <Tag className="h-3.5 w-3.5" />
+                Tổng giảm giá trên SP:
+              </span>
+              <span className="text-sm font-black">-{moneyFormat(calculateTotalDiscount())}</span>
             </div>
           )}
-          <div className="flex items-center justify-between border-t pt-1.5">
-            <span className="text-sm font-semibold">Tổng:</span>
-            <span className="text-lg font-bold text-primary">
-              {moneyFormat(
-                selectedProducts.reduce((total, product) => {
-                  return total + calculateSubTotal(product.id)
-                }, 0),
-              )}
-            </span>
+          <div className="flex items-center justify-between border-t border-emerald-100 pt-3">
+            <span className="text-sm font-black text-emerald-950">Tổng thanh toán SP:</span>
+            <div className="flex flex-col items-end">
+              <span className="text-xl font-black text-emerald-600 tracking-tight">
+                {moneyFormat(
+                  selectedProducts.reduce((total, product) => {
+                    return total + calculateSubTotal(product.id)
+                  }, 0),
+                )}
+              </span>
+            </div>
           </div>
           {giftProducts.length > 0 && (
-            <div className="flex items-center gap-1.5 border-t pt-1.5 mt-1">
-              <Gift className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-xs text-amber-600 font-medium">
-                {giftProducts.length} sản phẩm quà tặng kèm (miễn phí)
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg">
+              <Gift className="h-4 w-4 text-amber-500 animate-bounce" />
+              <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wide">
+                Bạn đã chọn {giftProducts.length} sản phẩm ưu đãi kèm theo
               </span>
             </div>
           )}

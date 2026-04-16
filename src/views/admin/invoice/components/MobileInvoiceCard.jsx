@@ -4,7 +4,7 @@ import { Button } from '@/components/custom/Button'
 import { moneyFormat } from '@/utils/money-format'
 import { dateFormat } from '@/utils/date-format'
 import { cn } from '@/lib/utils'
-import { ChevronDown, MoreVertical, Eye, Pencil, Trash2, Phone, CreditCard } from 'lucide-react'
+import { ChevronDown, MoreVertical, Eye, Pencil, Trash2, Phone, CreditCard, Truck } from 'lucide-react'
 import { IconFileTypePdf } from '@tabler/icons-react'
 import { useState, useMemo } from 'react'
 import {
@@ -103,10 +103,24 @@ const MobileInvoiceCard = ({
 
 
   const getPaymentStatusBadge = (paymentStatusValue) => {
+    const hasApprovedWarehouseReceipt = invoice.hasApprovedWarehouseReceipt
+    const isNotDelivered = !hasApprovedWarehouseReceipt && !['cancelled', 'pending'].includes(status)
+
+    if (isNotDelivered) {
+      return (
+        <Badge variant="outline" className="border-0 text-slate-500 bg-slate-50">
+          <span className="mr-1 inline-flex h-3 w-3 items-center justify-center">
+            <Truck className="h-3 w-3" />
+          </span>
+          Chưa giao hàng
+        </Badge>
+      )
+    }
+
     const customerDebt = Number(invoice?.customer?.currentDebt || 0)
     const hasPrepaidCredit = customerDebt < 0
     const resolvedStatus = hasPrepaidCredit ? 'paid' : paymentStatusValue
-    
+
     const paymentStatusObj = paymentStatuses.find(
       (s) => s.value === resolvedStatus
     )

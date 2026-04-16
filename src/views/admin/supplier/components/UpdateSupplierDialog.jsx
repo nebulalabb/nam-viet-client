@@ -95,7 +95,7 @@ const UpdateSupplierDialog = ({
                   name="supplierCode"
                   render={({ field }) => (
                     <FormItem className="mb-2 space-y-1">
-                      <FormLabel required={true}>Mã nhà cung cấp</FormLabel>
+                      <FormLabel required={false}>Mã nhà cung cấp</FormLabel>
                       <FormControl>
                         <Input placeholder="Nhập mã nhà cung cấp" {...field} />
                       </FormControl>

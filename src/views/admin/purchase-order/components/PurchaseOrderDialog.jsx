@@ -1035,9 +1035,16 @@ const PurchaseOrderDialog = ({
       )}
 
       <DialogContent className="max-w-screen w-screen p-0 m-0 h-[calc(100vh-64px)] md:max-h-screen md:h-screen">
-        <DialogHeader className="px-6 pt-4">
-          <DialogTitle>{isUpdateMode ? 'Cập nhật đơn đặt hàng' : 'Tạo đơn đặt hàng mới'}</DialogTitle>
-          <DialogDescription>{isUpdateMode ? 'Chỉnh sửa thông tin đơn đặt hàng' : `Chọn ${modeLabel} và điền thông tin để tạo đơn đặt hàng`}</DialogDescription>
+        <DialogHeader className="px-6 py-5 bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-t-lg shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+          <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-emerald-400/10 rounded-full blur-xl" />
+          
+          <DialogTitle className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <span>{isUpdateMode ? 'Cập nhật đơn đặt hàng' : 'Tạo đơn đặt hàng mới'}</span>
+          </DialogTitle>
+          <DialogDescription className="text-emerald-50 opacity-90 font-medium">
+            {isUpdateMode ? 'Chỉnh sửa thông tin đơn đặt hàng' : `Chọn ${modeLabel} và điền thông tin để tạo đơn đặt hàng`}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

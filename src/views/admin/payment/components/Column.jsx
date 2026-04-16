@@ -61,7 +61,7 @@ export const columns = [
             />
           )}
           <div
-            className={cn(" font-medium cursor-pointer text-primary hover:underline")}
+            className={cn("font-medium cursor-pointer text-blue-600 hover:underline")}
             onClick={handleViewPayment}
           >
             {row.getValue('voucherCode')}
@@ -86,24 +86,24 @@ export const columns = [
       if (type === 'supplier_payment') {
         label = 'Nhà cung cấp'
         Icon = Building2
-        colorClass = 'text-orange-600'
+        colorClass = 'bg-orange-100 text-orange-800 border-orange-300 shadow-sm'
       } else if (type === 'salary') {
         label = 'Lương'
         Icon = Contact
-        colorClass = 'text-purple-600'
+        colorClass = 'bg-purple-100 text-purple-800 border-purple-300 shadow-sm'
       } else if (type === 'operating_cost') {
         label = 'Chi phí VH'
         Icon = CircleHelp
-        colorClass = 'text-blue-600'
+        colorClass = 'bg-blue-100 text-blue-800 border-blue-300 shadow-sm'
       } else if (type === 'refund') {
         label = 'Hoàn tiền'
         Icon = CircleHelp
-        colorClass = 'text-green-600'
+        colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-sm'
       }
 
       return (
         <div className="shrink-0 flex pr-2">
-          <Badge variant="outline" className={`whitespace-nowrap border-transparent bg-transparent px-0 font-medium ${colorClass}`}>
+          <Badge variant="outline" className={`whitespace-nowrap font-semibold px-2.5 py-1 text-[13px] ${colorClass}`}>
             <Icon className="mr-1.5 h-3.5 w-3.5" />
             {label}
           </Badge>
@@ -191,10 +191,10 @@ export const columns = [
 
       return (
         <div className="flex flex-col gap-1 items-end">
-          <span className="max-w-32 truncate sm:max-w-72 md:max-w-[31rem] font-medium text-red-600">
+          <span className="max-w-32 truncate sm:max-w-72 md:max-w-[31rem] font-bold text-slate-800">
             {moneyFormat(row.getValue('amount'))}
           </span>
-          <Badge variant="outline" className={`whitespace-nowrap border-transparent bg-transparent px-0 font-medium ${paymentMethodObj?.color}`}>
+          <Badge variant="outline" className={`whitespace-nowrap font-medium transition-colors ${paymentMethodObj?.color}`}>
             {Icon && <Icon className="mr-1 h-3 w-3" />}
             {paymentMethodObj?.label || method || '—'}
           </Badge>
@@ -229,10 +229,10 @@ export const columns = [
           <div className="w-28 flex items-center justify-center gap-2">
             <Badge
               className={cn(
-                "cursor-pointer hover:underline",
-                status === 'posted' ? 'bg-green-500' :
-                  status === 'cancelled' ? 'bg-red-500' :
-                    'bg-yellow-500'
+                "cursor-pointer transition-opacity border hover:opacity-80",
+                status === 'posted' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                  status === 'cancelled' ? 'bg-red-100 text-red-800 border-red-200' :
+                    'bg-amber-100 text-amber-800 border-amber-200'
               )}
               onClick={() => setShowUpdateStatusDialog(true)}
             >
@@ -280,7 +280,7 @@ export const columns = [
       return (
         <div className="flex flex-col gap-0.5">
           {creator ? (
-            <span className="font-medium text-[14px] max-w-[150px] truncate text-primary">
+            <span className="font-semibold text-[14px] max-w-[150px] truncate text-slate-700">
               {creator.fullName}
             </span>
           ) : (

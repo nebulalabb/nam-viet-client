@@ -30,7 +30,7 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { statuses, paymentStatuses } from '../data'
 import { receiptStatus } from '../../receipt/data'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { CreditCard, Mail, MapPin, Pencil, Trash2, QrCode, Printer, X, Truck, Store, Calendar, User } from 'lucide-react'
+import { CreditCard, Mail, MapPin, Pencil, Trash2, QrCode, Printer, X, Truck, Store, Calendar, User, PackagePlus } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { IconPlus, IconFileText, IconCircleCheck, IconCircleX } from '@tabler/icons-react'
 import { dateFormat } from '@/utils/date-format'
@@ -1369,20 +1369,42 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">Phiếu xuất kho / Trả hàng</h3>
-                            {(invoice?.orderStatus === 'preparing' || invoice?.orderStatus === 'delivering' || invoice?.orderStatus === 'completed') && isFullyExported ? (
-                              <Button
-                                size="sm"
-                                className="h-8 gap-1 bg-orange-500 text-white hover:bg-orange-600 border-transparent shadow-sm"
-                                onClick={() => setShowReturnWarehouseReceiptDialog(true)}
-                              >
-                                <IconPlus className="h-4 w-4" />
-                                <span>Trả hàng</span>
-                              </Button>
-                            ) : (
-                              invoice?.orderStatus === 'pending' ? (
-                                <span className="text-[12px] text-gray-500">Đơn hàng chưa được duyệt</span>
-                              ) : null
-                            )}
+                            {(() => {
+                              const canPost = ['preparing', 'delivering', 'completed'].includes(invoice?.orderStatus)
+                              if (!canPost) {
+                                return invoice?.orderStatus === 'pending' ? (
+                                  <span className='text-[12px] text-gray-500'>
+                                    Đơn hàng chưa được duyệt
+                                  </span>
+                                ) : null
+                              }
+
+                              if (isFullyExported) {
+                                return (
+                                  <Button
+                                    size='sm'
+                                    className='h-8 gap-1 border-transparent bg-orange-500 text-white shadow-sm hover:bg-orange-600'
+                                    onClick={() =>
+                                      setShowReturnWarehouseReceiptDialog(true)
+                                    }
+                                  >
+                                    <IconPlus className='h-4 w-4' />
+                                    <span>Trả hàng</span>
+                                  </Button>
+                                )
+                              } else {
+                                return (
+                                  <Button
+                                    size='sm'
+                                    className='h-8 gap-1 border-transparent bg-green-600 text-white shadow-sm hover:bg-green-700'
+                                    onClick={handleCreateWarehouseReceipt}
+                                  >
+                                    <IconPlus className='h-4 w-4' />
+                                    <span>Thêm</span>
+                                  </Button>
+                                )
+                              }
+                            })()}
                           </div>
 
                           {invoice?.warehouseReceipts && invoice.warehouseReceipts.length > 0 ? (
@@ -1913,20 +1935,51 @@ const ViewInvoiceDialog = ({ invoiceId, showTrigger = true, onEdit, onSuccess, c
           <DialogFooter className={cn(
             "hidden md:flex flex-row flex-wrap items-center justify-center sm:justify-end gap-2 !space-x-0"
           )}>
-            {invoice && (
-              <>
+                {invoice && (
+                  <>
+                    {/* Add Payment Button */}
+                    {invoice?.orderStatus !== 'cancelled' &&
+                      invoice?.orderStatus !== 'pending' &&
+                      invoice?.paymentStatus !== 'paid' && (
+                        <Button
+                          size='sm'
+                          className='gap-2 bg-green-600 text-white shadow-sm hover:bg-green-700'
+                          onClick={handleCreateReceipt}
+                        >
+                          <CreditCard className='h-4 w-4' />
+                          Tạo Phiếu Thu
+                        </Button>
+                      )}
 
-                {invoice?.orderStatus !== 'cancelled' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className={cn("gap-2 text-blue-600 border-blue-200 hover:bg-blue-50", !isDesktop && "w-full")}
-                    onClick={handlePrintInvoice}
-                  >
-                    <Printer className="h-4 w-4" />
-                    In Hóa Đơn
-                  </Button>
-                )}
+                    {/* Add Export Button */}
+                    {['preparing', 'delivering', 'completed'].includes(
+                      invoice?.orderStatus
+                    ) &&
+                      !isFullyExported && (
+                        <Button
+                          size='sm'
+                          className='gap-2 bg-blue-600 text-white shadow-sm hover:bg-blue-700'
+                          onClick={handleCreateWarehouseReceipt}
+                        >
+                          <PackagePlus className='h-4 w-4' />
+                          Tạo Phiếu Xuất Kho
+                        </Button>
+                      )}
+
+                    {invoice?.orderStatus !== 'cancelled' && (
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        className={cn(
+                          'gap-2 border-blue-200 text-blue-600 hover:bg-blue-50',
+                          !isDesktop && 'w-full'
+                        )}
+                        onClick={handlePrintInvoice}
+                      >
+                        <Printer className='h-4 w-4' />
+                        In Hóa Đơn
+                      </Button>
+                    )}
 
                 {invoice.orderStatus === 'pending' && (
                   <Button

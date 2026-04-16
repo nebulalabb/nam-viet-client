@@ -35,7 +35,7 @@ const CategorySidebar = ({
           className={cn(
             "w-full flex items-start gap-2 px-3 py-2 rounded-md text-sm transition-all mb-1",
             "hover:bg-accent hover:text-accent-foreground",
-            isActive && "bg-primary text-primary-foreground hover:bg-primary/90",
+            isActive && "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm",
             level > 0 && "pl-" + (level * 4 + 3) // Add indentation based on level
           )}
           style={{ paddingLeft: level > 0 ? `${level * 1.5 + 0.75}rem` : undefined }}
@@ -46,8 +46,8 @@ const CategorySidebar = ({
             <span className={cn(
               "text-xs px-1.5 py-0.5 rounded-full",
               isActive
-                ? "bg-primary-foreground/20 text-primary-foreground"
-                : "bg-muted text-muted-foreground"
+                ? "bg-white/20 text-white"
+                : "bg-emerald-100 text-emerald-700 font-bold"
             )}>
               {count}
             </span>

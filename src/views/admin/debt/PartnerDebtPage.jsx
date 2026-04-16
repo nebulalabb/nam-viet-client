@@ -5,10 +5,12 @@ import { getDebts, getMonthlyDebtObjects, exportDebtList, syncFullBatch, syncSna
 import DebtReconciliationTable from './components/DebtReconciliationTable'
 import { ViewDebtReconciliationDialog } from './components/ViewDebtReconciliationDialog'
 import { ConfirmSyncDialog } from './components/ConfirmSyncDialog'
+import { PrintDebtListTemplate } from './components/PrintDebtListTemplate'
 import IntegrityWidget from './components/IntegrityWidget'
 import { Button } from '@/components/custom/Button'
 import { formatCurrency } from '@/utils/number-format'
 import { exportDebtToExcel } from '@/utils/list-debt-excel-export'
+import { formatISO } from 'date-fns'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,9 +19,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
     Search, Calendar, Filter,
-    Users, MapPin,
+    Users, MapPin, Printer, Loader2,
     FileDown, ShieldAlert, Layers
 } from 'lucide-react'
+import { useReactToPrint } from 'react-to-print'
+import { useRef } from 'react'
+import api from '@/utils/axios'
+import { toast } from 'sonner'
 
 const PartnerDebtPage = () => {
     const dispatch = useDispatch()
@@ -54,6 +60,50 @@ const PartnerDebtPage = () => {
     const [viewData, setViewData] = useState({ id: null, type: 'customer', year: new Date().getFullYear() })
     const [isViewOpen, setIsViewOpen] = useState(false)
     const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false)
+
+    // Print State
+    const printRef = useRef(null)
+    const [printData, setPrintData] = useState([])
+    const [isPrinting, setIsPrinting] = useState(false)
+
+    const reactToPrintFn = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: `In_Cong_No_NCC`,
+        pageStyle: `@page { size: A4; margin: 15mm; }`
+    })
+
+    const handlePrintClick = async () => {
+        try {
+            setIsPrinting(true);
+            const res = await api.get('/smart-debt', {
+                params: {
+                    ...filters,
+                    limit: 10000,
+                    page: 1,
+                    year: filters.dateRange?.from ? filters.dateRange.from.getFullYear() : (filters.year || new Date().getFullYear()),
+                    from: filters.dateRange?.from ? formatISO(filters.dateRange.from) : undefined,
+                    to: filters.dateRange?.to ? formatISO(filters.dateRange.to) : undefined,
+                    search: searchTerm,
+                    address: addressTerm,
+                    blacklist: activeTab === 'blacklist' ? 'true' : 'false'
+                }
+            });
+            if (res?.data?.data) {
+                setPrintData(res.data.data);
+                setTimeout(() => {
+                    reactToPrintFn();
+                    setIsPrinting(false);
+                }, 500);
+            } else {
+                toast.error('Lỗi khi lấy dữ liệu in');
+                setIsPrinting(false);
+            }
+        } catch (error) {
+            console.error('Print Error:', error);
+            toast.error('Lỗi khi tải dữ liệu in');
+            setIsPrinting(false);
+        }
+    }
 
     const handleView = (id, type, year) => {
         setViewData({ id: Number(id), type, year: Number(year) })
@@ -169,6 +219,14 @@ const PartnerDebtPage = () => {
                     <div className="flex flex-wrap gap-2">
                         {isAdmin && activeTab === 'aggregate' && (
                             <>
+                                <Button 
+                                    className="gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-md transition-all h-9 px-4 rounded-md"
+                                    onClick={handlePrintClick}
+                                    disabled={isPrinting}
+                                >
+                                    {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+                                    In
+                                </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white shadow-md transition-all h-9 px-4 rounded-md">
@@ -461,6 +519,17 @@ const PartnerDebtPage = () => {
                         year={filters.year || new Date().getFullYear()}
                     />
                 )}
+
+                {/* Print Template Hidden */}
+                <div className="hidden">
+                    <PrintDebtListTemplate 
+                        ref={printRef} 
+                        data={printData} 
+                        type={filters.type} 
+                        dateRange={filters.dateRange}
+                        year={filters.year || new Date().getFullYear()}
+                    />
+                </div>
             </LayoutBody>
         </Layout>
     )

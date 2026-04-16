@@ -55,10 +55,32 @@ const MobileInvoiceActions = ({
           </SheetHeader>
           <div className="flex flex-col gap-3">
 
+            {/* Payment Action */}
+            {(invoice?.orderStatus !== 'cancelled' && invoice?.orderStatus !== 'pending' && invoice?.paymentStatus !== 'paid') && (
+              <Button
+                className="bg-green-600 text-white hover:bg-green-700 h-auto py-3 flex-row gap-2"
+                onClick={() => handleAction(handleCreateReceipt)}
+              >
+                <IconPlus className="h-5 w-5" />
+                <span className="text-sm font-semibold">Tạo Phiếu Thu</span>
+              </Button>
+            )}
+
+            {/* Warehouse Actions */}
+            {(['preparing', 'delivering', 'completed'].includes(invoice?.orderStatus)) && (
+              <Button
+                className="bg-blue-600 text-white hover:bg-blue-700 h-auto py-3 flex-row gap-2"
+                onClick={() => handleAction(handleCreateWarehouseReceipt)}
+              >
+                <IconPlus className="h-5 w-5" />
+                <span className="text-sm font-semibold">Xuất kho</span>
+              </Button>
+            )}
+
             {/* Delivery Action */}
             {(!invoice.isPickupOrder && ['preparing', 'delivering'].includes(invoice?.orderStatus)) && (
               <Button
-                className="bg-blue-600 text-white hover:bg-blue-700 h-auto py-3 flex-row gap-2"
+                className="bg-purple-600 text-white hover:bg-purple-700 h-auto py-3 flex-row gap-2"
                 onClick={() => handleAction(handleCreateDelivery)}
               >
                 <Truck className="h-5 w-5" />
