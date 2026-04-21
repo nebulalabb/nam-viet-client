@@ -36,6 +36,7 @@ import {
   Settings,
   Wallet,
   Scale,
+  FileText,
 } from 'lucide-react'
 
 export const sideLinks = [
@@ -371,6 +372,19 @@ export const sideLinks = [
         href: '/financial-report',
         icon: <img src="/icons/tài chính báp cáo.png" className="w-[18px] h-[18px] " alt="Tài chính báp cáo" />,
         permission: 'GET_FINANCIAL_REPORT',
+      },
+    ],
+  },
+  {
+    title: 'Bài viết',
+    icon: <FileText size={20} strokeWidth={1.5} />,
+    permission: 'GET_REVENUE_REPORT',
+    sub: [
+      {
+        title: 'Quản lý bài viết',
+        href: '/news',
+        icon: <FileText size={18} strokeWidth={1.5} />,
+        permission: 'GET_REVENUE_REPORT',
       },
     ],
   },

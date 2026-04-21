@@ -63,6 +63,7 @@ import DeliveryPage from '@/views/admin/delivery/DeliveryPage'
 import InventorySummaryPage from '@/views/admin/warehouse-report/InventorySummaryPage'
 import InventoryDetailPage from '@/views/admin/warehouse-report/InventoryDetailPage'
 import CashFlowReportPage from '@/views/admin/cash-flow/CashFlowReportPage'
+import NewsPage from '@/views/admin/news/NewsPage'
 
 const routes = [
   {
@@ -201,6 +202,11 @@ const routes = [
   {
     path: '/cash-flow',
     element: CashFlowReportPage,
+    layout: AdminLayout,
+  },
+  {
+    path: '/news',
+    element: NewsPage,
     layout: AdminLayout,
   },
   {
