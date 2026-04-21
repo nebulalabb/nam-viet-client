@@ -461,7 +461,7 @@ const CreateManualWarehouseReceiptDialog = ({
                   name="warehouseId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{isTransferType ? 'Kho xuất' : 'Kho'}</FormLabel>
+                      <FormLabel>{isTransferType ? (receiptType === 1 ? 'Kho nhập' : 'Kho xuất') : 'Kho'}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -486,7 +486,7 @@ const CreateManualWarehouseReceiptDialog = ({
                     name="partnerId"
                     render={({ field }) => (
                       <FormItem className="flex flex-col mt-2">
-                        <FormLabel className="mb-0.5">Kho nhập</FormLabel>
+                        <FormLabel className="mb-0.5">{receiptType === 1 ? 'Kho xuất' : 'Kho nhập'}</FormLabel>
                         <Popover open={openTargetWarehousePopover} onOpenChange={setOpenTargetWarehousePopover}>
                           <PopoverTrigger asChild>
                             <FormControl>

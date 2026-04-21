@@ -86,7 +86,7 @@ const ViewWarehouseReceiptDialog = ({
   const [showSupplierDialog, setShowSupplierDialog] = useState(false)
 
   // Transfer specific data
-  const isTransferIn = receipt?.referenceType === 'transfer_in'
+  const isTransferIn = receipt?.referenceType === 'transfer_in' || receipt?.referenceType === 'transfer_in_auto'
   const isTransferOut = receipt?.referenceType === 'transfer_out'
   const isTransferType = isTransferIn || isTransferOut
   
