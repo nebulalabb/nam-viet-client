@@ -378,25 +378,25 @@ export const sideLinks = [
   },
   {
     title: 'Bài viết',
-    icon: <FileText size={20} strokeWidth={1.5} />,
+    icon: <img src="/icons/bài viết.png" className="w-[20px] h-[20px] " alt="Bài viết" />,
     permission: 'GET_REVENUE_REPORT',
     sub: [
       {
         title: 'Quản lý bài viết',
         href: '/news',
-        icon: <FileText size={18} strokeWidth={1.5} />,
+        icon: <img src="/icons/quản lý bài viết.png" className="w-[18px] h-[18px] " alt="Quản lý bài viết" />,
         permission: 'GET_REVENUE_REPORT',
       },
       {
         title: 'Danh mục bài viết',
         href: '/news-categories',
-        icon: <FolderOpen size={18} strokeWidth={1.5} />,
+        icon: <img src="/icons/danh mục bài viết.png" className="w-[18px] h-[18px] " alt="Danh mục bài viết" />,
         permission: 'GET_REVENUE_REPORT',
       },
       {
         title: 'Duyệt bình luận',
         href: '/news-comments',
-        icon: <MessageSquare size={18} strokeWidth={1.5} />,
+        icon: <img src="/icons/Bình luận .png" className="w-[18px] h-[18px] " alt="Duyệt bình luận" />,
         permission: 'GET_REVENUE_REPORT',
       },
     ],
